@@ -3,7 +3,7 @@
 [![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://en.wikipedia.org/wiki/MIT_License)
 
 
-A [JETI](http://www.jetimodel.com/en/) Ex Bus [protocol](http://www.jetimodel.com/en/Telemetry-Protocol/) implementation in [MicroPython](https://micropython.org/). 
+A [JETI](http://www.jetimodel.com/en/) [Ex Bus protocol](http://www.jetimodel.com/en/Telemetry-Protocol/) implementation in [MicroPython](https://micropython.org/). 
 
 ## Features
 
