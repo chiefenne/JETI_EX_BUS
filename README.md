@@ -4,7 +4,7 @@
 
 
 A [JETI](http://www.jetimodel.com/en/) [Ex Bus protocol](http://www.jetimodel.com/en/Telemetry-Protocol/) implementation in [MicroPython](https://micropython.org/).
-This will allow to use boards like RaspberyyPi, ESP3286 or similar to act as sensors for Jeti RC [receivers[(http://www.jetimodel.com/en/katalog/Duplex-2-4-EX/Receivers-EX/) and transmit telemetry data from the board to the receiver and thus back to the transmitter (i.e. RC controli like this [DC24](http://www.jetimodel.com/en/katalog/Transmitters/@produkt/DC-24/)).
+This will allow to use boards like RaspberyPi, ESP3286 or similar to act as sensors for Jeti RC [receivers](http://www.jetimodel.com/en/katalog/Duplex-2-4-EX/Receivers-EX/) and transmit telemetry data from the board to the receiver and thus back to the transmitter (i.e. RC controli like this [DC24](http://www.jetimodel.com/en/katalog/Transmitters/@produkt/DC-24/)).
 
 >
 > NOTE: This is a rather a proof of concept at the moment and NOT ready for use yet.
