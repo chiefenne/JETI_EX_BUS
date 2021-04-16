@@ -15,6 +15,7 @@ import uos
 import utime
 import ubinascii
 
+# check if we are on a Pyboard (main development platform for this code)
 if 'pyboard' in usys.platform:
     import pyb
     pyboard = True
