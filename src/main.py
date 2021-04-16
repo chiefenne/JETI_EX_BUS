@@ -34,12 +34,7 @@ logger.resetPreString()
 
 # switch on blue led to show we are active (only for pyboard)
 if pyboard:
-    red = pyb.LED(1)
-    green = pyb.LED(2)
-    orange = pyb.LED(3)
     blue = pyb.LED(4)
-
-    # led working indicator for Pyboard
     blue.on()
 
 # instantiate a Jeti ex bus connection (using default parameters)
