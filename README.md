@@ -22,21 +22,9 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as sens
  - UPCOMING: [TINY2040](https://shop.pimoroni.com/products/tiny-2040)
  - UPCOMING: [ESP8266](https://en.wikipedia.org/wiki/ESP8266)
 
-## Documentation
-
-Work in progress ...
-
 ## Dependencies
 
  - [MicroPython](https://micropython.org/)
-
-## Download
-
-Work in progress ...
-
-## Installation
-
-Work in progress ...
 
 
 
