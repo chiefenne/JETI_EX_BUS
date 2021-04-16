@@ -7,7 +7,7 @@ A [JETI](http://www.jetimodel.com/en/) [Ex Bus protocol](http://www.jetimodel.co
 This will allow to use boards like RaspberyPi, ESP3286 or similar to act as sensors for Jeti RC [receivers](http://www.jetimodel.com/en/katalog/Duplex-2-4-EX/Receivers-EX/) and transmit telemetry data from the board to the receiver and thus back to the transmitter (i.e. RC controls like this [DC24](http://www.jetimodel.com/en/katalog/Transmitters/@produkt/DC-24/)).
 
 >
-> NOTE: This is a rather a proof of concept at the moment and NOT ready for use yet.
+> NOTE: This is currently rather a proof of concept and NOT ready for use yet.
 >
 
 
