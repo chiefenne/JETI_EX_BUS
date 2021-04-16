@@ -6,7 +6,7 @@
 A [JETI](http://www.jetimodel.com/en/) [Ex Bus protocol](http://www.jetimodel.com/en/Telemetry-Protocol/) implementation in [MicroPython](https://micropython.org/). 
 
 >
-> NOTE: This is a rather a proof of concept at the moment on not ready for use.
+> NOTE: This is a rather a proof of concept at the moment and NOT ready for use yet.
 >
 
 
