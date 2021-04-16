@@ -8,7 +8,12 @@ This version of the JETI Ex Bus protocol is written in [MicroPython](https://mic
 ## Features
 
  - Pure Python (MicroPython) impementation of the Jeti Ex Bus protocol
- - Runs on all microcontrollers which are supported by MicrPython
+ - Runs on many boards (thoses supported by [MicroPython](https://micropython.org/))
+
+## Boards tested
+
+ - [Pyboard](https://store.micropython.org/product/PYBv1.1)
+ - UPCOMING: [TINY2040](https://shop.pimoroni.com/products/tiny-2040)
 
 ## Documentation
 
