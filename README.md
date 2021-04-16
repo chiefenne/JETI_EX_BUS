@@ -28,7 +28,7 @@ Work in progress ...
 
 ## Dependencies
 
- - [[MicroPython](https://micropython.org/)
+ - [MicroPython](https://micropython.org/)
 
 ## Download
 
