@@ -14,7 +14,7 @@ A [JETI](http://www.jetimodel.com/en/) [Ex Bus protocol](http://www.jetimodel.co
 
  - [Pyboard](https://store.micropython.org/product/PYBv1.1)
  - UPCOMING: [TINY2040](https://shop.pimoroni.com/products/tiny-2040)
- - UPCOMING: [ESP8266]()
+ - UPCOMING: [ESP8266](https://en.wikipedia.org/wiki/ESP8266)
 
 ## Documentation
 
