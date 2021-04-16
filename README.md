@@ -5,6 +5,11 @@
 
 A [JETI](http://www.jetimodel.com/en/) [Ex Bus protocol](http://www.jetimodel.com/en/Telemetry-Protocol/) implementation in [MicroPython](https://micropython.org/). 
 
+>
+> NOTE: This is a rather a proof of concept at the moment on not ready for use.
+>
+
+
 ## Features
 
  - Pure Python (MicroPython) impementation of the Jeti Ex Bus protocol
