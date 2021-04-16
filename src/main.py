@@ -10,7 +10,6 @@ Changes:
 
 '''
 
-
 import usys
 import uos
 import utime
@@ -43,7 +42,8 @@ if pyboard:
     # led working indicator for Pyboard
     blue.on()
 
-# instantiate a Jeti ex bus connection
+# instantiate a Jeti ex bus connection (using default parameters)
+# baudrate=125000, 8-N-1
 exbus = JetiExBus.JetiExBus()
 
 # write information and debug messages (visible on the REPL)

@@ -32,6 +32,9 @@ import utime
 import crc16_ccitt
 import Logger
 
+# setup a logger for the REPL
+logger = Logger.Logger()
+
 
 class JetiExBus:
     '''JETI Ex Bus protocol handler
@@ -43,15 +46,15 @@ class JetiExBus:
 
     '''
 
-    def __init__(self):
+    def __init__(self, baudrate=125000, bits=8, parity=None, stop=1, port=3):
         self.serial = None
 
         # Jeti ex bus protocol runs 8-N-1, speed any of 125000 or 250000
-        self.baudrate = 125000
-        self.bits = 8
-        self.parity = None
-        self.stop = 1
-        self.port = 3
+        self.baudrate = baudrate
+        self.bits = bits
+        self.parity = parity
+        self.stop = stop
+        self.port = port
 
         self.buffer = bytearray()
 
@@ -85,6 +88,8 @@ class JetiExBus:
 
     def run_forever(self):
 
+        self.telemetry_request = False
+
         while True:
 
             if self.serial.any() > 0:
@@ -93,14 +98,14 @@ class JetiExBus:
                 self.handleTelemetryRequest()
                 self.handleJetiboxRequest()
 
-            # check for timeout if no sensor connected
-            # 
+            # break bus when telemetry request is received
+            if self.telemetry_request:
+                break
 
     def handleTelemetryRequest(self):
         '''Fill frame buffer with ex bus data
         '''
 
-        request_telemetry = False
         hex_request = ''
 
         # read one character from serial stream
@@ -112,8 +117,6 @@ class JetiExBus:
         # check for ex bus packet header (0x3E or 0x3D)
         if hexstr == b'3d':
             t_start = utime.ticks_us()
-            message = 'Checking for telemetry request'
-            self.logger.log('info', message)
 
             # read and add following 7 bytes of the stream
             self.buffer = self.buffer + self.serial.read(7)
@@ -121,20 +124,30 @@ class JetiExBus:
 
             message = 'Got request {}'.format(self.buffer)
             self.logger.log('info', message)
+            message = 'Type self.buffer {}'.format(type(self.buffer))
+            self.logger.log('info', message)
 
             message = 'Hexlified request {}'.format(
                 ubinascii.hexlify(self.buffer))
             self.logger.log('info', message)
 
-            # if hex_request == '3D-01-08-06-3A-00-98-81':
+            # for a telemetry request from the master (receiver) the first
+            # three bytes have to be '3d0108' and the 5th byte hast to be '3a'
             if b'3d0108' in hex_request and b'3a' in hex_request:
-                print('Buffer element 4', self.buffer[4])
-                request_telemetry = True
+                self.telemetry_request = True
                 t_end = utime.ticks_us()
                 delta_t = utime.ticks_diff(t_end, t_start)
-                print('Telemetry request each', delta_t / 1000., 'milliseconds')
-            
-        return hex_request, request_telemetry
+                message = 'Time to ireceive and check telemetry request is {} milliseconds'.format(delta_t / 1000.)
+                logger.log('info', message)
+
+            # send telemetry data
+            self.sendTelemetry()
+    
+    def sendTelemetry(self):
+        
+        # compose and write packet
+        # bytes_written = self.serial.write(packet)
+        pass
 
     def handleJetiboxRequest(self):
         pass
