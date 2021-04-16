@@ -8,12 +8,14 @@ A [JETI](http://www.jetimodel.com/en/) Ex Bus [protocol](http://www.jetimodel.co
 ## Features
 
  - Pure Python (MicroPython) impementation of the Jeti Ex Bus protocol
- - Runs on many boards (thoses supported by [MicroPython](https://micropython.org/))
+ - Runs on many boards (those supported by [MicroPython](https://micropython.org/))
+ - Overview on avialable [ports](https://github.com/micropython/micropython/tree/master/ports)
 
 ## Boards tested
 
  - [Pyboard](https://store.micropython.org/product/PYBv1.1)
  - UPCOMING: [TINY2040](https://shop.pimoroni.com/products/tiny-2040)
+ - UPCOMING: [ESP8266]()
 
 ## Documentation
 
