@@ -8,9 +8,8 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as sens
 
 >
 > NOTE: This is currently rather a proof of concept and NOT ready for use.
-> I use this to learn about serial communication between microcontrollers
+> I use this mainly to learn about serial communication between microcontrollers and/or RC devices.
 >
-
 
 ## Features (planned)
 
