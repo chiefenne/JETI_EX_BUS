@@ -98,7 +98,8 @@ class JetiExBus:
                 self.handleTelemetryRequest()
                 self.handleJetiboxRequest()
 
-            # break bus when telemetry request is received
+            # for debugging
+            # # break bus when telemetry request is received
             if self.telemetry_request:
                 break
 

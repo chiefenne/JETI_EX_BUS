@@ -48,6 +48,9 @@ exbus.info()
 # establish the serial connection
 exbus.connect()
 
+message = 'Serial connection established'
+logger.log('info', message)
+
 # check (and if needed set) the correct connection speed 
 # one of 125000 or 250000
 # exbus.checkSpeed(packet)
