@@ -20,7 +20,7 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as sens
 
 ## Boards tested
 
- - [Pyboard](https://store.micropython.org/product/PYBv1.1)
+ - [Pyboard](https://store.micropython.org/product/PYBv1.1) (this board is used for the development)
  - UPCOMING: [TINY2040](https://shop.pimoroni.com/products/tiny-2040)
  - UPCOMING: [ESP8266](https://en.wikipedia.org/wiki/ESP8266)
 
