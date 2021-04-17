@@ -137,7 +137,8 @@ class JetiExBus:
                 self.telemetry_request = True
                 t_end = utime.ticks_us()
                 delta_t = utime.ticks_diff(t_end, t_start)
-                message = 'Time to ireceive and check telemetry request is {} milliseconds'.format(delta_t / 1000.)
+                message = 'Time to ireceive and check telemetry request is ' \
+                        + '{} milliseconds'.format(delta_t / 1000.)
                 logger.log('info', message)
 
             # send telemetry data
