@@ -92,11 +92,18 @@ class JetiExBus:
 
         while True:
 
-            if self.serial.any() > 0:
+            header = self.serial.read(2)
+            
+            # hex string '3E' maps to binary b'>'
+            # hex string '3D' maps to binary b'='
 
-                self.handleChannnelData()
+            if header == b'=\x01':
+                self.logger.log('debug', 'Found Ex Bus request header')
+                break
+
                 self.handleTelemetryRequest()
                 self.handleJetiboxRequest()
+                self.handleChannnelData()
 
             # for debugging
             # # break bus when telemetry request is received
