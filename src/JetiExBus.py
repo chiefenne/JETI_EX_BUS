@@ -16,7 +16,7 @@ Date: 14-04-2021
 Version: 0.2
 
 Changes:
-    Version 0.2 - 14-04-2021: update for RP2040 based boards
+    Version 0.2 - 17-04-2021: basic structure of the code established
     Version 0.1 - 14-04-2021: initial version of the implementation
 
 '''
