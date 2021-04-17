@@ -1,5 +1,5 @@
 
-# JETI Ex Bus protocol
+# JETI Ex Bus protocol (MicroPython)
 [![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://en.wikipedia.org/wiki/MIT_License)
 
 
