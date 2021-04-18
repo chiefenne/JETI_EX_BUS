@@ -20,7 +20,7 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as sens
 ## Features (planned)
 
  - Pure Python (MicroPython) impementation of the Jeti Ex Bus protocol
- - Runs on boards which are supported by MicroPython see ([code repository](https://github.com/micropython/micropython/tree/master/ports) or [forum](https://forum.micropython.org/viewforum.php?f=10))
+ - Runs on boards which are supported by MicroPython (see [code repository](https://github.com/micropython/micropython/tree/master/ports) or [forum](https://forum.micropython.org/viewforum.php?f=10))
  - Simple firmware update via USB
  - Easy logging of sensor data on the board (SD card, etc.)
 
