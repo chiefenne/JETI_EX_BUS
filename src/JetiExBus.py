@@ -19,6 +19,29 @@ Changes:
     Version 0.2 - 17-04-2021: basic structure of the code established
     Version 0.1 - 14-04-2021: initial version of the implementation
 
+Ex Bus protocol description:
+============================
+
+1) Packet with the telemetry request sent by the receiver (master)
+
+    Byte | Length |     Data     |  Description
+   ------|--------|--------------|----------------------------------------
+     1   |    1   |     0x3D     |  Header
+     2   |    1   |     0x01     |  Header
+     3   |    1   |      LEN     |  Packet length incl. CRC
+     4   |    1   |       ID     |  Packet ID
+     5   |    1   |     0x3A     |  Identifier for a telemetry request
+     6   |    1   |        0     |  Length of data block
+     7   |    2   |    CRC16     |  CRC16-CCITT in sequence LSB, MSB             |
+
+   NOTE: - slave needs to answer with this ID
+         - LSB, MSB need to be swapped to get the checksum
+         - byte 1 (0x3D) states that this is a request
+         - byte 2 (0x01) states that after this packet there is a 4ms slot on
+           the ex bus to answer with the corresponding information
+         - byte 5 (0x3A) states that this is a telemetry request
+
+
 '''
 
 # modules starting with 'u' are Python standard libraries which
@@ -28,6 +51,7 @@ import ubinascii
 import usys
 import uos
 import utime
+import uasyncio
 
 import crc16_ccitt
 import Logger
@@ -94,14 +118,21 @@ class JetiExBus:
 
             header = self.serial.read(2)
             
-            # hex string '3E' maps to binary b'>'
+            # some important characters in the ex bus protocol
+            # hex string '3A' maps to binary b':'
+            # hex string '3B' maps to binary b';'
             # hex string '3D' maps to binary b'='
+            # hex string '3E' maps to binary b'>'
+            # hex string '01' maps to binary b'\x01'
 
+            # ex bus telemetry request starts with '3D01' and 5th byte is '3A'
+            # so the check is: b[0:2] == b'=\x01' and b[4:5] == b':'
             if header == b'=\x01':
                 self.logger.log('debug', 'Found Ex Bus request header')
+                self.handleTelemetryRequest()
                 break
 
-                self.handleTelemetryRequest()
+            if header == b'=\x01':
                 self.handleJetiboxRequest()
                 self.handleChannnelData()
 
