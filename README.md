@@ -37,7 +37,7 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as sens
 ## Test setup
 
 ![](docs/images/setup_Pyboard_JetiRex6.png)
-The Pyboard is in a small housing and a Jeti REX6 receiver is attached. The yellow cable splits into two wires (one with a 2,4kOhm resistor as per the Jeti specification) which are connected to TX(Y9) and RX(Y10) on UART(3) on the Pyboard.
+The Pyboard is in a small housing and a Jeti REX6 receiver is attached. The yellow cable splits into two wires (one with a 2.4kOhm resistor as per the Jeti specification) which are connected to TX(Y9) and RX(Y10) on UART(3) on the Pyboard.
 
 <br><br><br>
 Andreas Ennemoser – andreas.ennemoser@aon.at
