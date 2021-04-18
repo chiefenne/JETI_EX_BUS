@@ -33,15 +33,13 @@ Ex Bus protocol description:
            the ex bus to answer with the corresponding information
          - byte 5 (0x3A) states that this is a telemetry request
 
-
-            
+           
 Some important characters in the ex bus protocol:
     hex string '3A' maps to binary b':'
     hex string '3B' maps to binary b';'
     hex string '3D' maps to binary b'='
     hex string '3E' maps to binary b'>'
     hex string '01' maps to binary b'\x01'
-
 
 
 Author: Dipl.-Ing. A. Ennemoser
@@ -142,7 +140,7 @@ class JetiExBus:
             if check_packet[0:2] == b'=\x01' and check_packet[4:5] == b':':
                 self.logger.log('debug', 'Found Ex Bus telemetry request')
                 # self.handleTelemetryRequest()
-                    break
+                break
 
             if check_packet[0:2] == b'=\x01' and check_packet[4:5] == b';':
                 self.logger.log('debug', 'Found Ex Bus JetiBox request')
