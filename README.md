@@ -37,10 +37,9 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as sens
 ## Test setup
 
 ![](docs/images/setup_Pyboard_JetiRex6.png)
-**PyAero GUI at a glance**
-<br><br>
+The Pyboard in a small housing and a Jeti REX6 receiver attached.
 
-
+<br><br><br>
 Andreas Ennemoser – andreas.ennemoser@aon.at
 
 Distributed under the MIT license. See [LICENSE](https://raw.githubusercontent.com/chiefenne/PyAero/master/LICENSE) for more information.
