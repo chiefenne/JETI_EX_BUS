@@ -10,7 +10,10 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as sens
 > NOTE: This is currently rather a proof of concept and NOT ready for use.
 > I use this mainly to learn about serial communication between microcontrollers and/or RC devices.
 
-> NOTE: I am currently studying uasyncio which seems to be the proper way of implementing the Ex Bus protocol.
+> NOTE: My first tests will be done in a classical linear programming way (no asynchronous operations)
+> I will check how far I come with this somewhat simpler approach
+
+> NOTE: Possibly I will be studying uasyncio which seems to be the proper way of implementing the Ex Bus protocol.
 > For reference see [this example](https://github.com/peterhinch/micropython-async/blob/master/v3/as_demos/auart_hd.py).
 
 
