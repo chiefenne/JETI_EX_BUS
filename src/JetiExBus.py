@@ -114,9 +114,14 @@ class JetiExBus:
 
         self.telemetry_request = False
 
+        counter_1 = 0
+        counter_2 = 0
+        counter_3 = 0
+
         while True:
 
-            header = self.serial.read(2)
+            # read 5 bytes to be able to check for (channel, telemetry or JetiBox)
+            check_packet = self.serial.read(5)
             
             # some important characters in the ex bus protocol
             # hex string '3A' maps to binary b':'
@@ -127,14 +132,26 @@ class JetiExBus:
 
             # ex bus telemetry request starts with '3D01' and 5th byte is '3A'
             # so the check is: b[0:2] == b'=\x01' and b[4:5] == b':'
-            if header == b'=\x01':
-                self.logger.log('debug', 'Found Ex Bus request header')
-                self.handleTelemetryRequest()
-                break
+            if check_packet[0:2] == b'=\x01' and check_packet[4:5] == b':':
+                self.logger.log('debug', 'Found telemetry request')
+                # self.handleTelemetryRequest()
+                counter_1 += 1
+                if counter_1 == 4:
+                    break
 
-            if header == b'=\x01':
-                self.handleJetiboxRequest()
-                self.handleChannnelData()
+            if check_packet[0:2] == b'=\x01' and check_packet[4:5] == b';':
+                self.logger.log('debug', 'Found JetiBox request')
+                #self.handleJetiboxRequest()
+                counter_2 += 1
+                if counter_2 == 4:
+                    break
+
+            if check_packet[0:2] == b'>\x03' and check_packet[4:5] == b'1':
+                self.logger.log('debug', 'Found Ex Bus request header')
+                # self.handleChannnelData()
+                counter_3 += 1
+                if counter_3 == 4:
+                    break
 
             # for debugging
             # # break bus when telemetry request is received
