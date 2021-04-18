@@ -122,13 +122,9 @@ class JetiExBus:
 
         self.telemetry_request = False
 
-        counter_1 = 0
-        counter_2 = 0
-        counter_3 = 0
-        limit = 50
-
         while True:
 
+            # check if there are any data available
             if self.serial.any() == 0:
                 continue
 
@@ -139,20 +135,22 @@ class JetiExBus:
             # so the check is: b[0:2] == b'=\x01' and b[4:5] == b':'
             if check_packet[0:2] == b'=\x01' and check_packet[4:5] == b':':
                 self.logger.log('debug', 'Found Ex Bus telemetry request')
+                self.telemetry_request = True
                 # self.handleTelemetryRequest()
                 break
 
+            # ex bus JetiBox request starts with '3D01' and 5th byte is '3B'
+            # so the check is: b[0:2] == b'=\x01' and b[4:5] == b';'
             if check_packet[0:2] == b'=\x01' and check_packet[4:5] == b';':
                 self.logger.log('debug', 'Found Ex Bus JetiBox request')
                 #self.handleJetiboxRequest()
+                break
 
+            # ex bus channel data packet starts with '3E03' and 5th byte is '31'
+            # so the check is: b[0:2] == b'=\x01' and b[4:5] == b'1'
             if check_packet[0:2] == b'>\x03' and check_packet[4:5] == b'1':
                 self.logger.log('debug', 'Found Ex Bus channel data')
                 # self.handleChannnelData()
-
-            # for debugging
-            # # break bus when telemetry request is received
-            if self.telemetry_request:
                 break
 
     def handleTelemetryRequest(self):
