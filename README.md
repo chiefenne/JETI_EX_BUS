@@ -34,6 +34,11 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as sens
 
  - [MicroPython](https://micropython.org/)
 
+## Test setup
+
+![](docs/images/setup_Pyboard_JetiRex6.png)
+**PyAero GUI at a glance**
+<br><br>
 
 
 Andreas Ennemoser – andreas.ennemoser@aon.at
