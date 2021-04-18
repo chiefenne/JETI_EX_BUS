@@ -11,14 +11,6 @@ JETI Ex Bus specification:
     
     File: EX_Bus_protokol_v121_EN.pdf
 
-Author: Dipl.-Ing. A. Ennemoser
-Date: 14-04-2021
-Version: 0.2
-
-Changes:
-    Version 0.2 - 17-04-2021: basic structure of the code established
-    Version 0.1 - 14-04-2021: initial version of the implementation
-
 Ex Bus protocol description:
 ============================
 
@@ -41,6 +33,24 @@ Ex Bus protocol description:
            the ex bus to answer with the corresponding information
          - byte 5 (0x3A) states that this is a telemetry request
 
+
+            
+Some important characters in the ex bus protocol:
+    hex string '3A' maps to binary b':'
+    hex string '3B' maps to binary b';'
+    hex string '3D' maps to binary b'='
+    hex string '3E' maps to binary b'>'
+    hex string '01' maps to binary b'\x01'
+
+
+
+Author: Dipl.-Ing. A. Ennemoser
+Date: 14-04-2021
+Version: 0.2
+
+Changes:
+    Version 0.2 - 17-04-2021: basic structure of the code established
+    Version 0.1 - 14-04-2021: initial version of the implementation
 
 '''
 
@@ -117,41 +127,30 @@ class JetiExBus:
         counter_1 = 0
         counter_2 = 0
         counter_3 = 0
+        limit = 50
 
         while True:
 
+            if self.serial.any() == 0:
+                continue
+
             # read 5 bytes to be able to check for (channel, telemetry or JetiBox)
             check_packet = self.serial.read(5)
-            
-            # some important characters in the ex bus protocol
-            # hex string '3A' maps to binary b':'
-            # hex string '3B' maps to binary b';'
-            # hex string '3D' maps to binary b'='
-            # hex string '3E' maps to binary b'>'
-            # hex string '01' maps to binary b'\x01'
 
             # ex bus telemetry request starts with '3D01' and 5th byte is '3A'
             # so the check is: b[0:2] == b'=\x01' and b[4:5] == b':'
             if check_packet[0:2] == b'=\x01' and check_packet[4:5] == b':':
-                self.logger.log('debug', 'Found telemetry request')
+                self.logger.log('debug', 'Found Ex Bus telemetry request')
                 # self.handleTelemetryRequest()
-                counter_1 += 1
-                if counter_1 == 4:
                     break
 
             if check_packet[0:2] == b'=\x01' and check_packet[4:5] == b';':
-                self.logger.log('debug', 'Found JetiBox request')
+                self.logger.log('debug', 'Found Ex Bus JetiBox request')
                 #self.handleJetiboxRequest()
-                counter_2 += 1
-                if counter_2 == 4:
-                    break
 
             if check_packet[0:2] == b'>\x03' and check_packet[4:5] == b'1':
-                self.logger.log('debug', 'Found Ex Bus request header')
+                self.logger.log('debug', 'Found Ex Bus channel data')
                 # self.handleChannnelData()
-                counter_3 += 1
-                if counter_3 == 4:
-                    break
 
             # for debugging
             # # break bus when telemetry request is received
