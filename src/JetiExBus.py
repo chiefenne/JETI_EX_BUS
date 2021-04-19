@@ -114,21 +114,11 @@ class JetiExBus:
                          parity=self.parity,
                          stop=self.stop)
 
-    def info(self):
-        message = 'Ex Bus running on {} at port {}'.format(usys.platform,
-                                                            self.port)
-        self.logger.log('info', message)
-
-        message = '{}-{}-{}-{}'.format(self.baudrate, self.bits,
-                                       self.parity, self.stop)
-        self.logger.log('info', message)
-
-        message = '{}'.format(uos.uname())
-        self.logger.log('info', message)
-
     def run_forever(self):
 
-        self.telemetry_request = False
+        self.request_telemetry = False
+        self.request_JetiBox = False
+        self.received_channels = False
 
         while True:
 
@@ -143,7 +133,7 @@ class JetiExBus:
             # so the check is: b[0:2] == b'=\x01' and b[4:5] == b':'
             if check_packet[0:2] == b'=\x01' and check_packet[4:5] == b':':
                 self.logger.log('debug', 'Found Ex Bus telemetry request')
-                self.telemetry_request = True
+                self.request_telemetry = True
                 # self.handleTelemetryRequest()
                 break
 
@@ -151,6 +141,7 @@ class JetiExBus:
             # so the check is: b[0:2] == b'=\x01' and b[4:5] == b';'
             if check_packet[0:2] == b'=\x01' and check_packet[4:5] == b';':
                 self.logger.log('debug', 'Found Ex Bus JetiBox request')
+                self.request_JetiBox = True
                 #self.handleJetiboxRequest()
                 break
 
@@ -158,6 +149,7 @@ class JetiExBus:
             # so the check is: b[0:2] == b'=\x01' and b[4:5] == b'1'
             if check_packet[0:2] == b'>\x03' and check_packet[4:5] == b'1':
                 self.logger.log('debug', 'Found Ex Bus channel data')
+                self.received_channels = False
                 # self.handleChannnelData()
                 break
 

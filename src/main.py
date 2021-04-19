@@ -42,8 +42,16 @@ if pyboard:
 # baudrate=125000, 8-N-1
 exbus = JetiExBus.JetiExBus()
 
-# write information and debug messages (visible on the REPL)
-exbus.info()
+# write information and debug messages (only for pyboard REPL)
+if pyboard:
+    message = 'Ex Bus running on {} at port {}'.format(usys.platform,
+                                                       exbus.port)
+    logger.log('info', message)
+    message = '{}-{}-{}-{}'.format(exbus.baudrate, exbus.bits,
+                                        exbus.parity, exbus.stop)
+    logger.log('info', message)
+    message = '{}'.format(uos.uname())
+    logger.log('info', message)
 
 # establish the serial connection
 exbus.connect()
