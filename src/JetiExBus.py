@@ -14,17 +14,17 @@ JETI Ex Bus specification:
 Ex Bus protocol description:
 ============================
 
-1) Packet with the telemetry request sent by the receiver (master)
+1) Packet (8 bytes) with the telemetry request sent by the receiver (master)
 
     Byte | Length |     Data     |  Description
    ------|--------|--------------|----------------------------------------
      1   |    1   |     0x3D     |  Header
      2   |    1   |     0x01     |  Header
-     3   |    1   |      LEN     |  Packet length incl. CRC
+     3   |    1   |      LEN     |  Message length incl. CRC
      4   |    1   |       ID     |  Packet ID
      5   |    1   |     0x3A     |  Identifier for a telemetry request
      6   |    1   |        0     |  Length of data block
-     7   |    2   |    CRC16     |  CRC16-CCITT in sequence LSB, MSB             |
+    7/8  |    2   |    CRC16     |  CRC16-CCITT in sequence LSB, MSB             |
 
    NOTE: - slave needs to answer with this ID
          - LSB, MSB need to be swapped to get the checksum
@@ -33,7 +33,15 @@ Ex Bus protocol description:
            the ex bus to answer with the corresponding information
          - byte 5 (0x3A) states that this is a telemetry request
 
-           
+2) Packet (9 bytes) with the JetiBox request sent by the receiver (master)
+   There is only little difference to the telemerty request:
+
+    Byte | Length |     Data     |  Description
+   ------|--------|--------------|----------------------------------------
+     5   |    1   |     0x3B     |  Identifier for a JetiBox request
+     7   |    1   |  0bLDUR0000  |  Information of the buttons
+
+          
 Some important characters in the ex bus protocol:
     hex string '3A' maps to binary b':'
     hex string '3B' maps to binary b';'
