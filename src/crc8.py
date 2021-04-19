@@ -9,20 +9,24 @@ the protocol description:
 
     0x7E 0x9F 0x4C 0xA1 0xA8 0x5D 0x55 0x00 0x11 0xE8 0x23 0x21 0x1B 0x00 0xF4
 
-The last byte above contains the checksum of the packet.
+Above data written in hex string format:
+    hexstr = '7E 9F 4C A1 A8 5D 55 00 11 E8 23 21 1B 00 F4'
 
-# format need by the crc16 function below
-data = b'\x3D\x01\x08\x06\x3A\x00'
+Hex string converted to bytes via bytearray.fromhex(hexstr)
+    data = b'~\x9fL\xa1\xa8]U\x00\x11\xe8#!\x1b\x00\xf4'
+
+The last byte above contains the checksum of the packet.
 
 '''
 
 
-def crc8(data : bytearray, offset , length):
+def crc8(data : bytearray, offset, crc=0):
     '''CRC check (8-bit)
     CRC polynomial: X^8 + X^2 + X + 1 */
+    poly = b'0x07'
 
     Args:
-        data (bytearray): packet of the ex bus
+        data (bytearray): EX packet
         offset (int): start of packet
         length (int): length of packet
 
@@ -30,16 +34,27 @@ def crc8(data : bytearray, offset , length):
         int: checksum
     '''
 
-    if data is None or offset < 0 or offset > len(data) - 1 and \
-        offset+length > len(data):
-        return 0
- 
-    crc = 0
-    for i in range(0, length):
-        crc ^= data[offset + i]
-        for _ in range(0,8):
-            if (crc & 1) > 0:
-                crc = (crc >> 1) ^ 0x8408
-            else:
-                crc = crc >> 1
+    g = 1 << offset | b'0x07'  # Generator polynomial
+
+    # Loop over the data
+    for d in data:
+
+        # XOR the top byte in the CRC with the input byte
+        crc ^= d << (offset - 8)
+
+        # Loop over all the bits in the byte
+        for _ in range(8):
+            # Start by shifting the CRC, so we can check for the top bit
+            crc <<= 1
+
+            # XOR the CRC if the top bit is 1
+            if crc & (1 << offset):
+                crc ^= g
+
+    # Return the CRC value
     return crc
+
+
+if __name__ == '__main__':
+
+    # test with a packet from the documatation

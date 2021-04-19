@@ -13,6 +13,12 @@ Page 6 of the protocol description:
 
     0x3D 0x01 0x08 0x06 0x3A 0x00 0x98 0x81
 
+Above data written in hex string format:
+    hexstr = '3D 01 08 06 3A 00 98 81'
+
+Hex string converted to bytes via bytearray.fromhex(hexstr)
+    data = b'=\x01\x08\x06:\x00\x98\x81'
+
 The last two bytes above contain the checksum of the packet in the
 order LSB and MSB. So those need to be swapped to make up the checksum,
 i.e. 0x8198
@@ -27,7 +33,7 @@ def crc16(data : bytearray, offset , length):
     '''CRC check using the CRC16-CCITT algorithm
 
     Args:
-        data (bytearray): packet of the ex bus
+        data (bytearray): packet of the EX Bus
         offset (int): start of packet
         length (int): length of packet
 

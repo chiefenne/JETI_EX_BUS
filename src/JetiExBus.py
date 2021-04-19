@@ -26,7 +26,7 @@ Ex Bus protocol description:
      6   |    1   |        0     |  Length of data block
     7/8  |    2   |    CRC16     |  CRC16-CCITT in sequence LSB, MSB             |
 
-   NOTE: - slave needs to answer with this ID
+   NOTE: - slave needs to answer with this Packet ID (byte 4)
          - LSB, MSB need to be swapped to get the checksum
          - byte 1 (0x3D) states that this is a request
          - byte 2 (0x01) states that after this packet there is a 4ms slot on
