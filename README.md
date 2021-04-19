@@ -39,16 +39,14 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as a se
 
 ## Test setup
 
-<!--
-Markdown systax for images
-![](docs/images/setup_Pyboard_JetiRex6.png)
-HTML syntax below allows to change the image size
--->
+The following image shows the components and connections as used during the developmnet.
+
+<!-- HTML syntax for image display allows to change the image size -->
 <img src="docs/images/setup_Pyboard_JetiRex6.png" width="600" />
 The Pyboard is in a small housing and a Jeti REX6 receiver is attached. The yellow wire (channel 6) splits into two wires (one with a 2.4kOhm resistor as per the Jeti specification) which are connected to TX(Y9) and RX(Y10) on UART(3) on the Pyboard. The black wire establishes a common ground. The receiver is powered by a 4S NiMH Eneloop accumulator via channel 1. Channel 6 of the receiver was set to "Ex Bus" (see image below) in the device manager of the Jeti transmitter.
 
 <br><br>
-<kbd>
+<kbd> <!-- make a frame around the image -->
 <img src="docs/images/EX_Bus_channel_6.png"/>
 </kbd>
 
