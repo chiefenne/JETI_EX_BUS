@@ -39,7 +39,7 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as a se
 
 ## Test setup
 
-The following image shows the components and connections as used during the developmnet.
+The following image shows the components and connections as used during the development.
 
 <!-- HTML syntax for image display allows to change the image size -->
 <img src="docs/images/setup_Pyboard_JetiRex6.png" width="600" />
