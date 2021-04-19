@@ -1,5 +1,5 @@
 
-'''Function to calculate the CRC16-CCITT value of a packet
+'''Function to calculate the CRC16-CCITT value of an EX Bus packet
 
 Description of the corresponding C code used by Jeti:
 JETI EX Bus Protocol V.1.21 EN
@@ -8,7 +8,7 @@ Credits: Mark Adler
 https://stackoverflow.com/a/67115933/2264936
     
 
-Test data from Jeti Ex Bus protocol. Telemetry request from receiver (master)
+Test data from Jeti EX Bus protocol. Telemetry request from receiver (master)
 Page 6 of the protocol description:
 
     0x3D 0x01 0x08 0x06 0x3A 0x00 0x98 0x81
@@ -57,7 +57,7 @@ if __name__ == '__main__':
     Complete packet:
         0x3D 0x01 0x08 0x06 0x3A 0x00 0x98 0x81
     
-    Packet without CRC:
+    Packet without CRC (this part is the input to the crc16 function):
         0x3D 0x01 0x08 0x06 0x3A 0x00
 
     CRC for that packet:
