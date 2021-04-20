@@ -32,6 +32,9 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as a se
    - 168 MHz Cortex M4 CPU
  - Planned: [TINY2040](https://shop.pimoroni.com/products/tiny-2040)
  - Planned: [ESP8266](https://en.wikipedia.org/wiki/ESP8266), [ESP32](https://en.wikipedia.org/wiki/ESP32)
+ - Would be cool: [TEENSY 4.0](https://www.pjrc.com/store/teensy40.html)
+   - Not yet ported to MicroPython (CircuitPython port exists)
+   - Has 2Mb flash and 600 MHz clock speed, decent size (29mmx18mm)
 
 ## Dependencies
 
