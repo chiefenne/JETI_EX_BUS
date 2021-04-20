@@ -24,7 +24,7 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as a se
  - Simple firmware update via USB
  - Easy logging of sensor data on the board (SD card, etc.)
 
-## Boards tested
+## Boards
 
  - [Pyboard](https://store.micropython.org/product/PYBv1.1) 
    - This board is used for the development
