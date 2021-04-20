@@ -108,6 +108,7 @@ class JetiExBus:
         receiver (master). The speed has to be checked by the sensor (slave)
         via the CRC check (see checkSpeed))
         '''
+
         self.serial = UART(self.port, self.baudrate)
         self.serial.init(baudrate=self.baudrate,
                          bits=self.bits,
@@ -126,12 +127,18 @@ class JetiExBus:
             if self.serial.any() == 0:
                 continue
 
+            # for debugging only
+            if True:
+                self.getStream()
+                break
+
             # read 5 bytes to be able to check for (channel, telemetry or JetiBox)
-            check_packet = self.serial.read(5)
+            self.start_packet = self.serial.read(5)
 
             # ex bus telemetry request starts with '3D01' and 5th byte is '3A'
             # so the check is: b[0:2] == b'=\x01' and b[4:5] == b':'
-            if check_packet[0:2] == b'=\x01' and check_packet[4:5] == b':':
+            if self.start_packet[0:2] == b'=\x01' and \
+                    self.start_packet[4:5] == b':':
                 self.logger.log('debug', 'Found Ex Bus telemetry request')
                 self.request_telemetry = True
                 # self.handleTelemetryRequest()
@@ -139,7 +146,8 @@ class JetiExBus:
 
             # ex bus JetiBox request starts with '3D01' and 5th byte is '3B'
             # so the check is: b[0:2] == b'=\x01' and b[4:5] == b';'
-            if check_packet[0:2] == b'=\x01' and check_packet[4:5] == b';':
+            if self.start_packet[0:2] == b'=\x01' and \
+                    self.start_packet[4:5] == b';':
                 self.logger.log('debug', 'Found Ex Bus JetiBox request')
                 self.request_JetiBox = True
                 #self.handleJetiboxRequest()
@@ -147,11 +155,22 @@ class JetiExBus:
 
             # ex bus channel data packet starts with '3E03' and 5th byte is '31'
             # so the check is: b[0:2] == b'=\x01' and b[4:5] == b'1'
-            if check_packet[0:2] == b'>\x03' and check_packet[4:5] == b'1':
+            if self.start_packet[0:2] == b'>\x03' and \
+                    self.start_packet[4:5] == b'1':
                 self.logger.log('debug', 'Found Ex Bus channel data')
                 self.received_channels = False
                 # self.handleChannnelData()
                 break
+
+    def getStream(self):
+        self.packet = bytearray(20000)
+        start = utime.ticks_ms()
+        time = 0
+        while time < 1000:
+            self.packet += self.serial.read()
+            message = 'Packet length is {}'.format(len(self.packet))
+            self.logger.log('debug', message)
+            time = utime.ticks_diff(time, start)
 
     def handleTelemetryRequest(self):
         '''Fill frame buffer with ex bus data
@@ -167,7 +186,6 @@ class JetiExBus:
 
         # check for ex bus packet header (0x3E or 0x3D)
         if hexstr == b'3d':
-            t_start = utime.ticks_us()
 
             # read and add following 7 bytes of the stream
             self.buffer = self.buffer + self.serial.read(7)
@@ -186,11 +204,6 @@ class JetiExBus:
             # three bytes have to be '3d0108' and the 5th byte hast to be '3a'
             if b'3d0108' in hex_request and b'3a' in hex_request:
                 self.telemetry_request = True
-                t_end = utime.ticks_us()
-                delta_t = utime.ticks_diff(t_end, t_start)
-                message = 'Time to ireceive and check telemetry request is ' \
-                        + '{} milliseconds'.format(delta_t / 1000.)
-                logger.log('info', message)
 
             # send telemetry data
             self.sendTelemetry()
