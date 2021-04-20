@@ -31,7 +31,7 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as a se
    - STM32F405RG microcontroller
    - 168 MHz Cortex M4 CPU
  - Planned: [TINY2040](https://shop.pimoroni.com/products/tiny-2040)
- - Planned: [ESP8266](https://en.wikipedia.org/wiki/ESP8266)
+ - Planned: [ESP8266](https://en.wikipedia.org/wiki/ESP8266), [ESP32](https://en.wikipedia.org/wiki/ESP32)
 
 ## Dependencies
 
