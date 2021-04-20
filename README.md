@@ -29,12 +29,12 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as a se
  - [Pyboard](https://store.micropython.org/product/PYBv1.1) 
    - This board is used for the development
    - STM32F405RG microcontroller
-   - 168 MHz Cortex M4 CPU
+   - 168 MHz Cortex-M4 CPU
  - Planned: [TINY2040](https://shop.pimoroni.com/products/tiny-2040) (22.9 x 18.2)
  - Planned: [ESP8266](https://en.wikipedia.org/wiki/ESP8266), [ESP32](https://en.wikipedia.org/wiki/ESP32)
  - Would be cool: [TEENSY 4.0](https://www.pjrc.com/store/teensy40.html)
    - Not yet ported to MicroPython (CircuitPython port exists)
-   - 2Mb flash, 600 MHz clock speed and decent size (29.2 x 17.8mm)
+   - 2Mb flash, 600 MHz Cortex-M7 clock speed and decent size (29.2 x 17.8mm)
 
 ## Dependencies
 
