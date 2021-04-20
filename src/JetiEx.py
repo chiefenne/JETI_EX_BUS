@@ -3,10 +3,13 @@
 This protocol describes how data, text and messages are sent to and from the
 Jeti receiver.
 
-This is used from within the Jeti Ex Bus protocol.
+This is used from within the Jeti EX Bus protocol. So the Jeti EX Bus protocol
+carries data with this Jeti EX protocol. 
 
 
 1) EX Packet
+
+  a) Message Header
 
     Byte |  Length |     Data     |  Description
    ------|---------|--------------|----------------------------------------
@@ -18,7 +21,7 @@ This is used from within the Jeti Ex Bus protocol.
     6-7  |    2B   |       SN     |  Lower part of a serial number, Device ID (Little Endian)
      8   |    1B   |     0x00     |  Reserved
 
-   NOTE: Byte 3 of the packet is split into 2 and 6 bits
+   NOTE: Byte 3 of the packet is split into 2 and 6 bits (B=Byte, b=bit)
    NOTE: The upper part of the serial number should be in the range 0xA400 – 0xA41F
          The lower part of a serial number should be used in a manner it
          ensures uniqueness of the whole serial number
@@ -28,7 +31,49 @@ This is used from within the Jeti Ex Bus protocol.
    is the packet type, there follow three different specifications (data, text, message)
    for the rest of the bytes of the packet.
 
+  b1) Data specification
 
+    Byte  |  Length |    8 data bits    |  Description
+   -------|---------|-------------------|----------------------------------------
+     9    |    4b   | Identifier (0-15) |  Identifier of telemetry value
+     9    |    4b   |  Data type (0-15) |  Data type of telemetry value
+    10    |    xB   |        Data       |  Data with length according to data type
+    11+x  |    4b   | Identifier (1-15) |  Identifier of a second telemetry value
+    11+x  |    4b   |  Data type (0-15) |  Data type of a second telemetry value
+    12+x  |    yB   |        Data       |  Data with length according to data type
+    13+x+y|    1B   |        CRC8       |  Cyclic redundancy check
+
+  b2) Text specification
+
+    Byte  |  Length |            8 data bits          |  Description
+   -------|---------|---------------------------------|----------------------------------------
+     9    |    1B   |       Identifier (0-255)        |  Identifier of telemetry value
+    10    |    5b   | Length of the description (x)   |  Length of the description in Bytes
+    10    |    3b   | Length of unit's description (y)|  Length of the unit's description in Bytes
+    11    |    xB   |                Label            |  ASCII textual description of a value
+    11+x  |    yB   |                Label            |  ASCII textual description of a unit
+    11+x+y|    1B   |                 CRC8            |  Cyclic redundancy check
+
+  b3) Message specification
+
+    Byte   |  Length |       8 data bits         |  Description
+   --------|---------|---------------------------|----------------------------------------
+     9     |    1B   |    Message type (0-255)   |  Primary identifier of the message type. Value is used for additional semantic information and localization.
+    10[7:5]|    3b   |    Message class          |  Class identifier of the message type. Gives additional semantics
+    10[4:0]|    5b   | Length of the message (x) |  Length of the message in bytes
+    11     |    xB   |          Message          |  UTF-8 message
+    11+x   |    1B   |             CRC8          |  Cyclic redundancy check
+
+  Message class semantics:
+    Message class  |   Description
+           0       |   Basic informative message (really unimportant messages)
+           1       | Status message (device ready, motors armed, GPS position fix etc.)
+           2       | Warning (alarm, high vibrations, preflight conditions check, …)
+           3       | Recoverable error (loss of GPS position, erratic sensor data, …)
+           4       | Nonrecoverable error (peripheral failure, unexpected hardware fault, …)
+           5       | Reserved
+           6       | Reserved
+           7       | Reserved
 
 '''
 
