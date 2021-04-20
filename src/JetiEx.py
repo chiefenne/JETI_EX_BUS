@@ -6,23 +6,29 @@ Jeti receiver.
 This is used from within the Jeti Ex Bus protocol.
 
 
-1) Packet 
+1) EX Packet
 
-    Byte | Length |     Data     |  Description
-   ------|--------|--------------|----------------------------------------
-     1   |    1   |     0x7E     |  Header
-     2   |    1   |     0x01     |  Header
-     3   |    1   |      LEN     |  Message length incl. CRC
-     4   |    1   |       ID     |  Packet ID
-     5   |    1   |     0x3A     |  Identifier for a telemetry request
-     6   |    1   |        0     |  Length of data block
-    7/8  |    2   |    CRC16     |  CRC16-CCITT in sequence LSB, MSB             |
+    Byte |  Length |     Data     |  Description
+   ------|---------|--------------|----------------------------------------
+     1   |    1B   |     0x7E     |  Separator of the message
+     2   |    1B   |     0xNF     |  Distinct identifier of an EX packet (n is an arbitrary number)
+     3   |    2b   |  Type (0-3)  |  0 - Text, 1 – Data, 2 – Message
+     3   |    6b   | Length (0-31)|  Length of a packet (number of bytes following)
+    4-5  |    2B   |       SN     |  Upper part of a serial number, Manufacturer ID (Little Endian)
+    6-7  |    2B   |       SN     |  Lower part of a serial number, Device ID (Little Endian)
+     8   |    1B   |     0x00     |  Reserved
 
-1 1B 0x7E 0 Separator of the message
+   NOTE: Byte 3 of the packet is split into 2 and 6 bits
+   NOTE: The upper part of the serial number should be in the range 0xA400 – 0xA41F
+         The lower part of a serial number should be used in a manner it
+         ensures uniqueness of the whole serial number
+   NOTE: Maximum allowed length of a packet is 29B (together with separators 0x7E; 0xNF)
 
-Little endian and big endian can be modified via the struct module:
-struct.pack('>i', 0x31323334) --> b'1234'
-struct.pack('<i', 0x31323334) --> b'4321'
+   Bytes 3 to 8 make up the message header. Depending on byte 3 [2bits] which
+   is the packet type, there follow three different specifications (data, text, message)
+   for the rest of the bytes of the packet.
+
+
 
 '''
 
