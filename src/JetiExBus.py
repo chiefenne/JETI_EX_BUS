@@ -71,6 +71,7 @@ import uasyncio
 
 import crc16_ccitt
 import Logger
+import Streamrecorder
 
 # setup a logger for the REPL
 logger = Logger.Logger()
@@ -123,15 +124,15 @@ class JetiExBus:
 
         while True:
 
-            # for debugging only (see function getStream for usage)
+            # for debugging only (see module Streamrecorder for usage)
             # uncomment this code block for getting a part of the serial stream
             # which will be written to a text file on the SD card
             # when uncommented nothing else is done
-            '''
             get_data_from_serial_stream = True
             if get_data_from_serial_stream:
-                self.getStream()
+                Streamrecorder.getStream(self.serial, logger, duration=1000)
                 break
+            '''
             '''
 
             # check if there are any data available
@@ -175,48 +176,6 @@ class JetiExBus:
                 
                 # this break is only for testing
                 break
-
-    def getStream(self):
-        '''Write a part of the serial stream to a text file on the SD card 
-        for debugging purposes.
-
-        NOTE: Do not use this function during normal operation.
-              When debugging, use thsi call by 
-
-        NOTE: Writing to the SD card sometimes doesn't work.
-              Do a hard reset when this function is active.
-              After the hard reset the file 'EX_Bus_stream.txt' should exist.
-        '''
-
-        start = utime.ticks_ms()
-        time = 0
-        stime = 1000
-        f = open('EX_Bus_stream.txt', 'w')
-    
-        while time < stime:
-
-            buf = bytearray(50)  
-            mv = memoryview(buf)
-            idx = 0
-
-            while idx < len(buf):
-                if self.serial.any() > 0:
-                    bytes_read = self.serial.readinto(mv[idx:])
-                    print('Got {} bytes of data'.format(bytes_read),
-                        hexlify(buf[idx:idx+bytes_read], b':'))
-                    idx += bytes_read
-
-            f.write(hexlify(buf, b':') + '\n')
-
-            time = utime.ticks_diff(utime.ticks_ms(), start)
-
-        f.close()
-        # sync file systems
-        uos.sync()
-        
-        message = 'EX Bus stream recorded for {} seconds.'.format(stime/1000.)
-        self.logger.log('debug', message)
-
     
     def sendTelemetry(self):
         
