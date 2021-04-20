@@ -50,6 +50,8 @@ The Pyboard is in a small housing and a Jeti REX6 receiver is attached. The yell
 <img src="docs/images/EX_Bus_channel_6.png"/>
 </kbd>
 
+### EX Bus connection cable
+
 <br><br>
 <img src="docs/images/EX_Bus_connection_cable.png" width="600" />
 
