@@ -44,14 +44,21 @@ exbus = JetiExBus.JetiExBus()
 
 # write information and debug messages (only for pyboard REPL)
 if pyboard:
-    message = 'Ex Bus running on {} at port {}'.format(usys.platform,
+    message = 'EX Bus to run on {} at port {}'.format(usys.platform,
                                                        exbus.port)
     logger.log('info', message)
-    message = '{}-{}-{}-{}'.format(exbus.baudrate, exbus.bits,
-                                        exbus.parity, exbus.stop)
+    message = 'Parameters for serial connection at port {}: {}-{}-{}-{}'.format(exbus.port,
+                exbus.baudrate, exbus.bits, exbus.parity, exbus.stop)
     logger.log('info', message)
-    message = '{}'.format(uos.uname())
-    logger.log('info', message)
+
+    # uos.uname is a named tuple
+    # extract values per defined tuple name
+    uname = uos.uname()
+    logger.log('info', 'System name: ' + uname.sysname)
+    logger.log('info', 'Network name: ' + uname.nodename)
+    logger.log('info', 'Version of underlying system: ' + uname.release)
+    logger.log('info', 'MicroPython version: ' + uname.version)
+    logger.log('info', 'Hardware identifier: ' + uname.machine)
 
 # establish the serial connection
 exbus.connect()
