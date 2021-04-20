@@ -34,7 +34,7 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as a se
  - Planned: [ESP8266](https://en.wikipedia.org/wiki/ESP8266), [ESP32](https://en.wikipedia.org/wiki/ESP32)
  - Would be cool: [TEENSY 4.0](https://www.pjrc.com/store/teensy40.html)
    - Not yet ported to MicroPython (CircuitPython port exists)
-   - 2Mb flash, 600 MHz Cortex-M7 clock speed and decent size (29.2 x 17.8mm)
+   - 2Mb flash, 600 MHz Cortex-M7 and decent size (29.2 x 17.8mm)
 
 ## Dependencies
 
