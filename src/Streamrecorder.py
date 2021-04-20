@@ -1,4 +1,4 @@
-'''Function to reacord a part of the serial stream
+'''Function to record a part of the serial stream
 '''
 
 import uos
