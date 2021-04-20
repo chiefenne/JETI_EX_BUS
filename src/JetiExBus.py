@@ -102,7 +102,6 @@ class JetiExBus:
         # setup a logger for the REPL
         self.logger = Logger.Logger()
 
-
     def connect(self):
         '''Setup the serial conection via UART
         JETI uses 125kbaud or 250kbaud. The speed is prescribed by the
@@ -125,14 +124,13 @@ class JetiExBus:
         while True:
 
             # for debugging only (see module Streamrecorder for usage)
-            # uncomment this code block for getting a part of the serial stream
-            # which will be written to a text file on the SD card
-            # when uncommented nothing else is done
+            # uncomment the two line s below to record the serial stream
+            # it will be written to a text file on the SD card
+            # when uncommented only stream recording is done (break)
+            # duration is the time in milliseconds to be recorded
             '''
-            get_data_from_serial_stream = True
-            if get_data_from_serial_stream:
-                Streamrecorder.getStream(self.serial, logger, duration=1000)
-                break
+            Streamrecorder.saveStream(self.serial, logger, duration=1000)
+            break
             '''
 
             # check if there are any data available
