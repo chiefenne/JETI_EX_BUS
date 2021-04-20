@@ -63,7 +63,7 @@ Changes:
 # modules starting with 'u' are Python standard libraries which
 # are stripped down in MicroPython to be efficient on microcontrollers
 from machine import UART
-import ubinascii
+from ubinascii import hexlify
 import usys
 import uos
 import utime
@@ -123,14 +123,20 @@ class JetiExBus:
 
         while True:
 
+            # for debugging only (see function getStream for usage)
+            # uncomment this code block for getting a part of the serial stream
+            # which will be written to a text file on the SD card
+            # when uncommented nothing else is done
+            '''
+            get_data_from_serial_stream = True
+            if get_data_from_serial_stream:
+                self.getStream()
+                break
+            '''
+
             # check if there are any data available
             if self.serial.any() == 0:
                 continue
-
-            # for debugging only
-            if True:
-                self.getStream()
-                break
 
             # read 5 bytes to be able to check for (channel, telemetry or JetiBox)
             self.start_packet = self.serial.read(5)
@@ -141,7 +147,11 @@ class JetiExBus:
                     self.start_packet[4:5] == b':':
                 self.logger.log('debug', 'Found Ex Bus telemetry request')
                 self.request_telemetry = True
-                # self.handleTelemetryRequest()
+
+                # send telemetry data
+                self.sendTelemetry()
+
+                # this break is only for testing
                 break
 
             # ex bus JetiBox request starts with '3D01' and 5th byte is '3B'
@@ -151,6 +161,8 @@ class JetiExBus:
                 self.logger.log('debug', 'Found Ex Bus JetiBox request')
                 self.request_JetiBox = True
                 #self.handleJetiboxRequest()
+
+                # this break is only for testing
                 break
 
             # ex bus channel data packet starts with '3E03' and 5th byte is '31'
@@ -160,53 +172,51 @@ class JetiExBus:
                 self.logger.log('debug', 'Found Ex Bus channel data')
                 self.received_channels = False
                 # self.handleChannnelData()
+                
+                # this break is only for testing
                 break
 
     def getStream(self):
-        self.packet = bytearray(20000)
-        start = utime.ticks_ms()
-        time = 0
-        while time < 1000:
-            self.packet += self.serial.read()
-            message = 'Packet length is {}'.format(len(self.packet))
-            self.logger.log('debug', message)
-            time = utime.ticks_diff(time, start)
+        '''Write a part of the serial stream to a text file on the SD card 
+        for debugging purposes.
 
-    def handleTelemetryRequest(self):
-        '''Fill frame buffer with ex bus data
+        NOTE: Do not use this function during normal operation.
+              When debugging, use thsi call by 
+
+        NOTE: Writing to the SD card sometimes doesn't work.
+              Do a hard reset when this function is active.
+              After the hard reset the file 'EX_Bus_stream.txt' should exist.
         '''
 
-        hex_request = ''
+        start = utime.ticks_ms()
+        time = 0
+        stime = 1000
+        f = open('EX_Bus_stream.txt', 'w')
+    
+        while time < stime:
 
-        # read one character from serial stream
-        self.buffer = self.serial.read(1)
+            buf = bytearray(50)  
+            mv = memoryview(buf)
+            idx = 0
 
-        hexstr = ubinascii.hexlify(self.buffer)
-        self.logger.log('debug', str(self.buffer))
+            while idx < len(buf):
+                if self.serial.any() > 0:
+                    bytes_read = self.serial.readinto(mv[idx:])
+                    print('Got {} bytes of data'.format(bytes_read),
+                        hexlify(buf[idx:idx+bytes_read], b':'))
+                    idx += bytes_read
 
-        # check for ex bus packet header (0x3E or 0x3D)
-        if hexstr == b'3d':
+            f.write(hexlify(buf, b':') + '\n')
 
-            # read and add following 7 bytes of the stream
-            self.buffer = self.buffer + self.serial.read(7)
-            hex_request = ubinascii.hexlify(self.buffer)
+            time = utime.ticks_diff(utime.ticks_ms(), start)
 
-            message = 'Got request {}'.format(self.buffer)
-            self.logger.log('info', message)
-            message = 'Type self.buffer {}'.format(type(self.buffer))
-            self.logger.log('info', message)
+        f.close()
+        # sync file systems
+        uos.sync()
+        
+        message = 'EX Bus stream recorded for {} seconds.'.format(stime/1000.)
+        self.logger.log('debug', message)
 
-            message = 'Hexlified request {}'.format(
-                ubinascii.hexlify(self.buffer))
-            self.logger.log('info', message)
-
-            # for a telemetry request from the master (receiver) the first
-            # three bytes have to be '3d0108' and the 5th byte hast to be '3a'
-            if b'3d0108' in hex_request and b'3a' in hex_request:
-                self.telemetry_request = True
-
-            # send telemetry data
-            self.sendTelemetry()
     
     def sendTelemetry(self):
         
