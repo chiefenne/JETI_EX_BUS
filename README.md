@@ -37,7 +37,9 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as a se
 
  - [MicroPython](https://micropython.org/)
 
-## Test setup
+## Connecting receiver to Pyboard
+
+### Setup used during develompent and testing
 
 The following image shows the components and connections as used during the development.
 
