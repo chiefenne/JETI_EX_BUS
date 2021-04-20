@@ -133,7 +133,7 @@ class JetiExBus:
             break
             '''
 
-            # check if there are any data available
+            # check serial stream for data
             if self.serial.any() == 0:
                 continue
 
