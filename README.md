@@ -57,7 +57,9 @@ See [EX_Bus_stream.txt](https://github.com/chiefenne/JETI_EX_BUS/blob/main/docs/
 The following image shows the components and connections as used during the development.
 
 <!-- HTML syntax for image display allows to change the image size -->
+<kbd> <!-- make a frame around the image -->
 <img src="docs/images/setup_Pyboard_JetiRex6.png" width="600" />
+</kbd>
 
 The Pyboard is in a small housing and a Jeti REX6 receiver is attached. The yellow wire (channel 6) splits into two wires (one with a 2.4kOhm resistor as per the Jeti specification) which are connected to TX(Y9) and RX(Y10) on UART(3) on the Pyboard. The black wire establishes a common ground. The receiver is powered by a 4S NiMH accumulator via channel 1. Channel 6 of the receiver was set to "Ex Bus" (see image below) in the device manager of the Jeti transmitter.
 
@@ -69,7 +71,9 @@ The Pyboard is in a small housing and a Jeti REX6 receiver is attached. The yell
 
 ### EX Bus connection cable
 
+<kbd> <!-- make a frame around the image -->
 <img src="docs/images/EX_Bus_connection_cable.png" width="600" />
+</kbd>
 
 Connection cable for the EX Bus. A standard RC servo cable has 3 wires (signal, vcc, gnd). When connecting to an EX Bus channel on the receiver, one needs one wire (yellow here) which splits into two wires (yellow, green). One of them gets a resistor (2.4k&Omega;) soldered in line (this one goes into GPIO Y9 (TX); see [Pyboard pinout](https://micropython.org/resources/pybv11-pinout.jpg)). The figure describes the setup for the referenced Pyboard setup. The yellow wire is the one that needs to be connected to the signal pin on the receiver. The black wire (as described above) establishes a common ground between receiver and Pyboard. Since the Pyboard is powered via USB here, we do not need to connect the vcc (red plus wire). This is obviously only meaningful, while in a development phase on the computer. In normal operation, the Pyboard (or any othe board running MicroPython), when acting as a sensor or sensor hub, would need a proper voltage supply (which can come from the receiver).
 
