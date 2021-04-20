@@ -128,11 +128,11 @@ class JetiExBus:
             # uncomment this code block for getting a part of the serial stream
             # which will be written to a text file on the SD card
             # when uncommented nothing else is done
+            '''
             get_data_from_serial_stream = True
             if get_data_from_serial_stream:
                 Streamrecorder.getStream(self.serial, logger, duration=1000)
                 break
-            '''
             '''
 
             # check if there are any data available
