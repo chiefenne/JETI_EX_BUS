@@ -66,7 +66,7 @@ carries data with this Jeti EX protocol.
 
   Message class semantics:
     Message class  |   Description
-           0       |   Basic informative message (really unimportant messages)
+           0       | Basic informative message (really unimportant messages)
            1       | Status message (device ready, motors armed, GPS position fix etc.)
            2       | Warning (alarm, high vibrations, preflight conditions check, …)
            3       | Recoverable error (loss of GPS position, erratic sensor data, …)
