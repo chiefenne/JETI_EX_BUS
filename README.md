@@ -57,7 +57,7 @@ See [EX_Bus_stream.txt](https://github.com/chiefenne/JETI_EX_BUS/blob/main/docs/
 
 ## Data from logic level analyzer
 
-The data recorded show a duration of approximately **3.8ms** for the channel data and the telemetry request (see figure below).
+The data recorded show a duration of approximately **3.8ms** for the channel data and the telemetry request (see figure below). Click on the image to see a larger version.
 
 <kbd> <!-- make a frame around the image -->
 <img src="docs/images/EX_Bus_logic_analyzer_01.png" width="900" />
