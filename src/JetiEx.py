@@ -75,6 +75,23 @@ carries data with this Jeti EX protocol.
            6       | Reserved
            7       | Reserved
 
+  c) Simple text protocol
+     The simple text is concatenated to every telemetry package
+
+    Byte  |  Length |8 data bits|  Bit 8 |   Description
+   -------|---------|------------|-------|-----------------------------
+     1    |    1B   |    0xFE    |    0  | Separator of a message (begin)
+     2    |    1B   | 'T' (0x54) |    1  | ASCII character
+     3    |    1B   | 'E' (0x45) |    1  | ASCII character
+     4    |    1B   | 'X' (0x58) |    1  | ASCII character
+     5    |    1B   | 'T' (0x54) |    1  | ASCII character
+   ...    |   ...   |     ...    |    0  | ...
+   ...    |   ...   |     ...    |    0  | ...
+   ...    |   ...   |     ...    |    0  | ...
+    34    |    1B   |    0xFF    |    0  | Separator of a message (end)
+
+
+
 '''
 
 
