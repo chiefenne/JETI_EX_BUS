@@ -5,7 +5,8 @@ import uos
 import utime
 from binascii import hexlify
 
-def saveStream(serial, logger, duration=1000):
+
+def saveStream(serial, logger, filename='EX_Bus_stream.txt', duration=1000):
     '''Write a part of the serial stream to a text file on the SD card 
     for debugging purposes.
 
@@ -20,7 +21,7 @@ def saveStream(serial, logger, duration=1000):
     start = utime.ticks_ms()
     time = 0
     duration = 1000
-    f = open('EX_Bus_stream.txt', 'w')
+    f = open(filename, 'w')
 
     while time < duration:
 

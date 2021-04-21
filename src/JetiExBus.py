@@ -129,7 +129,9 @@ class JetiExBus:
             # when uncommented only stream recording is done (break)
             # duration is the time in milliseconds to be recorded
             '''
-            Streamrecorder.saveStream(self.serial, logger, duration=1000)
+            Streamrecorder.saveStream(self.serial, logger,
+                                     filename='EX_Bus_stream.txt',
+                                     duration=1000)
             break
             '''
 
