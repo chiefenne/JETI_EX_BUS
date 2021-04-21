@@ -86,6 +86,12 @@ The following image shows the components and connections as used during the deve
 <img src="docs/images/setup_Pyboard_JetiRex6.png" width="600" />
 </kbd>
 
+The figure below shows how the resistor is soldered at the split point of the wires. It is only active on the wire going to the **Y9** pin of the Pyboard.
+
+<kbd> <!-- make a frame around the image -->
+<img src="docs/images/setup_Pyboard_JetiRex6_02.png" width="600" />
+</kbd>
+
 The Pyboard is in a small housing and a Jeti REX6 receiver is attached. The yellow wire (channel 6) splits into two wires (one with a 2.4kOhm resistor as per the Jeti specification) which are connected to TX(Y9) and RX(Y10) on UART(3) on the Pyboard. The black wire establishes a common ground. The receiver is powered by a 4S NiMH accumulator via channel 1. Channel 6 of the receiver was set to "Ex Bus" (see image below) in the device manager of the Jeti transmitter.
 
 ### Channel setup in the device manager of the transmitter
