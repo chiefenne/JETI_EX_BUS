@@ -63,10 +63,16 @@ The data recorded show a duration of approximately **3.8ms** for the channel dat
 <img src="docs/images/EX_Bus_logic_analyzer_01.png" width="900" />
 </kbd>
 
-The time between two channel/telemetry request packages is approximately **6.2ms**. The EX bus protocol documentation states that a period of **4ms** after the telemetry/JetiBox request is reserved for the answer from the sensor, etc.
+The time between two channel/telemetry request packages is approximately **6.2ms**. The EX bus protocol documentation states that a period of **4ms** after the telemetry/JetiBox request is reserved for the answer from the sensor, etc. Click on the image to see a larger version.
 
 <kbd> <!-- make a frame around the image -->
 <img src="docs/images/EX_Bus_logic_analyzer_02.png" width="900" />
+</kbd>
+
+The image below shows a detailed view of the beginning of a packet (digital and analog). Click on the image to see a larger version.
+
+<kbd> <!-- make a frame around the image -->
+<img src="docs/images/EX_Bus_logic_analyzer_03.png" width="900" />
 </kbd>
 
 ## Connecting Pyboard and receiver
