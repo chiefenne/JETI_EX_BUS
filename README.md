@@ -44,7 +44,7 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as a se
 
 The receiver is the master and triggers the half-duplex communication. As an example **3e:03** is the beginning of a packet containing channel data sent by the receiver (the packet describes the current actuator settings of the transmitter). A telemetry request (from receiver/master to the Pyboard/sensor) is indicated by **3d:01** which is the start of an 8 byte packet. After this there is a 4ms window to send telemetry data back from the board to the receiver (not visible in this data stream).
 
-``` Text
+```Text
 02:02:7d:dd:2e:e7:2e:f2:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:78:69:3e:03:28:42:31:20:40:1f:dd:2e:e7:2e:f2:2e:e0
 2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:78:69:3d:01:08:42:3a:00:8f:e4:3e:03:28:42:31:20:40:1f:dd:2e:e7:2e:f2:2e:e0
 2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:3e:03:28:42:31:20:40:1f:dd:2e:e7:2e:f2:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0
@@ -54,6 +54,20 @@ The receiver is the master and triggers the half-duplex communication. As an exa
 ```
 
 See [EX_Bus_stream.txt](https://github.com/chiefenne/JETI_EX_BUS/blob/main/docs/EX_Bus_stream.txt) for a 1 second recording of the bus (this feature can be activated in the code for debugging purposes).
+
+## Data from logic level analyzer
+
+The data recorded show a duration of approximately **3.8ms** for the channel data and the telemetry request (see figure below).
+
+<kbd> <!-- make a frame around the image -->
+<img src="docs/images/EX_Bus_logic_analyzer_01.png" width="900" />
+</kbd>
+
+The time between two channel/telemetry request packages is approximately **6.2ms**. The EX bus protocol documentation states that a period of **4ms** after the telemetry/JetiBox request is reserved for the answer from the sensor, etc.
+
+<kbd> <!-- make a frame around the image -->
+<img src="docs/images/EX_Bus_logic_analyzer_02.png" width="900" />
+</kbd>
 
 ## Connecting Pyboard and receiver
 
