@@ -91,6 +91,16 @@ carries data with this Jeti EX protocol.
     34    |    1B   |    0xFF    |    0  | Separator of a message (end)
 
 
+  d) Protocol of alarms
+     Protocol includes a letter encoded in Morse Code alphabet, which is later acoustically signalized
+
+    Byte  | 8 data bits| Bit 8 |   Description
+   -------|------------|-------|-------------------------------
+     1    |    0x7E    |    0  | Separator of a message
+     2    |    0xNL    |    1  | L = number of bytes following (always 2), N can be any number
+     3    |  0x22/0x23 |    1  | 0x22- without reminder tone (Vario); 0x23 – with reminder tone (standard alarm)
+     4    |   'A'-'Z'  |    1  | ASCII letter to be signalized by Morse alarm
+
 
 '''
 
