@@ -10,13 +10,12 @@ Changes:
 
 '''
 
-import usys
-import uos
-import utime
-import ubinascii
+# modules with "u" in front are 
+import usys as sys
+import uos as os
 
 # check if we are on a Pyboard (main development platform for this code)
-if 'pyboard' in usys.platform:
+if 'pyboard' in sys.platform:
     import pyb
     pyboard = True
 
@@ -29,7 +28,7 @@ logger = Logger.Logger()
 
 # write something to the REPL
 logger.setPreString('MIRCOCONTROLLER')
-message = 'Running main.py from {}.'.format(uos.getcwd())
+message = 'Running main.py from {}.'.format(os.getcwd())
 logger.log('info', message)
 logger.resetPreString()
 
@@ -44,16 +43,16 @@ exbus = JetiExBus.JetiExBus()
 
 # write information and debug messages (only for pyboard REPL)
 if pyboard:
-    message = 'EX Bus to run on {} at port {}'.format(usys.platform,
+    message = 'EX Bus to run on {} at port {}'.format(sys.platform,
                                                        exbus.port)
     logger.log('info', message)
     message = 'Parameters for serial connection at port {}: {}-{}-{}-{}'.format(exbus.port,
                 exbus.baudrate, exbus.bits, exbus.parity, exbus.stop)
     logger.log('info', message)
 
-    # uos.uname is a named tuple
+    # os.uname is a named tuple
     # extract values per defined tuple name
-    uname = uos.uname()
+    uname = os.uname()
     logger.log('info', 'System name: ' + uname.sysname)
     logger.log('info', 'Network name: ' + uname.nodename)
     logger.log('info', 'Version of underlying system: ' + uname.release)
