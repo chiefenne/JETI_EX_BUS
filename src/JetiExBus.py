@@ -116,7 +116,10 @@ class JetiExBus:
                          stop=self.stop)
 
     def run_forever(self):
-
+        '''This is the main loop and will run forever. This function is called
+        at the end of the function "main.py". It does exactly the same as the
+        Arduino "loop()" function.
+        '''
         self.request_telemetry = False
         self.request_JetiBox = False
         self.received_channels = False
@@ -124,16 +127,16 @@ class JetiExBus:
         while True:
 
             # for debugging only (see module Streamrecorder for usage)
-            # uncomment the two line s below to record the serial stream
+            # change record variable below to "True" to record the serial stream
             # it will be written to a text file on the SD card
-            # when uncommented only stream recording is done (break)
-            # duration is the time in milliseconds to be recorded
-            '''
-            Streamrecorder.saveStream(self.serial, logger,
+            # when "True" is set, only stream recording is done (break)
+            # filename and recording duration can be specified
+            record = False
+            if record:
+                Streamrecorder.saveStream(self.serial, logger,
                                      filename='EX_Bus_stream.txt',
                                      duration=1000)
-            break
-            '''
+                break
 
             # check serial stream for data
             if self.serial.any() == 0:
