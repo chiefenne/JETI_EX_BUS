@@ -10,6 +10,9 @@ def saveStream(serial, logger, filename='EX_Bus_stream.txt', duration=1000):
     '''Write a part of the serial stream to a text file on the SD card 
     for debugging purposes.
 
+    The "memoryview" hack credits go to:
+    https://forum.micropython.org/viewtopic.php?t=1259#p8002
+
     NOTE: Do not use this function during normal operation.
             When debugging, use thsi call by 
 
