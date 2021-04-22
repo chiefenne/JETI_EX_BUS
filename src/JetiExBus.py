@@ -64,10 +64,6 @@ Changes:
 # are stripped down in MicroPython to be efficient on microcontrollers
 from machine import UART
 from ubinascii import hexlify
-import usys
-import uos
-import utime
-import uasyncio
 
 import crc16_ccitt
 import Logger
@@ -119,6 +115,11 @@ class JetiExBus:
         '''This is the main loop and will run forever. This function is called
         at the end of the function "main.py". It does exactly the same as the
         Arduino "loop()" function.
+
+        Within the loop the datastream of the EX bus checked for:
+          1) Channel data (current status of the transmitter)
+          2) Telemetry request (a sensor can send data)
+          3) JetiBox request (modify parameters)
         '''
         self.request_telemetry = False
         self.request_JetiBox = False
@@ -139,57 +140,82 @@ class JetiExBus:
                 break
 
             # check serial stream for data
+            # be careful with "any" (see MP docs)
             if self.serial.any() == 0:
                 continue
 
             # read 5 bytes to be able to check for (channel, telemetry or JetiBox)
             self.start_packet = self.serial.read(5)
 
-            # ex bus telemetry request starts with '3D01' and 5th byte is '3A'
-            # so the check is: b[0:2] == b'=\x01' and b[4:5] == b':'
-            if self.start_packet[0:2] == b'=\x01' and \
-                    self.start_packet[4:5] == b':':
-                self.logger.log('debug', 'Found Ex Bus telemetry request')
-                self.request_telemetry = True
-
-                # send telemetry data
-                self.sendTelemetry()
-
-                # this break is only for testing
+            # check for telemetry request and send data if needed
+            if self.checkTelemetryRequest():
+                self.sendTelemetryData()
+                # FIXME remove break after testing
                 break
 
-            # ex bus JetiBox request starts with '3D01' and 5th byte is '3B'
-            # so the check is: b[0:2] == b'=\x01' and b[4:5] == b';'
-            if self.start_packet[0:2] == b'=\x01' and \
-                    self.start_packet[4:5] == b';':
-                self.logger.log('debug', 'Found Ex Bus JetiBox request')
-                self.request_JetiBox = True
-                #self.handleJetiboxRequest()
-
-                # this break is only for testing
+            # check for JetiBox request and send data if needed
+            if self.checkJetiBoxRequest():
+                self.sendJetiBoxData()
+                # FIXME remove break after testing
                 break
 
-            # ex bus channel data packet starts with '3E03' and 5th byte is '31'
-            # so the check is: b[0:2] == b'=\x01' and b[4:5] == b'1'
-            if self.start_packet[0:2] == b'>\x03' and \
-                    self.start_packet[4:5] == b'1':
-                self.logger.log('debug', 'Found Ex Bus channel data')
-                self.received_channels = False
-                # self.handleChannnelData()
-                
-                # this break is only for testing
+            # check for channel data and read them if available
+            if self.checkTelemetryRequest():
+                self.getChannelData()
+                # FIXME remove break after testing
                 break
     
-    def sendTelemetry(self):
+    def checkTelemetryRequest(self):
+        '''Check if a telemetry request was sent by the master (receiver)
+        '''
+        # telemetry request starts with '3D01' and 5th byte is '3A'
+        # so the check is: b[0:2] == b'=\x01' and b[4:5] == b':'
+        if self.start_packet[0:2] == b'=\x01' and \
+                self.start_packet[4:5] == b':':
+            self.logger.log('debug', 'Found Ex Bus telemetry request')
+            self.request_telemetry = True
+            return True
+
+        return False
+
+    def checkJetiBoxRequest(self):
+        '''Check if a JetiBox request was sent by the master (receiver)
+        '''
+        # JetiBox request starts with '3D01' and 5th byte is '3B'
+        # so the check is: b[0:2] == b'=\x01' and b[4:5] == b';'
+        if self.start_packet[0:2] == b'=\x01' and \
+                self.start_packet[4:5] == b';':
+            self.logger.log('debug', 'Found Ex Bus JetiBox request')
+            self.request_JetiBox = True
+            return True
+
+        return False
+
+    def checkChannelData(self):
+        '''Check if channel data were sent by the master (receiver)
+        '''
+        # channel data packet starts with '3E03' and 5th byte is '31'
+        # so the check is: b[0:2] == b'=\x01' and b[4:5] == b'1'
+        if self.start_packet[0:2] == b'>\x03' and \
+                self.start_packet[4:5] == b'1':
+            self.logger.log('debug', 'Found Ex Bus channel data')
+            self.received_channels = False
+            return True
+
+        return False
+
+    def sendTelemetryData(self):
+        '''[summary]
+        '''
         
         # compose and write packet
         # bytes_written = self.serial.write(packet)
         pass
 
-    def handleJetiboxRequest(self):
+    def sendJetiBoxData(self):
         pass
 
-    def handleChannnelData(self):
+    def getChannelData(self):
         pass
 
     def readPacket(self, identifier='channel'):
@@ -235,7 +261,7 @@ class JetiExBus:
         packet = self.readPacket('channel')
 
         # do a CRC check on a Jeti ex bus packet
-        crc = self.CRC(packet)
+        crc = self.readPacket(packet)
 
         speed_changed = False
 
