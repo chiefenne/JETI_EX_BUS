@@ -30,8 +30,14 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as a se
    - This board is used for the development
    - STM32F405RG microcontroller
    - 168 MHz Cortex-M4 CPU
+   - 1024 KB Flash-ROM
  - Planned: [TINY2040](https://shop.pimoroni.com/products/tiny-2040) (22.9 x 18.2)
+  - 133 MHz Cortex-M0+
+  - 8MB QSPI flash
  - Planned: [ESP8266](https://en.wikipedia.org/wiki/ESP8266), [ESP32](https://en.wikipedia.org/wiki/ESP32)
+   - 160 MHz - 240 MHz
+   - up to 16 Mb flash memory
+   - Wi-Fi (use the phone as a JetiBox ???)
  - Would be cool: [TEENSY 4.0](https://www.pjrc.com/store/teensy40.html)
    - Not yet ported to MicroPython (CircuitPython port exists)
    - 2Mb flash, 600 MHz Cortex-M7 and decent size (29.2 x 17.8mm)
