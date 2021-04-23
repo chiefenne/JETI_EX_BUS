@@ -82,7 +82,7 @@ The image below shows a detailed view of the beginning of a packet (digital and 
 <img src="docs/images/EX_Bus_logic_analyzer_03.png" height="180" width="900" />
 </kbd>
 
-The next figure depicts a telemetry answer from the slave (sensor, etc.). In this case it is an answer from a Jeti MVario 2 sensor. The telemetry data were sent in aprox. **2.6ms**. Click on the image to see a larger version.
+The next figure depicts a telemetry answer from the slave (sensor, etc.). In this case it is an answer from a Jeti MVario 2 sensor. The telemetry data were sent in aprox. **2.6ms**. In order to answer a telemetry request, there are **4ms** reserved on the EX bus, so this packet fits well into that. Click on the image to see a larger version.
 
 <kbd> <!-- make a frame around the image -->
 <img src="docs/images/EX_Bus_logic_analyzer_04_telemetry.png" height="180" width="900" />
