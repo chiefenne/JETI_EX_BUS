@@ -1,12 +1,15 @@
-'''Class to store methods for all kinds of conversion
+'''Store some functions for all kind of conversions
 '''
 
+def bytes2decimal(bytes, endian='little'):
+    '''Converts a bytes object to a decimal number
 
-class Converter:
+    Args:
+        bytes (bytes): A bytes type object, e.g. b'\x11'
+        endian (str): One of 'little' or 'big'
 
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def convert(source, target, value):
-        pass
+    Returns:
+        int: A decimal number
+    '''
+    decimal = int.from_bytes(bytes, byteorder=endian)
+    return decimal
