@@ -46,7 +46,8 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as a se
 
  - [MicroPython](https://micropython.org/)
 
-## Sample EX Bus data stream (from receiver)
+## Sample EX Bus data stream
+Written by function [Streamrecorder.py](https://github.com/chiefenne/JETI_EX_BUS/blob/main/src/Streamrecorder.py).
 
 The receiver is the master and triggers the half-duplex communication. As an example **3e:03** is the beginning of a packet containing channel data sent by the receiver (the packet describes the current actuator settings of the transmitter). A telemetry request (from receiver/master to the Pyboard/sensor) is indicated by **3d:01** which is the start of an 8 byte packet. After this there is a 4ms window to send telemetry data back from the board to the receiver (not visible in this data stream).
 
@@ -63,7 +64,7 @@ See [EX_Bus_stream.txt](https://github.com/chiefenne/JETI_EX_BUS/blob/main/docs/
 
 ## Data from logic level analyzer
 
-The data recorded show a duration of approximately **3.8ms** for the channel data and the telemetry request (see figure below). Click on the image to see a larger version.
+The data recorded are coming from the master (receiver) and show a duration of approximately **3.8ms** for the channel data and the concatenated telemetry request (see figure below). Click on the image to see a larger version.
 
 <kbd> <!-- make a frame around the image -->
 <img src="docs/images/EX_Bus_logic_analyzer_01.png" width="900" />
@@ -78,7 +79,13 @@ The time between two channel/telemetry request packages is approximately **6.2ms
 The image below shows a detailed view of the beginning of a packet (digital and analog). Click on the image to see a larger version.
 
 <kbd> <!-- make a frame around the image -->
-<img src="docs/images/EX_Bus_logic_analyzer_03.png" width="900" />
+<img src="docs/images/EX_Bus_logic_analyzer_03.png" height="180" width="900" />
+</kbd>
+
+The next figure depicts a telemetry answer from the slave (sensor, etc.). In this case it is an answer from a Jeti MVario 2 sensor. The telemetry data were sent in aprox. **2.6ms**. Click on the image to see a larger version.
+
+<kbd> <!-- make a frame around the image -->
+<img src="docs/images/EX_Bus_logic_analyzer_04_telemetry.png" height="180" width="900" />
 </kbd>
 
 ## Connecting Pyboard and receiver
