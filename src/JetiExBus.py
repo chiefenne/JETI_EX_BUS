@@ -93,7 +93,7 @@ class JetiExBus:
         self.stop = stop
         self.port = port
 
-        self.buffer = bytearray()
+        self.telemetry = bytearray()
 
         # setup a logger for the REPL
         self.logger = Logger.Logger()
@@ -207,6 +207,8 @@ class JetiExBus:
     def sendTelemetryData(self):
         '''[summary]
         '''
+
+        self.telemetry.extend()
         
         # compose and write packet
         # bytes_written = self.serial.write(packet)
