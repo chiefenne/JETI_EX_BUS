@@ -221,7 +221,7 @@ class JetiExBus:
         pass
 
     def readPacket(self, identifier='channel'):
-        '''Read one full Jeti ex bus packet (from header to CRC)
+        '''Read one full Jeti EX bus packet (from header to CRC)
 
         Args:
             identifier (str): One of 'channel', 'telemetry', 'jetibox' 
@@ -235,7 +235,7 @@ class JetiExBus:
         return packet
 
     def writePacket(self, identifier='telemetry'):
-        '''Write one fule Jeti ex bus packet (from header to CRC)
+        '''Write one full Jeti EX bus packet (from header to CRC)
 
         Args:
             identifier (str): One of 'telemetry' or 'jetibox'
@@ -278,6 +278,9 @@ class JetiExBus:
         return speed_changed
 
     def deconnect(self):
+        '''Function to deconnect from the serial connection.
+        (Most likely not used in this application)
+        '''
         self.serial.deinit()
 
     def checkCRC(self, packet):
