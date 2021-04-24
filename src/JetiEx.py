@@ -110,10 +110,12 @@ carries data with this Jeti EX protocol.
 
 '''
 
+from ubinascii import hexlify, unhexlify
+
 
 class JetiEx:
-  '''Jeti EX protocol implementation. 
-  '''
+    '''Jeti EX protocol implementation. 
+    '''
 
     def __init__(self):
         self.header = bytearray()
@@ -124,33 +126,49 @@ class JetiEx:
         self.simpleText = bytearray()
 
     def ExHeader(self):
-      pass
+        pass
 
     def ExData(self):
-      pass
+        pass
 
     def ExText(self):
-      pass
+        pass
 
     def ExMessage(self):
-      pass
+        pass
 
     def ExAlarm(self):
-      pass
+        pass
 
     def ExSimpleText(self, text):
-      '''Messages to be displayed on the JetiBox.
-      The packet is always 34 bytes long, inlcuding 2 message separator bytes (begin, end).
-      So each message has to have 32 bytes of text.
+        '''Messages to be displayed on the JetiBox.
+        The packet is always 34 bytes long, inlcuding 2 message separator bytes (begin, end).
+        So each message has to have 32 bytes of text.
 
-      Args:
-          text (str): A simple text message (maximum 32 characters)
+        Args:
+            text (str): A simple text message (maximum 32 characters)
 
-      '''
-      # separator of message (begin)
-      begin = bytearray.fromhex('FE')
-      self.simpleText.extend(begin)
+        '''
+
+        # do a hard limit on the text length (limit to max allowed)
+        if len(text) > 32:
+            text = text[:32]
+
+        # separator of message (begin)
+        begin = bytearray.fromhex('FE')
+        self.simpleText.extend(begin)
+
+        # add the text to the packet
+        text_encoded = text.encode('utf-8')
+        text_hex = hexlify(text_encoded)
+        self.simpleText.extend(text_hex)
+
+        # separator of message (end)
+        end = bytearray.fromhex('FF')
+        self.simpleText.extend(end)
+
+        return self.simpleText
 
     def ExPacket(self):
-      pass
+        pass
 
