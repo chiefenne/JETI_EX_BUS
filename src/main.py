@@ -14,6 +14,7 @@ Changes:
 import usys as sys
 import uos as os
 
+
 # check if we are on a Pyboard (main development platform for this code)
 if 'pyboard' in sys.platform:
     import pyb
@@ -68,6 +69,13 @@ logger.log('info', message)
 # check (and if needed set) the correct connection speed 
 # one of 125000 or 250000
 # exbus.checkSpeed(packet)
+
+# check for sensors attached via I2C
+i2c = I2C_Sensors()
+i2c.scan()
+
+# send sensor objects to the EX bus
+exbus.getSensors(i2c)
 
 # run JETI Ex Bus
 exbus.run_forever()
