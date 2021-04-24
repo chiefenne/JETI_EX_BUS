@@ -217,6 +217,14 @@ class JetiExBus:
     def getChannelData(self):
         pass
 
+    def getSensors(self, i2c):
+        '''Get I2C sensors attached to the board.
+
+        Args:
+            i2c (I2C_Sensors instance): carries all hardware connected via I2c
+        '''
+        self.sensors = i2c.sensors
+
     def readPacket(self, identifier='channel'):
         '''Read one full Jeti EX bus packet (from header to CRC)
 
