@@ -112,6 +112,11 @@ carries data with this Jeti EX protocol.
 
 from ubinascii import hexlify, unhexlify
 
+import Logger
+
+# setup a logger for the REPL
+logger = Logger.Logger()
+
 
 class JetiEx:
     '''Jeti EX protocol implementation. 
@@ -124,6 +129,9 @@ class JetiEx:
         self.message = bytearray()
         self.alarm = bytearray()
         self.simpleText = bytearray()
+
+        # setup a logger for the REPL
+        self.logger = Logger.Logger()
 
     def ExHeader(self):
         pass
@@ -152,6 +160,7 @@ class JetiEx:
 
         # do a hard limit on the text length (limit to max allowed)
         if len(text) > 32:
+            self.logger.log('debug', 'Text too long for simple text.')
             text = text[:32]
 
         # separator of message (begin)
