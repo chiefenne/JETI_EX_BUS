@@ -69,9 +69,6 @@ import crc16_ccitt
 import Logger
 import Streamrecorder
 
-# setup a logger for the REPL
-logger = Logger.Logger()
-
 
 class JetiExBus:
     '''JETI Ex Bus protocol handler
