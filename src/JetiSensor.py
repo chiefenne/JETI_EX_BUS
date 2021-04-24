@@ -5,13 +5,14 @@ is used to make up a vario.
 
 '''
 
+import machine
+
 
 class JetiSensor(JetiEx):
-    '''
-
-    Args:
-        JetiEx (class): Jeti EX protocol implementation
+    '''This class represents a sensor.
     '''
 
     def __init__(self):
         super().__init__()
+
+        self.sensors = None
