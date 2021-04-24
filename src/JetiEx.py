@@ -1,4 +1,4 @@
-'''Python Implementation of the JETI Ex protocol
+'''Python Implementation of the JETI EX protocol
 
 This protocol describes how data, text, messages and alarms are sent to
 and from the Jeti receiver.
@@ -107,7 +107,6 @@ carries data with this Jeti EX protocol.
      3    |  0x22/0x23 |    1  | 0x22- without reminder tone (Vario); 0x23 – with reminder tone (standard alarm)
      4    |   'A'-'Z'  |    1  | ASCII letter to be signalized by Morse alarm
 
-
 '''
 
 from ubinascii import hexlify, unhexlify
@@ -128,27 +127,29 @@ class JetiEx:
         self.text = bytearray()
         self.message = bytearray()
         self.alarm = bytearray()
-        self.simpleText = bytearray()
+        self.simple_text = bytearray()
+        self.packet = bytearray()
 
         # setup a logger for the REPL
         self.logger = Logger.Logger()
 
-    def ExHeader(self):
+    def Header(self):
         pass
 
-    def ExData(self):
+    def Data(self):
         pass
 
-    def ExText(self):
+    def Text(self):
         pass
 
-    def ExMessage(self):
+    def Message(self):
         pass
 
-    def ExAlarm(self):
-        pass
+    def Alarm(self):
+        '''[summary]
+        '''
 
-    def ExSimpleText(self, text):
+    def SimpleText(self, text):
         '''Messages to be displayed on the JetiBox.
         The packet is always 34 bytes long, inlcuding 2 message separator bytes (begin, end).
         So each message has to have 32 bytes of text.
@@ -165,19 +166,19 @@ class JetiEx:
 
         # separator of message (begin)
         begin = bytearray.fromhex('FE')
-        self.simpleText.extend(begin)
+        self.simple_text.extend(begin)
 
         # add the text to the packet
         text_encoded = text.encode('utf-8')
         text_hex = hexlify(text_encoded)
-        self.simpleText.extend(text_hex)
+        self.simple_text.extend(text_hex)
 
         # separator of message (end)
         end = bytearray.fromhex('FF')
-        self.simpleText.extend(end)
+        self.simple_text.extend(end)
 
         return self.simpleText
 
-    def ExPacket(self):
+    def Packet(self):
         pass
 
