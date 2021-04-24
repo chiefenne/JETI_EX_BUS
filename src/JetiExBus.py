@@ -1,4 +1,4 @@
-'''Python Implementation of the JETI Ex Bus protocol
+'''Python Implementation of the JETI EX Bus protocol
 
 
 Implementation via MicroPython (Python for microprocessors):
