@@ -1,7 +1,13 @@
 '''Python Implementation of the JETI Ex protocol
 
-This protocol describes how data, text and messages are sent to and from the
-Jeti receiver.
+This protocol describes how data, text, messages and alarms are sent to
+and from the Jeti receiver.
+
+The EX protocol is used in two ways:
+  - In older Jeti devices at lower communication speed (9600-9800 baud)
+  - As part of the newer "EX Bus" protocol (125 or 250kbaud).
+
+In both cases it carries the telemetry data (data, text, message, alarms).
 
 This is used from within the Jeti EX Bus protocol. So the Jeti EX Bus protocol
 carries data with this Jeti EX protocol. 
@@ -106,7 +112,45 @@ carries data with this Jeti EX protocol.
 
 
 class JetiEx:
+  '''Jeti EX protocol implementation. 
+  '''
 
     def __init__(self):
-        pass
+        self.header = bytearray()
+        self.data = bytearray()
+        self.text = bytearray()
+        self.message = bytearray()
+        self.alarm = bytearray()
+        self.simpleText = bytearray()
+
+    def ExHeader(self):
+      pass
+
+    def ExData(self):
+      pass
+
+    def ExText(self):
+      pass
+
+    def ExMessage(self):
+      pass
+
+    def ExAlarm(self):
+      pass
+
+    def ExSimpleText(self, text):
+      '''Messages to be displayed on the JetiBox.
+      The packet is always 34 bytes long, inlcuding 2 message separator bytes (begin, end).
+      So each message has to have 32 bytes of text.
+
+      Args:
+          text (str): A simple text message (maximum 32 characters)
+
+      '''
+      # separator of message (begin)
+      begin = bytearray.fromhex('FE')
+      self.simpleText.extend(begin)
+
+    def ExPacket(self):
+      pass
 
