@@ -68,6 +68,8 @@ from ubinascii import hexlify
 import crc16_ccitt
 import Logger
 import Streamrecorder
+import bme280_float as bme280
+import JetiEx
 
 
 class JetiExBus:
@@ -89,6 +91,9 @@ class JetiExBus:
         self.parity = parity
         self.stop = stop
         self.port = port
+
+        # instantiate the EX protocol
+        self.jetiex = JetiEx.JetiEx()
 
         self.telemetry = bytearray()
 
@@ -234,21 +239,37 @@ class JetiExBus:
 
         Each call of this function sends data from the next sensor in the queue.
         This is implemented via cycling through the list of sensors. The implementation
-        is done via a the "round_robin" generator function.
+        is done via a generator function ("round_robin").
         '''
 
         # get next sensor to send its data
         sensor = next(self.next_sensor)
 
-        # BME280
-        if sensor in 'BME280':
-            address = self.sensors[sensor]['address']
-            print('Address:', address)
+        # compose packet
+        packet = self.jetiex.Packet(sensor)
 
-        # compose and write packet
+        # write packet to EX bus stream
         bytes_written = self.serial.write(packet)
 
-    def round_robin(self, sensors):
+    def sendJetiBoxData(self):
+        pass
+
+    def getChannelData(self):
+        pass
+
+    def Sensors(self, i2c_sensors):
+        '''Get I2C sensors attached to the board
+            i2c (I2C_Sensors instance): carries all hardware connected via I2c
+
+        Args:
+            i2c_sensors (JetiSensor object): Sensor meta data (id, type, address, driver, etc.)
+        '''
+        self.jetiex.Sensors(i2c_sensors)
+
+        # generator object to be able to cycle through sensors
+        self.next_sensor = self.round_robin(i2c_sensors)
+
+    def round_robin(self, i2c_sensors):
         '''Light weight implementation for cycling periodically through lists
 
         Args:
@@ -262,27 +283,10 @@ class JetiExBus:
 
         Source: https://stackoverflow.com/a/36657230/2264936
         '''
+        sensors = i2c_sensors.available_sensors.keys()
         while sensors:
             for sensor in sensors:
                 yield sensor
-
-    def sendJetiBoxData(self):
-        pass
-
-    def getChannelData(self):
-        pass
-
-    def Sensors(self, i2c):
-        '''Get I2C sensors attached to the board.
-
-        Args:
-            i2c (I2C_Sensors instance): carries all hardware connected via I2c
-        '''
-        self.i2c_sensors = i2c.sensors
-
-
-        # generator object for cycling through sensors
-        self.next_sensor = self.round_robin(self.i2c_sensors.keys())
 
     def checkSpeed(self):
         '''Check the connection speed via CRC. This needs to be done by
