@@ -177,7 +177,7 @@ class JetiEx:
         end = bytearray.fromhex('FF')
         self.simple_text.extend(end)
 
-        return self.simpleText
+        return self.simple_text
 
     def Packet(self):
         pass
