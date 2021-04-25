@@ -9,7 +9,7 @@ from machine import I2C, Pin
 import ujson
 
 
-class Sensors:
+class I2C_Sensors:
     '''This class represents all sensors attached via I2C
     '''
 
@@ -17,7 +17,8 @@ class Sensors:
         # call constructor of JetiEx
         super().__init__()
 
-        self.sensors = dict()
+        self.available_sensors = dict()
+
         # load information of known sensors 
         self.knownSensors(filename='sensors.json')
 
@@ -57,8 +58,9 @@ class Sensors:
         # populate available sensors (subset or all of known sensors)
         for address in addresses:
             for sensor_id in self.known_sensors:
-                if address in self.known_sensors[sensor_id]:
-                    sensor_type = self.known_sensors[sensor_id][0]
-                    self.sensors[sensor_id] = [address, sensor_type]
+                if address in self.known_sensors[sensor_id]['address']:
+                    sensor_type = self.known_sensors[sensor_id]['type']
+                    self.available_sensors[sensor_id] = {'type': sensor_type,
+                                               'address': address}
 
-        return self.sensors
+        return self.available_sensors
