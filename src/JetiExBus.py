@@ -136,7 +136,7 @@ class JetiExBus:
             # filename and recording duration can be specified
             record = False
             if record:
-                Streamrecorder.saveStream(self.serial, logger,
+                Streamrecorder.saveStream(self.serial, self.logger,
                                      filename='EX_Bus_stream.txt',
                                      duration=1000)
                 break
