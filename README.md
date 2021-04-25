@@ -61,6 +61,16 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as a se
 
  - [MicroPython](https://micropython.org/)
 
+## Hardware Layer
+
+ The following flowchart describes the setup of the hardware and indicates the physical connections. The receiver is connected with the board (Pyboard, ESP32, etc.) via three wires (vcc, gnd, signal). The connection between the board and a sensor os established via four wires (vcc, gnd, sda, scl). 
+
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/hardware_layer.png" width="700" />
+  </kbd>
+</p>
+
 ## Sample EX Bus data stream
 Written by function [Streamrecorder.py](https://github.com/chiefenne/JETI_EX_BUS/blob/main/src/Streamrecorder.py).
 
