@@ -71,6 +71,14 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as a se
   </kbd>
 </p>
 
+## Program Logic
+
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/program_logic.png" width="700" />
+  </kbd>
+</p>
+
 ## Sample EX Bus data stream
 Written by function [Streamrecorder.py](https://github.com/chiefenne/JETI_EX_BUS/blob/main/src/Streamrecorder.py).
 
