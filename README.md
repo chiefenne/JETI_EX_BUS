@@ -75,7 +75,7 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as a se
 
 <p align="center">
   <kbd> <!-- make a frame around the image -->
-    <img src="docs/images/program_logic.png" width="700" />
+    <img src="docs/images/program_logic.png" height="400"/>
   </kbd>
 </p>
 
