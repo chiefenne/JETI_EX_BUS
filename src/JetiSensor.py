@@ -8,6 +8,10 @@ is used to make up a vario.
 from machine import I2C, Pin
 import ujson
 
+import Logger
+import bme280_float as bme280
+import MS5611
+
 
 class I2C_Sensors:
     '''This class represents all sensors attached via I2C
@@ -27,6 +31,12 @@ class I2C_Sensors:
 
         # get all attached sensors
         self.scanI2C()
+
+        # arm sensors
+        self.armSensors()
+
+        # setup a logger for the REPL
+        self.logger = Logger.Logger()
 
     def setupI2C(self, id=1, scl=25, sda=26, freq=400000):
         '''Setup an I2C connection.
@@ -64,3 +74,60 @@ class I2C_Sensors:
                                                'address': address}
 
         return self.available_sensors
+
+    def armSensors(self):
+        '''Arm available sensors by attaching their drivers
+        '''
+
+        for sensor in self.available_sensors:
+            
+            if 'BME280' in sensor:
+                bme280 = bme280.BME280(i2c=self.i2c)
+                self.available_sensors['reader'] = bme280
+
+            if 'MS5611' in sensor:
+                '''
+                sensor = MS5611()
+                sensor.setElevationFt(1420)
+                sensor.read()
+                sensor.printResults()
+                Alternatively all the values can be passed into the initialize function
+                sensor = MS5611(0,   0x76, 432.8    )
+                                bus, i2c,  elevation
+                sensor.read()
+                sensor.printResults()
+                '''
+                ms5611 = MS5611(bus=self.i2c)
+                self.available_sensors['reader'] = ms5611
+
+    def read(self, sensor):
+        '''Read data from sensor.
+
+        The data are read in different ways, depending on the snesor (driver)
+
+        Args:
+            sensor (str): Sensor id
+        '''
+
+        # BME280 pressure sensor
+        if 'BME280' in sensor:
+            address = self.available_sensors[sensor]['address']
+            reader = self.available_sensors[sensor]['reader']
+            p, t, h = reader.values()
+            message = 'Sensor: {}, Address {},Pressure {}, Temperature {}, \
+                       humidity {}'.format(sensor, address, p, t, h)
+            self.logger.log('info', message)
+
+            return p, t, h
+
+        # MS5611 pressure sensor
+        if 'MS5611' in sensor:
+            address = self.available_sensors[sensor]['address']
+            reader = self.available_sensors[sensor]['reader']
+            reader.read()
+            message = 'Sensor: {}, Address {},Pressure {}, Temperature {}'. \
+                        format(sensor, address, p, t)
+            self.logger.log('info', message)
+
+            return reader.pressureAdj, reader.tempC
+
