@@ -181,7 +181,10 @@ class JetiEx:
 
     def Sensors(self, i2c_sensors):
         self.sensors = i2c_sensors.available_sensors
-        
+
     def Packet(self, sensor):
-        pass
+
+        packet = b''
+
+        return packet
 

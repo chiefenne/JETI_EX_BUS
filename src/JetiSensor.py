@@ -97,7 +97,7 @@ class I2C_Sensors:
                 sensor.read()
                 sensor.printResults()
                 '''
-                ms5611 = MS5611(bus=self.i2c)
+                ms5611 = MS5611.MS5611(bus=self.i2c)
                 self.available_sensors['reader'] = ms5611
 
     def read(self, sensor):
