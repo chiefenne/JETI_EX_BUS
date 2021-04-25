@@ -282,7 +282,7 @@ class JetiExBus:
 
 
         # generator object for cycling through sensors
-        self.next_sensor = self.round_robin(self.sensors.keys())
+        self.next_sensor = self.round_robin(self.i2c_sensors.keys())
 
     def checkSpeed(self):
         '''Check the connection speed via CRC. This needs to be done by
