@@ -32,10 +32,12 @@ This will allow to use boards like Raspbery Pi, ESP3286 or similar to act as a s
 > For reference see [this example](https://github.com/peterhinch/micropython-async/blob/master/v3/as_demos/auart_hd.py).
 
 
-## Features (planned)
+## Features
 
  - Pure Python (MicroPython) impementation of the Jeti Ex Bus protocol
  - Runs on boards which are supported by MicroPython (see [forum](https://forum.micropython.org/viewforum.php?f=10) or [code repository](https://github.com/micropython/micropython/tree/master/ports))
+   - Those boards are much faster than Arduinos
+   - There should be less or no restriction with respect to the program size (32Kb vs. 1Mb or more)
  - Simple firmware update via USB
  - Easy logging of sensor data on the board (SD card, etc.)
 
