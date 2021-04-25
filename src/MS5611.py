@@ -169,12 +169,12 @@ class MS5611:
         return self.bus
 
     def printResults(self):
-        print "Temperature:", round(self.tempC, 2), "C"
-        print "            ", round(self.tempF, 2), "F"
+        print("Temperature:", round(self.tempC, 2), "C")
+        print("            ", round(self.tempF, 2), "F")
 
-        print "Pressure Absolute:", round(self.pressure, 2), "hPa"
-        print "         Adjusted:", round(self.pressureAdj, 2), "hPa"
-        print "         Adjusted:", round(self.convert2In(self.pressureAdj), 2), "in"
+        print("Pressure Absolute:", round(self.pressure, 2), "hPa")
+        print("         Adjusted:", round(self.pressureAdj, 2), "hPa")
+        print("         Adjusted:", round(self.convert2In(self.pressureAdj), 2), "in")
 
     def convert2In(self, pressure):
         return pressure * 0.0295301
