@@ -72,18 +72,18 @@ if pyboard:
 exbus.checkSpeed()
 
 # collect sensors attached via I2C
-i2c = JetiSensor.I2C_Sensors()
+i2c_sensors = JetiSensor.I2C_Sensors()
 
 # print sensor meta data at REPL
 if pyboard:
-    for sensor in i2c.available_sensors:
+    for sensor in i2c_sensors.available_sensors:
         message = 'Sensor {} of type {} available at address {}'.format(sensor,
-            i2c.available_sensors[sensor]['type'],
-            i2c.available_sensors[sensor]['address'])
+            i2c_sensors.available_sensors[sensor]['type'],
+            i2c_sensors.available_sensors[sensor]['address'])
         logger.log('info', message)
 
 # transfer sensor meta data
-exbus.Sensors(i2c.available_sensors)
+exbus.Sensors(i2c_sensors)
 
 # run JETI Ex Bus
 exbus.run_forever()
