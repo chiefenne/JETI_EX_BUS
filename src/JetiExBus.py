@@ -230,14 +230,41 @@ class JetiExBus:
         return False
 
     def sendTelemetryData(self):
-        '''[summary]
+        '''Send telemetry data back to the receiver
+
+        Each call of this function sends data from the next sensor in the queue.
+        This is implemented via cycling through the list of sensors. The implementation
+        is done via a the "round_robin" generator function.
         '''
 
-        self.telemetry.extend()
-        
+        # get next sensor to send its data
+        sensor = next(self.next_sensor)
+
+        # BME280
+        if sensor in 'BME280':
+            address = self.sensors[sensor]['address']
+            print('Address:', address)
+
         # compose and write packet
-        # bytes_written = self.serial.write(packet)
-        pass
+        bytes_written = self.serial.write(packet)
+
+    def round_robin(self, sensors):
+        '''Light weight implementation for cycling periodically through lists
+
+        Args:
+            sensors (list): Any list which should be cycled
+
+        Yields:
+            Next element in the list
+        
+        Usage:
+            cycled_list = round_robin(L)
+
+        Source: https://stackoverflow.com/a/36657230/2264936
+        '''
+        while sensors:
+            for sensor in sensors:
+                yield sensor
 
     def sendJetiBoxData(self):
         pass
@@ -245,13 +272,17 @@ class JetiExBus:
     def getChannelData(self):
         pass
 
-    def getSensors(self, i2c):
+    def Sensors(self, i2c):
         '''Get I2C sensors attached to the board.
 
         Args:
             i2c (I2C_Sensors instance): carries all hardware connected via I2c
         '''
-        self.sensors = i2c.sensors
+        self.i2c_sensors = i2c.sensors
+
+
+        # generator object for cycling through sensors
+        self.next_sensor = self.round_robin(self.sensors.keys())
 
     def checkSpeed(self):
         '''Check the connection speed via CRC. This needs to be done by
