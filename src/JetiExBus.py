@@ -145,32 +145,60 @@ class JetiExBus:
             self.start_packet = self.serial.read(5)
 
             # check for telemetry request and send data if needed
-            if self.checkTelemetryRequest():
+            self.checkTelemetryRequest()
+
+            if self.request_telemetry:
+                # 4 ms time to answer on EX bus (up to 6 ms measured)
                 self.sendTelemetryData()
+
+                self.request_telemetry = False
                 # FIXME remove break after testing
                 break
 
             # check for JetiBox request and send data if needed
-            if self.checkJetiBoxRequest():
+            self.checkJetiBoxRequest()
+
+            if self.request_JetiBox:
+                # 4 ms time to answer on EX bus
                 self.sendJetiBoxData()
+                
+                self.request_JetiBox = False
                 # FIXME remove break after testing
                 break
 
             # check for channel data and read them if available
-            if self.checkTelemetryRequest():
+            self.checkChannelData()
+
+            if self.received_channels:
                 self.getChannelData()
+                
+                self.received_channels = False
                 # FIXME remove break after testing
                 break
     
     def checkTelemetryRequest(self):
         '''Check if a telemetry request was sent by the master (receiver)
+
+        Example (hex): 0x3D 0x01 0x08 0x06 0x3A 0x00 0x98 0x81
+
+        To check for above hex code, a conversion to type "bytes" is necessary,
+        as serial.read() returns a byte object.
+        
+        A telemetry request starts always with '3D01' and the 5th byte
+        always is '3A'. So this makes up the check.
+        
+        '0x3D' corresponds to b'='
+        '0x01' corresponds to b'\x01'
+        '0x3A' corresponds to b':'
         '''
-        # telemetry request starts with '3D01' and 5th byte is '3A'
-        # so the check is: b[0:2] == b'=\x01' and b[4:5] == b':'
+        # read the remaining characters
+        rest = self.serial.read(3)
+
         if self.start_packet[0:2] == b'=\x01' and \
                 self.start_packet[4:5] == b':':
             self.logger.log('debug', 'Found Ex Bus telemetry request')
             self.request_telemetry = True
+            self.telemetryRequestPacket = self.start_packet + rest
             return True
 
         return False
@@ -196,7 +224,7 @@ class JetiExBus:
         if self.start_packet[0:2] == b'>\x03' and \
                 self.start_packet[4:5] == b'1':
             self.logger.log('debug', 'Found Ex Bus channel data')
-            self.received_channels = False
+            self.received_channels = True
             return True
 
         return False
@@ -225,31 +253,6 @@ class JetiExBus:
         '''
         self.sensors = i2c.sensors
 
-    def readPacket(self, identifier='channel'):
-        '''Read one full Jeti EX bus packet (from header to CRC)
-
-        Args:
-            identifier (str): One of 'channel', 'telemetry', 'jetibox' 
-
-        Returns:
-            byte: Returns one complete Jeti ex bus packet
-        '''
-
-        packet = None
-
-        return packet
-
-    def writePacket(self, identifier='telemetry'):
-        '''Write one full Jeti EX bus packet (from header to CRC)
-
-        Args:
-            identifier (str): One of 'telemetry' or 'jetibox'
-        '''
-        
-        packet = None
-
-        return packet
-
     def checkSpeed(self):
         '''Check the connection speed via CRC. This needs to be done by
         the sensor (slave). The speed is either 125000 (default) or 250000
@@ -265,15 +268,29 @@ class JetiExBus:
             bool: information if speed check was ok or failed
         '''
 
-        packet = self.readPacket('channel')
+        # do the same as in run_forever
+        while True:
+            self.start_packet = self.serial.read(5)
+            self.checkTelemetryRequest()
+            if self.request_telemetry:
+                pass
+        
+        # EX bus CRC starts with first byte of the packet
+        offset = 0
+        
+        # packet to check is message without last 2 bytes
+        packet = bytearray(self.telemetryRequestPacket[:-2])
 
-        # do a CRC check on a Jeti ex bus packet
-        crc = self.readPacket(packet)
+        # the last 2 bytes of the message makeup the crc value for the packet
+        packet_crc = self.telemetryRequestPacket[-2:]
 
-        speed_changed = False
+        # calculate the crc16-ccitt value of the packet
+        crc = crc16_ccitt.crc16(packet, offset, len(packet))
 
-        # change speed if CRC check fails
-        if not crc:
+        if crc == packet_crc:
+            speed_changed = False
+        else:
+            # change speed if CRC check fails
             speed_changed = True
             if self.baudrate == 125000:
                 self.baudrate = 250000
