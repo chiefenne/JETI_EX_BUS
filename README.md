@@ -63,7 +63,7 @@ This will allow to use boards like RaspberyPi, ESP3286 or similar to act as a se
 
 ## Hardware Layer
 
- The following flowchart describes the setup of the hardware and indicates the physical connections. The receiver is connected with the board (Pyboard, ESP32, etc.) via three wires (vcc, gnd, signal). The connection between the board and a sensor os established via four wires (vcc, gnd, sda, scl). 
+ The following flowchart describes the setup of the hardware and indicates the physical connections. The receiver is connected with the board (Pyboard, ESP32, etc.) via three wires (vcc, gnd, signal). The connection between the board and the sensors is established via four wires (vcc, gnd, sda, scl) for each of the sensors (I2C). 
 
 <p align="center">
   <kbd> <!-- make a frame around the image -->
