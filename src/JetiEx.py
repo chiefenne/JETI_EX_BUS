@@ -179,6 +179,9 @@ class JetiEx:
 
         return self.simple_text
 
-    def Packet(self):
+    def Sensors(self, i2c_sensors):
+        self.sensors = i2c_sensors.available_sensors
+        
+    def Packet(self, sensor):
         pass
 
