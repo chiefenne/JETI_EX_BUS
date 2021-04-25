@@ -21,6 +21,7 @@ if 'pyboard' in sys.platform:
     pyboard = True
 
 import JetiExBus
+import JetiSensor
 import Logger
 
 
@@ -63,19 +64,18 @@ if pyboard:
 # establish the serial connection
 exbus.connect()
 
-message = 'Serial connection established'
-logger.log('info', message)
+if pyboard:
+    message = 'Serial connection established'
+    logger.log('info', message)
 
-# check (and if needed set) the correct connection speed 
-# one of 125000 or 250000
-# exbus.checkSpeed(packet)
+# check (and if needed set) the connection speed (125000 or 250000)
+exbus.checkSpeed()
 
-# check for sensors attached via I2C
-i2c = I2C_Sensors()
-i2c.scan()
+# collect sensors attached via I2C
+sensors = JetiSensor.Sensors()
 
 # send sensor objects to the EX bus
-exbus.getSensors(i2c)
+exbus.Sensors(sensors)
 
 # run JETI Ex Bus
 exbus.run_forever()
