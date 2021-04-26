@@ -109,6 +109,8 @@ carries data with this Jeti EX protocol.
 
 '''
 
+# modules starting with 'u' are Python standard libraries which
+# are stripped down in MicroPython to be efficient on microcontrollers
 from ubinascii import hexlify, unhexlify
 
 import Logger
@@ -129,6 +131,8 @@ class JetiEx:
         self.alarm = bytearray()
         self.simple_text = bytearray()
         self.packet = bytearray()
+
+        self.i2c_sensors = None
 
         # setup a logger for the REPL
         self.logger = Logger.Logger()
@@ -180,7 +184,7 @@ class JetiEx:
         return self.simple_text
 
     def Sensors(self, i2c_sensors):
-        self.sensors = i2c_sensors.available_sensors
+        self.i2c_sensors = i2c_sensors
 
     def Packet(self, sensor):
 

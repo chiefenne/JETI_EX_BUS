@@ -10,7 +10,8 @@ Changes:
 
 '''
 
-# modules with "u" in front are 
+# modules starting with 'u' are Python standard libraries which
+# are stripped down in MicroPython to be efficient on microcontrollers
 import usys as sys
 import uos as os
 
@@ -23,7 +24,6 @@ if 'pyboard' in sys.platform:
 import JetiExBus
 import JetiSensor
 import Logger
-
 
 # setup a logger for the REPL
 logger = Logger.Logger()

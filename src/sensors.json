@@ -1,5 +1,5 @@
 {
-    "BME280": {"type": "pessure", "address": "0x76"},
+    "BME280": {"type": "pressure", "address": "0x76"},
     "MS5611": {"type": "pressure", "address": "0x77"},
     "NEO-M8": {"type": "gps", "address": "0x42"}
 }

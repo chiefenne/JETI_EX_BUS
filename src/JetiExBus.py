@@ -271,6 +271,10 @@ class JetiExBus:
 
     def round_robin(self, i2c_sensors):
         '''Light weight implementation for cycling periodically through lists
+        
+        Normally one would use itertools.cycle(). As this is not available in the
+        standard MicroPython library, this is the workaround for staying
+        independent of external libs.
 
         Args:
             sensors (list): Any list which should be cycled

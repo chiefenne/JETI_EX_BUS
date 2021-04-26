@@ -5,6 +5,8 @@ is used to make up a vario.
 
 '''
 
+# modules starting with 'u' are Python standard libraries which
+# are stripped down in MicroPython to be efficient on microcontrollers
 from machine import I2C, Pin
 import ujson
 
