@@ -1,8 +1,8 @@
 {
     "BME280": {"type": "pressure", "address": "0x76",
-              "sensor_data": {"pressure": "Pa", "temperature": "C", "humidity": "%"}},
+              "data": {"pressure": "Pa", "temperature": "C", "humidity": "%"}},
     "MS5611": {"type": "pressure", "address": "0x77",
-              "sensor_data": {"pressure": "Pa", "temperature": "C"}},
+              "data": {"pressure": "Pa", "temperature": "C"}},
     "NEO-M8": {"type": "gps", "address": "0x42",
-              "sensor_data": {"longitude": "gps", "latitude": "gps"}}
+              "data": {"longitude": "gps", "latitude": "gps"}}
 }
