@@ -82,7 +82,7 @@ carries data with this Jeti EX protocol.
            7       | Reserved
 
   c) Simple text protocol
-     The simple text is concatenated to every telemetry package
+     The simple text is concatenated to every telemetry packet
 
     Byte  |  Length |8 data bits|  Bit 8 |   Description
    -------|---------|------------|-------|-----------------------------
@@ -147,7 +147,7 @@ class JetiEx:
         self.logger = Logger.Logger()
 
     def Header(self, packet_type, packet_length):
-        '''EX package header
+        '''EX packet header
         '''
         # start header with message separator
         self.header.extend(bytearray.fromhex('7E'))
