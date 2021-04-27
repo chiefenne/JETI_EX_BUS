@@ -58,3 +58,4 @@ def crc8(data : bytearray, offset, crc=0):
 if __name__ == '__main__':
 
     # test with a packet from the documatation
+    pass
