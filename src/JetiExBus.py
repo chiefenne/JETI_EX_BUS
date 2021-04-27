@@ -246,7 +246,11 @@ class JetiExBus:
         sensor = next(self.next_sensor)
 
         # compose packet
-        packet = self.jetiex.Packet(sensor)
+        # FIXME
+        # FIXME
+        # FIXME
+        packet_type = '00'
+        packet = self.jetiex.Packet(sensor, packet_type)
 
         # write packet to EX bus stream
         bytes_written = self.serial.write(packet)
