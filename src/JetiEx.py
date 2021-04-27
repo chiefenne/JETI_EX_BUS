@@ -113,6 +113,7 @@ carries data with this Jeti EX protocol.
 # are stripped down in MicroPython to be efficient on microcontrollers
 from ubinascii import hexlify, unhexlify
 
+import crc8
 import Logger
 
 # setup a logger for the REPL
@@ -124,6 +125,14 @@ class JetiEx:
     '''
 
     def __init__(self):
+
+        # upper part of the serial number (bytes are swapped for little endian)
+        # must be in the range 0xA400 – 0xA41F
+        self.productID = b'00A4'
+
+        # lower part of the serial number (bytes are swapped for little endian)
+        self.deviceID = b'0100'
+
         self.header = bytearray()
         self.data = bytearray()
         self.text = bytearray()
@@ -137,8 +146,30 @@ class JetiEx:
         # setup a logger for the REPL
         self.logger = Logger.Logger()
 
-    def Header(self):
-        pass
+    def Header(self, packet_type, packet_length):
+        '''EX package header
+        '''
+        # start header with message separator
+        self.header.extend(bytearray.fromhex('7E'))
+
+        # add EX packet identifier '0xnF', with 'n' beeing any number
+        self.header.extend(bytearray.fromhex('1F'))
+
+        # 2 bits for packet type (0=text, 1=data, 2=message)
+        type_bits = format(packet_type, '02b')
+        # 6 bits for packet length
+        length_bits = format(packet_length, '06b')
+        number = int(type_bits + length_bits, 2)
+        hx = hex(number)
+        self.header.extend(bytearray.fromhex(hx))
+
+        # serial number
+        sn = unhexlify(self.productID) + unhexlify(self.deviceID)
+        self.header.extend(sn)
+
+        # finish header with crc for telemetry (8-bit crc)
+        crc8 = crc8.crc8(ba, 3)
+        self.header.extend(crc8)
 
     def Data(self):
         pass
@@ -186,7 +217,10 @@ class JetiEx:
     def Sensors(self, i2c_sensors):
         self.i2c_sensors = i2c_sensors
 
-    def Packet(self, sensor):
+    def Packet(self, sensor, packet_type):
+
+        packet = 32
+        self.Header(packet_type, packet_length)
 
         packet = b''
 
