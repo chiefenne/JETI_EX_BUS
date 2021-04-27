@@ -168,8 +168,12 @@ class JetiEx:
         self.header.extend(sn)
 
         # finish header with crc for telemetry (8-bit crc)
-        crc8 = crc8.crc8(ba, 3)
-        self.header.extend(crc8)
+        # FIXME
+        # FIXME check crc calculation and argument type
+        # FIXME
+        pk = bytearray.fromhex('FF')
+        crc = crc8.crc8(pk, 3)
+        self.header.extend(crc)
 
     def Data(self):
         pass
@@ -219,8 +223,10 @@ class JetiEx:
 
     def Packet(self, sensor, packet_type):
 
-        packet = 32
+        packet_length = 32
         self.Header(packet_type, packet_length)
+
+        if packet_type == 
 
         packet = b''
 
