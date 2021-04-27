@@ -48,13 +48,6 @@ class I2C_Sensors:
 
     def knownSensors(self, filename='sensors.json'):
         '''Load id, address, type, etc. of known sensors from json file
-        
-        Example sensor.json file {ID: {type, address}}:
-        {
-            "BME280": {"type": "pressure", "address": "0x76"},
-            "MS5611": {"type": "pressure", "address": "0x77"},
-            "NEO-M8": {"type": "gps", "address": "0x42"}
-        }
         '''
         with open(filename, 'r') as fp:
 	        self.known_sensors = ujson.load(fp)
@@ -83,22 +76,11 @@ class I2C_Sensors:
 
         for sensor in self.available_sensors:
             
-            if 'BME280' in sensor:
+            if sensor == 'BME280':
                 bme280 = bme280.BME280(i2c=self.i2c)
                 self.available_sensors['reader'] = bme280
 
-            if 'MS5611' in sensor:
-                '''
-                sensor = MS5611()
-                sensor.setElevationFt(1420)
-                sensor.read()
-                sensor.printResults()
-                Alternatively all the values can be passed into the initialize function
-                sensor = MS5611(0,   0x76, 432.8    )
-                                bus, i2c,  elevation
-                sensor.read()
-                sensor.printResults()
-                '''
+            if sensor == 'MS5611':
                 ms5611 = MS5611.MS5611(bus=self.i2c)
                 self.available_sensors['reader'] = ms5611
 
