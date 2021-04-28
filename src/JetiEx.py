@@ -176,10 +176,16 @@ class JetiEx:
         self.header.extend(crc)
 
     def Data(self, sensor):
-        self.data = None
+        self.data = self.i2c_sensors.read(sensor)
 
     def Text(self, sensor):
-        self.text = None
+
+        # BME280 pressure sensor
+        if 'BME280' in sensor:
+            self.text = 'Pressure' + 'Pa'
+        # MS5611 pressure sensor
+        if 'MS5611' in sensor:
+            self.text = 'Pressure' + 'Pa'
 
     def Message(self):
         pass
