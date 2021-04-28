@@ -175,16 +175,16 @@ class JetiEx:
         crc = crc8.crc8(pk, 3)
         self.header.extend(crc)
 
-    def Data(self):
-        pass
+    def Data(self, sensor):
+        self.data = None
 
-    def Text(self):
-        pass
+    def Text(self, sensor):
+        self.text = None
 
     def Message(self):
         pass
 
-    def Alarm(self):
+    def Alarm(self, sensor):
         '''[summary]
         '''
 
@@ -201,6 +201,8 @@ class JetiEx:
         # do a hard limit on the text length (limit to max allowed)
         if len(text) > 32:
             self.logger.log('debug', 'Text too long for simple text.')
+
+            # crop text if too long (this is dirty error handling)
             text = text[:32]
 
         # separator of message (begin)
@@ -223,15 +225,30 @@ class JetiEx:
 
     def Packet(self, sensor, packet_type):
 
-        packet_length = 32
-        self.Header(packet_type, packet_length)
+        packet = bytearray()
+
+        text = 'Hallodrio'
+        self.SimpleText(text)
 
         if packet_type == 'data':
-            pass
-        else:
-            pass
+            self.Data(sensor)
+            length_message = len(self.data)
+        elif packet_type == 'text':
+            self.Text(sensor)
+            length_message = len(self.text)
 
-        packet = b''
+        # packet length only known after data, text and simpletext
+        # max 32 bytes
+        packet_length = length_message + len(self.simple_text)
+        self.Header(packet_type, packet_length)
+
+        # compose packet
+        packet.extend(self.header)
+        if packet_type == 'data':
+            packet.extend(self.data)
+        elif packet_type == 'text':
+            packet.extend(self.text)
+        packet.extend(self.simple_text)
 
         return packet
 
