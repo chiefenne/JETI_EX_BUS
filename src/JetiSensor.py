@@ -78,11 +78,11 @@ class I2C_Sensors:
             
             if sensor == 'BME280':
                 bme280 = bme280.BME280(i2c=self.i2c)
-                self.available_sensors['reader'] = bme280
+                self.available_sensors[sensor]['reader'] = bme280
 
             if sensor == 'MS5611':
                 ms5611 = MS5611.MS5611(bus=self.i2c)
-                self.available_sensors['reader'] = ms5611
+                self.available_sensors[sensor]['reader'] = ms5611
 
     def read(self, sensor):
         '''Read data from sensor.
