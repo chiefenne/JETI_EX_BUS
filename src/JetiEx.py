@@ -226,7 +226,10 @@ class JetiEx:
         packet_length = 32
         self.Header(packet_type, packet_length)
 
-        if packet_type == 
+        if packet_type == 'data':
+            pass
+        else:
+            pass
 
         packet = b''
 
