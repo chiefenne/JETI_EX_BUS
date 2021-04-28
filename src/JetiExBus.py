@@ -41,22 +41,10 @@ Ex Bus protocol description:
      5   |    1   |     0x3B     |  Identifier for a JetiBox request
      7   |    1   |  0bLDUR0000  |  Information of the buttons
 
-          
-Some important characters in the ex bus protocol:
-    hex string '3A' maps to binary b':'
-    hex string '3B' maps to binary b';'
-    hex string '3D' maps to binary b'='
-    hex string '3E' maps to binary b'>'
-    hex string '01' maps to binary b'\x01'
 
 
 Author: Dipl.-Ing. A. Ennemoser
-Date: 14-04-2021
-Version: 0.2
-
-Changes:
-    Version 0.2 - 17-04-2021: basic structure of the code established
-    Version 0.1 - 14-04-2021: initial version of the implementation
+Date: 04-2021
 
 '''
 
@@ -118,105 +106,59 @@ class JetiExBus:
         at the end of the function "main.py". It does exactly the same as the
         Arduino "loop()" function.
 
-        Within the loop the datastream of the EX bus checked for:
-          1) Channel data (current status of the transmitter)
-          2) Telemetry request (a sensor can send data)
-          3) JetiBox request (modify parameters)
+        Within the loop the datastream of the EX bus is checked for:
+          1) Telemetry request (a sensor can send data)
+          2) JetiBox request (modify parameters)
+          3) Channel data (current status of the transmitter)
         '''
-        self.request_telemetry = False
-        self.request_JetiBox = False
-        self.received_channels = False
 
         while True:
-
-            # for debugging only (see module Streamrecorder for usage)
-            # change record variable below to "True" to record the serial stream
-            # it will be written to a text file on the SD card
-            # when "True" is set, only stream recording is done (break)
-            # filename and recording duration can be specified
-            record = False
-            if record:
-                Streamrecorder.saveStream(self.serial, self.logger,
-                                     filename='EX_Bus_stream.txt',
-                                     duration=1000)
-                break
 
             # check serial stream for data
             # be careful with "any" (see MP docs)
             if self.serial.any() == 0:
                 continue
 
-            # read 5 bytes to be able to check for (channel, telemetry or JetiBox)
-            self.start_packet = self.serial.read(5)
+            # check for (channel, telemetry or JetiBox)
+            self.exbus = self.serial.read(8)
 
             # check for telemetry request and send data if needed
             self.checkTelemetryRequest()
 
-            if self.request_telemetry:
-                # 4 ms time to answer on EX bus (up to 6 ms measured)
-                self.sendTelemetryData()
-
-                self.request_telemetry = False
-                # FIXME remove break after testing
-                break
-
-            # check for JetiBox request and send data if needed
+            # check for JetiBox menu request and send data if needed
             self.checkJetiBoxRequest()
-
-            if self.request_JetiBox:
-                # 4 ms time to answer on EX bus
-                self.sendJetiBoxData()
-                
-                self.request_JetiBox = False
-                # FIXME remove break after testing
-                break
 
             # check for channel data and read them if available
             self.checkChannelData()
 
-            if self.received_channels:
-                self.getChannelData()
-                
-                self.received_channels = False
-                # FIXME remove break after testing
-                break
+            # endless loop continues here
     
     def checkTelemetryRequest(self):
         '''Check if a telemetry request was sent by the master (receiver)
-
-        Example (hex): 0x3D 0x01 0x08 0x06 0x3A 0x00 0x98 0x81
-
-        To check for above hex code, a conversion to type "bytes" is necessary,
-        as serial.read() returns a byte object.
-        
-        A telemetry request starts always with '3D01' and the 5th byte
-        always is '3A'. So this makes up the check.
-        
-        '0x3D' corresponds to b'='
-        '0x01' corresponds to b'\x01'
-        '0x3A' corresponds to b':'
         '''
-        # read the remaining characters
-        rest = self.serial.read(3)
 
-        if self.start_packet[0:2] == b'=\x01' and \
-                self.start_packet[4:5] == b':':
-            self.logger.log('debug', 'Found Ex Bus telemetry request')
-            self.request_telemetry = True
-            self.telemetryRequestPacket = self.start_packet + rest
+        telemetry_request = self.exbus[0:2] == b'=\x01' and \
+            self.exbus[4:5] == b':'
+
+        if telemetry_request:
+            self.sendTelemetry()
             return True
 
         return False
 
     def checkJetiBoxRequest(self):
-        '''Check if a JetiBox request was sent by the master (receiver)
+        '''Check if a JetiBox menu request was sent by the master (receiver)
         '''
         # JetiBox request starts with '3D01' and 5th byte is '3B'
         # so the check is: b[0:2] == b'=\x01' and b[4:5] == b';'
-        if self.start_packet[0:2] == b'=\x01' and \
-                self.start_packet[4:5] == b';':
-            self.logger.log('debug', 'Found Ex Bus JetiBox request')
-            self.request_JetiBox = True
+        jetibox_request self.exbus[0:2] == b'=\x01' and \
+                self.exbus[4:5] == b';'
+
+        # 1 byte missing for whole telemetry packet (we read 8 bytes so far)
+        self.exbus.extend(self.serial.read(1))
+
+        if jetibox_request:
+            self.sendJetiBoxMenu()
             return True
 
         return False
@@ -226,36 +168,36 @@ class JetiExBus:
         '''
         # channel data packet starts with '3E03' and 5th byte is '31'
         # so the check is: b[0:2] == b'=\x01' and b[4:5] == b'1'
-        if self.start_packet[0:2] == b'>\x03' and \
-                self.start_packet[4:5] == b'1':
-            self.logger.log('debug', 'Found Ex Bus channel data')
-            self.received_channels = True
+        channels_available = self.exbus[0:2] == b'>\x03' and \
+                self.exbus[4:5] == b'1'
+
+        # read remaining bytes (we read 8 bytes so far)
+        # FIXME
+        # FIXME  calculate correct number of remaining bytes
+        # FIXME
+        r_bytes = 10
+        self.exbus.extend(self.serial.read(r_bytes))
+
+        if channels_available:
+            self.getChannelData()
             return True
 
         return False
 
-    def sendTelemetryData(self):
-        '''Send telemetry data back to the receiver
-
-        Each call of this function sends data from the next sensor in the queue.
-        This is implemented via cycling through the list of sensors. The implementation
-        is done via a generator function ("round_robin").
+    def sendTelemetry(self):
+        '''Send telemetry data back to the receiver. Each call of this function
+        sends data from the next sensor in the queue.
         '''
 
         # get next sensor to send its data
         sensor = next(self.next_sensor)
-
-        # compose packet
-        # FIXME
-        # FIXME
-        # FIXME
-        packet_type = '00'
+        packet_type = 'data'
         packet = self.jetiex.Packet(sensor, packet_type)
 
-        # write packet to EX bus stream
-        bytes_written = self.serial.write(packet)
+        # write packet to the EX bus stream
+        self.serial.write(packet)
 
-    def sendJetiBoxData(self):
+    def sendJetiBoxMenu(self):
         pass
 
     def getChannelData(self):
@@ -313,7 +255,7 @@ class JetiExBus:
 
         # do the same as in run_forever
         while True:
-            self.start_packet = self.serial.read(5)
+            self.exbus = self.serial.read(5)
             self.checkTelemetryRequest()
             if self.request_telemetry:
                 pass
@@ -322,10 +264,10 @@ class JetiExBus:
         offset = 0
         
         # packet to check is message without last 2 bytes
-        packet = bytearray(self.telemetryRequestPacket[:-2])
+        packet = bytearray(self.telemetryRequest[:-2])
 
         # the last 2 bytes of the message makeup the crc value for the packet
-        packet_crc = self.telemetryRequestPacket[-2:]
+        packet_crc = self.telemetryRequest[-2:]
 
         # calculate the crc16-ccitt value of the packet
         crc = crc16_ccitt.crc16(packet, offset, len(packet))
