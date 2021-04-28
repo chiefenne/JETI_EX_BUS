@@ -1,12 +1,16 @@
-'''
+'''Python Implementation of the JETI EX Bus protocol
+
+This module holds the overall program logic. It initializes the serial connection
+between board and Jeti receiver.
+
+Furter it connects via I2C to the sensors which are attached to the board.
+
+After that it starts an endless loop to handle all data streams between the devices.
+
+
 
 Author: Dipl.-Ing. A. Ennemoser
-Date: 14-04-2021
-Version: 0.3
-
-Changes:
-    Version 0.2 - 14-04-2021: basic structure of the code established
-    Version 0.1 - 14-04-2021: initial version of the implementation
+Date: 04-2021
 
 '''
 
@@ -28,12 +32,6 @@ import Logger
 # setup a logger for the REPL
 logger = Logger.Logger()
 
-# write something to the REPL
-logger.setPreString('MIRCOCONTROLLER')
-message = 'Running main.py from {}.'.format(os.getcwd())
-logger.log('info', message)
-logger.resetPreString()
-
 # switch on blue led to show we are active (only for pyboard)
 if pyboard:
     blue = pyb.LED(4)
@@ -51,15 +49,6 @@ if pyboard:
     message = 'Parameters for serial connection at port {}: {}-{}-{}-{}'.format(exbus.port,
                 exbus.baudrate, exbus.bits, exbus.parity, exbus.stop)
     logger.log('info', message)
-
-    # os.uname is a named tuple
-    # extract values per defined tuple name
-    uname = os.uname()
-    logger.log('info', 'System name: ' + uname.sysname)
-    logger.log('info', 'Network name: ' + uname.nodename)
-    logger.log('info', 'Version of underlying system: ' + uname.release)
-    logger.log('info', 'MicroPython version: ' + uname.version)
-    logger.log('info', 'Hardware identifier: ' + uname.machine)
 
 # establish the serial connection
 exbus.connect()
