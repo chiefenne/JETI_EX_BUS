@@ -62,10 +62,10 @@ class I2C_Sensors:
 
         # populate available sensors (subset or all of known sensors)
         for address in addresses:
-            for sensor_id in self.known_sensors:
-                if address in self.known_sensors[sensor_id]['address']:
-                    sensor_type = self.known_sensors[sensor_id]['type']
-                    self.available_sensors[sensor_id] = {'type': sensor_type,
+            for sensor in self.known_sensors:
+                if address in self.known_sensors[sensor]['address']:
+                    sensor_type = self.known_sensors[sensor]['type']
+                    self.available_sensors[sensor] = {'type': sensor_type,
                                                'address': address}
 
         return self.available_sensors
