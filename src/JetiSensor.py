@@ -79,7 +79,6 @@ class I2C_Sensors:
         # populate available sensors (subset or all of known sensors)
         for address in addresses:
             for sensor in self.known_sensors:
-                print('Sensor known:', sensor, self.known_sensors[sensor]['address'])
                 if hex(address) in self.known_sensors[sensor]['address']:
                     sensor_type = self.known_sensors[sensor]['type']
                     print('Found sensor of type:', self.known_sensors[sensor]['type'])
