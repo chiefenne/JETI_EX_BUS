@@ -118,7 +118,6 @@ class I2C_Sensors:
         if 'BME280' in sensor:
             address = self.available_sensors[sensor]['address']
             reader = self.available_sensors[sensor]['reader']
-            print('Reader', reader)
             p, t, h = reader.values
             message = 'Sensor: {}, Address {}, Pressure {}, Temperature {}, humidity {}' \
                 .format(sensor, address, p, t, h)
