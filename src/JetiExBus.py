@@ -84,7 +84,7 @@ class JetiExBus:
         self.jetiex = JetiEx.JetiEx()
 
         self.telemetry = bytearray()
-        self.send_sensor = False
+        self.get_new_sensor = False
 
         # setup a logger for the REPL
         self.logger = Logger.Logger()
@@ -150,8 +150,6 @@ class JetiExBus:
     def checkJetiBoxRequest(self):
         '''Check if a JetiBox menu request was sent by the master (receiver)
         '''
-        # JetiBox request starts with '3D01' and 5th byte is '3B'
-        # so the check is: b[0:2] == b'=\x01' and b[4:5] == b';'
         jetibox_request = self.exbus[0:2] == b'=\x01' and \
                           self.exbus[4:5] == b';'
 
@@ -167,8 +165,6 @@ class JetiExBus:
     def checkChannelData(self):
         '''Check if channel data were sent by the master (receiver)
         '''
-        # channel data packet starts with '3E03' and 5th byte is '31'
-        # so the check is: b[0:2] == b'=\x01' and b[4:5] == b'1'
         channels_available = self.exbus[0:2] == b'>\x03' and \
                              self.exbus[4:5] == b'1'
 
@@ -191,16 +187,17 @@ class JetiExBus:
         '''
 
         # toggles True and False
-        self.send_sensor ^= True
+        self.get_new_sensor ^= True
         
-        if self.send_sensor:
+        # send data and text messages for each sensor alternating
+        if self.get_new_sensor:
             # get next sensor to send its data
-            sensor = next(self.next_sensor)
+            current_sensor = next(self.next_sensor)
+            current_EX_type = 'data'
         else:     
-            # get next message type ('data' or 'text')
-            packet_type = next(self.next_packet_type)
+            current_EX_type = 'text'
         
-        packet = self.jetiex.Packet(sensor, packet_type)
+        packet = self.jetiex.Packet(current_sensor, current_EX_type)
 
         # write packet to the EX bus stream
         bytes_written = self.serial.write(packet)
@@ -227,10 +224,10 @@ class JetiExBus:
 
         self.jetiex.Sensors(self.i2c_sensors)
 
-        # generator object to be able to cycle through sensors
+        # cycle through sensors
         self.next_sensor = self.round_robin(i2c_sensors.available_sensors.keys())
 
-        # generator object to be able to cycle through sensor data and sensor text
+        # cycle through data and text message
         self.next_message = self.round_robin(['data', 'text'])
 
     def round_robin(self, cycled_list):
