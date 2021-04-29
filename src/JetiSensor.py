@@ -7,8 +7,16 @@ is used to make up a vario.
 
 # modules starting with 'u' are Python standard libraries which
 # are stripped down in MicroPython to be efficient on microcontrollers
+import usys as sys
 from machine import I2C, Pin
 import ujson
+
+# check if we are on a Pyboard (main development platform for this code)
+pyboard = False
+if 'pyboard' in sys.platform:
+    import pyb
+    pyboard = True
+
 
 import Logger
 import bme280_float as bme280
@@ -29,7 +37,10 @@ class I2C_Sensors:
         self.knownSensors(filename='sensors.json')
 
         # setup I2C connection to sensors
-        self.setupI2C(scl=25, sda=26)
+        if pyboard:
+            self.setupI2C(1, 'X9', 'X10')
+        else:
+            self.setupI2C(1, 25, 26)
 
         # get all attached sensors
         self.scanI2C()
@@ -40,11 +51,11 @@ class I2C_Sensors:
         # setup a logger for the REPL
         self.logger = Logger.Logger()
 
-    def setupI2C(self, id=1, scl=25, sda=26, freq=400000):
+    def setupI2C(self, id, scl, sda, freq=400000):
         '''Setup an I2C connection.
         Pins 25 and 26 are the default I2C pins (board dependend)
         '''
-        self.i2c = I2C(id, scl=Pin(scl), sda=Pin(sda), freq=freq)
+        self.i2c = I2C(Pin(scl), Pin(sda), freq=freq)
 
     def knownSensors(self, filename='sensors.json'):
         '''Load id, address, type, etc. of known sensors from json file
