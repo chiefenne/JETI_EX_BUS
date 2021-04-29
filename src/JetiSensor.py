@@ -55,7 +55,8 @@ class I2C_Sensors:
         '''Setup an I2C connection.
         Pins 25 and 26 are the default I2C pins (board dependend)
         '''
-        self.i2c = I2C(Pin(scl), Pin(sda), freq=freq)
+        # self.i2c = I2C(Pin(scl), Pin(sda))
+        self.i2c = I2C(-1, scl=Pin('X9'), sda=Pin('X10'))
 
     def knownSensors(self, filename='sensors.json'):
         '''Load id, address, type, etc. of known sensors from json file
@@ -70,11 +71,12 @@ class I2C_Sensors:
 
         # the return value per I2C device is its hex address
         addresses = self.i2c.scan()
+        print('Addresses on I2C:', addresses)
 
         # populate available sensors (subset or all of known sensors)
         for address in addresses:
             for sensor in self.known_sensors:
-                if address in self.known_sensors[sensor]['address']:
+                if hex(address) in self.known_sensors[sensor]['address']:
                     sensor_type = self.known_sensors[sensor]['type']
                     self.available_sensors[sensor] = {'type': sensor_type,
                                                'address': address}
