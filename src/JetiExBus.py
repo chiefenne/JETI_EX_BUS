@@ -72,6 +72,7 @@ class JetiExBus:
 
     def __init__(self, baudrate=125000, bits=8, parity=None, stop=1, port=3):
         self.serial = None
+        self.exbus = bytearray()
 
         # Jeti ex bus protocol runs 8-N-1, speed any of 125000 or 250000
         self.baudrate = baudrate
@@ -121,16 +122,20 @@ class JetiExBus:
                 continue
 
             # check for (channel, telemetry or JetiBox)
-            self.exbus = self.serial.read(8)
+            characters = self.serial.read(8)
+            self.exbus.extend(characters)
 
             # check for telemetry request and send data if needed
             self.checkTelemetryRequest()
 
             # check for JetiBox menu request and send data if needed
-            self.checkJetiBoxRequest()
+            # self.checkJetiBoxRequest()
 
             # check for channel data and read them if available
-            self.checkChannelData()
+            # self.checkChannelData()
+
+            # reset
+            self.exbus = bytearray()
 
             # endless loop continues here
     
@@ -173,7 +178,8 @@ class JetiExBus:
         # FIXME  calculate correct number of remaining bytes
         # FIXME
         r_bytes = 10
-        self.exbus.extend(self.serial.read(r_bytes))
+        characters = self.serial.read(r_bytes)
+        self.exbus += characters
 
         if channels_available:
             self.getChannelData()
