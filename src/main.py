@@ -21,6 +21,7 @@ import uos as os
 
 
 # check if we are on a Pyboard (main development platform for this code)
+pyboard = False
 if 'pyboard' in sys.platform:
     import pyb
     pyboard = True
@@ -58,7 +59,7 @@ if pyboard:
     logger.log('info', message)
 
 # check (and if needed set) the connection speed (125000 or 250000)
-exbus.checkSpeed()
+# exbus.checkSpeed()
 
 # collect sensors attached via I2C
 i2c_sensors = JetiSensor.I2C_Sensors()
