@@ -30,7 +30,7 @@ import time
 import math
 
 ## Import Libraries that let python talk to I2C devices
-from smbus import SMBus
+# from smbus import SMBus
 
 class MS5611:
     """Driver for reading temperature/pressure MS5611 Pressure Sensor."""
