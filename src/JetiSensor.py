@@ -18,9 +18,9 @@ if 'pyboard' in sys.platform:
     pyboard = True
 
 
-import Logger
 import bme280_float as bme280
 import MS5611
+import Logger
 
 
 class I2C_Sensors:
@@ -30,6 +30,9 @@ class I2C_Sensors:
     def __init__(self):
         # call constructor of JetiEx
         super().__init__()
+
+        # setup a logger for the REPL
+        self.logger = Logger.Logger()
 
         self.available_sensors = dict()
 
@@ -48,15 +51,14 @@ class I2C_Sensors:
         # arm sensors
         self.armSensors()
 
-        # setup a logger for the REPL
-        self.logger = Logger.Logger()
-
     def setupI2C(self, id, scl, sda, freq=400000):
         '''Setup an I2C connection.
         Pins 25 and 26 are the default I2C pins (board dependend)
         '''
         # self.i2c = I2C(Pin(scl), Pin(sda))
-        self.i2c = I2C(-1, scl=Pin('X9'), sda=Pin('X10'))
+        self.logger.log('info', 'Setting up I2C')
+        self.i2c = I2C(scl=Pin('X9'), sda=Pin('X10'))
+        self.logger.log('info', 'I2C setup done')
 
     def knownSensors(self, filename='sensors.json'):
         '''Load id, address, type, etc. of known sensors from json file
@@ -70,14 +72,17 @@ class I2C_Sensors:
         '''
 
         # the return value per I2C device is its hex address
+        # Scan all I2C addresses between 0x08 and 0x77 inclusive
         addresses = self.i2c.scan()
-        print('Addresses on I2C:', addresses)
+        print('Addresses on I2C:', addresses, [hex(a) for a in addresses])
 
         # populate available sensors (subset or all of known sensors)
         for address in addresses:
             for sensor in self.known_sensors:
+                print('Sensor known:', sensor, self.known_sensors[sensor]['address'])
                 if hex(address) in self.known_sensors[sensor]['address']:
                     sensor_type = self.known_sensors[sensor]['type']
+                    print('Found sensor of type:', self.known_sensors[sensor]['type'])
                     self.available_sensors[sensor] = {'type': sensor_type,
                                                'address': address}
 
@@ -87,11 +92,15 @@ class I2C_Sensors:
         '''Arm available sensors by attaching their drivers
         '''
 
+        print('Arming sensors from', self.available_sensors)
         for sensor in self.available_sensors:
+
+            print('Arming sensor:', sensor)
             
             if sensor == 'BME280':
-                bme280 = bme280.BME280(i2c=self.i2c)
-                self.available_sensors[sensor]['reader'] = bme280
+                bme280s = bme280.BME280(address=0x76, i2c=self.i2c)
+                self.available_sensors[sensor]['reader'] = bme280s
+                self.logger.log('info', 'Sensor BME280 armed')
 
             if sensor == 'MS5611':
                 ms5611 = MS5611.MS5611(bus=self.i2c)
@@ -110,9 +119,10 @@ class I2C_Sensors:
         if 'BME280' in sensor:
             address = self.available_sensors[sensor]['address']
             reader = self.available_sensors[sensor]['reader']
-            p, t, h = reader.values()
-            message = 'Sensor: {}, Address {},Pressure {}, Temperature {}, \
-                       humidity {}'.format(sensor, address, p, t, h)
+            print('Reader', reader)
+            p, t, h = reader.values
+            message = 'Sensor: {}, Address {}, Pressure {}, Temperature {}, humidity {}' \
+                .format(sensor, address, p, t, h)
             self.logger.log('info', message)
 
             return p, t, h
