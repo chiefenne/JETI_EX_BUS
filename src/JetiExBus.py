@@ -260,10 +260,8 @@ class JetiExBus:
 
         # do the same as in run_forever
         while True:
-            self.exbus = self.serial.read(5)
+            self.exbus = self.serial.read(8)
             self.checkTelemetryRequest()
-            if self.request_telemetry:
-                pass
         
         # EX bus CRC starts with first byte of the packet
         offset = 0
