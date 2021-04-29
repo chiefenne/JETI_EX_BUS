@@ -84,7 +84,7 @@ class JetiExBus:
         self.jetiex = JetiEx.JetiEx()
 
         self.telemetry = bytearray()
-        self.send_sensor = True
+        self.send_sensor = False
 
         # setup a logger for the REPL
         self.logger = Logger.Logger()
@@ -186,7 +186,6 @@ class JetiExBus:
         return False
 
     def sendTelemetry(self):
-<<<<<<< HEAD
         '''Send telemetry data back to the receiver. Each call of this function
         sends data from the next sensor or data type in the queue.
         '''
@@ -202,22 +201,6 @@ class JetiExBus:
             packet_type = next(self.next_packet_type)
         
         packet = self.jetiex.Packet(sensor, packet_type)
-=======
-        '''Send telemetry data back to the receiver. Each 2nd call of this function
-        sends data from the next sensor in the queue. The telemetry is made up
-        by data and text which need to be sent in individual messages. They are
-        connected via an identifier (4 bits of 9th byte). So two messages are sent
-        for one sensor.
-        '''
-
-        if first_message:
-            # get next sensor to send its data
-            sensor = next(self.next_sensor)
-            packet = self.jetiex.Packet(sensor, 'data')
-            first_message = False
-        else:
-            packet = self.jetiex.Packet(sensor, 'text')
->>>>>>> continue with program logic
 
         # write packet to the EX bus stream
         bytes_written = self.serial.write(packet)
@@ -245,43 +228,23 @@ class JetiExBus:
         self.jetiex.Sensors(self.i2c_sensors)
 
         # generator object to be able to cycle through sensors
-<<<<<<< HEAD
         self.next_sensor = self.round_robin(i2c_sensors.available_sensors.keys())
 
         # generator object to be able to cycle through sensor data and sensor text
         self.next_message = self.round_robin(['data', 'text'])
 
     def round_robin(self, cycled_list):
-=======
-        self.next_sensor = self.round_robin()
-
-    def round_robin(self):
->>>>>>> continue with program logic
         '''Light weight implementation for cycling periodically through lists
         Source: https://stackoverflow.com/a/36657230/2264936
         
-<<<<<<< HEAD
         Args:
             sensors (list): Any list which should be cycled
-=======
-        Normally one would use itertools.cycle(). As this is not available in the
-        standard MicroPython library, this is the workaround for staying
-        independent of external libs.
-
->>>>>>> continue with program logic
         Yields:
             Next element in the list
         '''
-<<<<<<< HEAD
         while cycled_list:
             for element in cycled_list:
                 yield element
-=======
-        sensors = self.i2c_sensors.available_sensors.keys()
-        while sensors:
-            for sensor in sensors:
-                yield sensor
->>>>>>> continue with program logic
 
     def checkSpeed(self):
         '''Check the connection speed via CRC. This needs to be done by
