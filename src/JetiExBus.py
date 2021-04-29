@@ -138,7 +138,7 @@ class JetiExBus:
         '''
 
         telemetry_request = self.exbus[0:2] == b'=\x01' and \
-            self.exbus[4:5] == b':'
+                            self.exbus[4:5] == b':'
 
         if telemetry_request:
             self.sendTelemetry()
@@ -151,8 +151,8 @@ class JetiExBus:
         '''
         # JetiBox request starts with '3D01' and 5th byte is '3B'
         # so the check is: b[0:2] == b'=\x01' and b[4:5] == b';'
-        jetibox_request self.exbus[0:2] == b'=\x01' and \
-                self.exbus[4:5] == b';'
+        jetibox_request = self.exbus[0:2] == b'=\x01' and \
+                          self.exbus[4:5] == b';'
 
         # 1 byte missing for whole telemetry packet (we read 8 bytes so far)
         self.exbus.extend(self.serial.read(1))
@@ -169,7 +169,7 @@ class JetiExBus:
         # channel data packet starts with '3E03' and 5th byte is '31'
         # so the check is: b[0:2] == b'=\x01' and b[4:5] == b'1'
         channels_available = self.exbus[0:2] == b'>\x03' and \
-                self.exbus[4:5] == b'1'
+                             self.exbus[4:5] == b'1'
 
         # read remaining bytes (we read 8 bytes so far)
         # FIXME
