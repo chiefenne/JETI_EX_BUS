@@ -212,7 +212,7 @@ class JetiEx:
             text = text[:32]
 
         # separator of message (begin)
-        begin = bytearray.fromhex('FE')
+        begin = unhexlify('FE')
         self.simple_text.extend(begin)
 
         # add the text to the packet
@@ -221,7 +221,7 @@ class JetiEx:
         self.simple_text.extend(text_hex)
 
         # separator of message (end)
-        end = bytearray.fromhex('FF')
+        end = unhexlify('FF')
         self.simple_text.extend(end)
 
         return self.simple_text
