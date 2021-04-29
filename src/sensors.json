@@ -1,5 +1,5 @@
 {
-    "BME280": {"type": "pressure", "address": "0x76",
+    "BME280": {"type": "pressure", "address": "0x78",
               "data": {"pressure": "Pa", "temperature": "C", "humidity": "%"}},
     "MS5611": {"type": "pressure", "address": "0x77",
               "data": {"pressure": "Pa", "temperature": "C"}},
