@@ -64,14 +64,6 @@ if pyboard:
 # collect sensors attached via I2C
 i2c_sensors = JetiSensor.I2C_Sensors()
 
-# print sensor meta data at REPL
-if pyboard:
-    for sensor in i2c_sensors.available_sensors:
-        message = 'Sensor {} of type {} available at address {}'.format(sensor,
-            i2c_sensors.available_sensors[sensor]['type'],
-            i2c_sensors.available_sensors[sensor]['address'])
-        logger.log('info', message)
-
 # transfer sensor meta data
 exbus.Sensors(i2c_sensors)
 
