@@ -16,7 +16,7 @@ Page 6 of the protocol description:
 Above data written in hex string format:
     hexstr = '3D 01 08 06 3A 00 98 81'
 
-Hex string converted to bytes via bytearray.fromhex(hexstr)
+Hex string converted to bytes via ubinascii.unhexlify(hexstr)
     data = b'=\x01\x08\x06:\x00\x98\x81'
 
 The last two bytes above contain the checksum of the packet in the
@@ -70,7 +70,7 @@ if __name__ == '__main__':
         0x8198
     '''
     hex_string = '3D 01 08 06 3A 00'
-    data_bytes = bytearray.fromhex(hex_string)
+    data_bytes = ubinascii.unhexlify(hex_string)
     # data_bytes = b'\x3D\x01\x08\x06\x3A\x00'
 
     checksum = int(b'8198', 16)
