@@ -74,14 +74,17 @@ class I2C_Sensors:
         # the return value per I2C device is its hex address
         # Scan all I2C addresses between 0x08 and 0x77 inclusive
         addresses = self.i2c.scan()
-        print('Addresses on I2C:', addresses, [hex(a) for a in addresses])
+        message = 'Addresses available on I2C: {}'.format([hex(a) for a in addresses])
+        self.logger.log('info', message)
 
         # populate available sensors (subset or all of known sensors)
         for address in addresses:
             for sensor in self.known_sensors:
                 if hex(address) in self.known_sensors[sensor]['address']:
                     sensor_type = self.known_sensors[sensor]['type']
-                    print('Found sensor of type:', self.known_sensors[sensor]['type'])
+                    message = 'Found known sensor {} ({})'.format(
+                        sensor, self.known_sensors[sensor]['type'])
+                    self.logger.log('info', message)
                     self.available_sensors[sensor] = {'type': sensor_type,
                                                'address': address}
 
@@ -91,11 +94,8 @@ class I2C_Sensors:
         '''Arm available sensors by attaching their drivers
         '''
 
-        print('Arming sensors from', self.available_sensors)
         for sensor in self.available_sensors:
 
-            print('Arming sensor:', sensor)
-            
             if sensor == 'BME280':
                 bme280s = bme280.BME280(address=0x76, i2c=self.i2c)
                 self.available_sensors[sensor]['reader'] = bme280s
@@ -120,10 +120,10 @@ class I2C_Sensors:
             reader = self.available_sensors[sensor]['reader']
             t, p, h = reader.values
             message = 'Sensor: {}, Address {}, Pressure {}, Temperature {}, humidity {}' \
-                .format(sensor, address, p, t, h)
+                .format(sensor, hex(address), p, t, h)
             self.logger.log('info', message)
 
-            return t, p, h
+            return p, t, h
 
         # MS5611 pressure sensor
         if 'MS5611' in sensor:
