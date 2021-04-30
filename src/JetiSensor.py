@@ -118,12 +118,12 @@ class I2C_Sensors:
         if 'BME280' in sensor:
             address = self.available_sensors[sensor]['address']
             reader = self.available_sensors[sensor]['reader']
-            p, t, h = reader.values
+            t, p, h = reader.values
             message = 'Sensor: {}, Address {}, Pressure {}, Temperature {}, humidity {}' \
                 .format(sensor, address, p, t, h)
             self.logger.log('info', message)
 
-            return p, t, h
+            return t, p, h
 
         # MS5611 pressure sensor
         if 'MS5611' in sensor:
