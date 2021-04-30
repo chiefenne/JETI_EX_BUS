@@ -168,6 +168,9 @@ class JetiEx:
     def Header(self, packet_type, packet_length):
         '''EX packet header
         '''
+
+        packet_types = {'text': 0, 'data': 1, 'message': 2}
+
         # start header with message separator
         self.header.extend('7E')
 
@@ -175,13 +178,10 @@ class JetiEx:
         self.header.extend('1F')
 
         # 2 bits for packet type (0=text, 1=data, 2=message)
-        type_bits ='{:02b}'.format(packet_type)
+        type_bits ='{:02b}'.format(packet_types[packet_type])
         # 6 bits for packet length
         length_bits ='{:06b}'.format(packet_length)
-        number = int(type_bits + length_bits, 2)
-        hx = hex(number)
-        print('Number:', number)
-        print('hx:', hx)
+
         self.header.extend(unhexlify(hx))
 
         # serial number
@@ -197,12 +197,18 @@ class JetiEx:
         self.header.extend(crc)
 
     def Data(self, sensor):
-        self.data = self.i2c_sensors.read(sensor)
+        values = self.i2c_sensors.read(sensor)
 
         if self.i2c_sensors.available_sensors[sensor]['type'] == 'pressure':
-            pressure = self.data[0]
-            temperature = self.data[1]
-            print('pressure in Data', pressure)
+            pressure = values[0]
+            temperature = values[1]
+            print('Pressure in Data', pressure)
+            print('Temperature in Data', temperature)
+
+            # FIXME value just for testing; refactoring needed
+            # FIXME send "pressure" and "temperature"
+            # FIXME value just for testing; refactoring needed
+            self.data = ['E823', 'E823']
 
         return self.data
 
@@ -260,13 +266,13 @@ class JetiEx:
 
         if packet_type == 'data':
             self.Data(sensor)
+            packet_length = len(self.data[0]) + len(self.data[1]) + 2
         elif packet_type == 'text':
             self.Text(sensor)
 
         # packet length only known after data, text
         # max 29 bytes
-        packet_length = length_message
-        self.Header(pt, packet_length)
+        self.Header(packet_type, packet_length)
 
         # compile simple text protocol
         text = 'Hallodrio'
