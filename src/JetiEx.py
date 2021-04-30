@@ -107,6 +107,25 @@ carries data with this Jeti EX protocol.
      3    |  0x22/0x23 |    1  | 0x22- without reminder tone (Vario); 0x23 – with reminder tone (standard alarm)
      4    |   'A'-'Z'  |    1  | ASCII letter to be signalized by Morse alarm
 
+
+NOTE on EX data types:
+There exist 16 data types. The most used are int14_t, int22_t and int30_t.                 
+The upper 3 bits of the telemetry value are reserved for sign (1 bit) and the
+position of the decimal point (2 bits).
+
+Example for int14_t (needs 2 bytes = 16 bits). 3 bits are needed for sign and
+decimal position, so 13 bits are left for the value (2^13 = 8192). This means
+together with the sign and zero the data range is fomr -8191 to 8191.
+
+    Telemetry:
+        value = 115.3
+    Convert scaled value to hex:
+        hex(1153) --> '0x481'
+    Convert sign (0 = +) and decimal point position (01):
+        hex(001) --> '0x1'
+    Combine results:
+        '0x1481'
+
 '''
 
 # modules starting with 'u' are Python standard libraries which
@@ -128,10 +147,10 @@ class JetiEx:
 
         # upper part of the serial number (bytes are swapped for little endian)
         # must be in the range 0xA400 – 0xA41F
-        self.productID = b'00A4'
+        self.productID = '00A4'
 
         # lower part of the serial number (bytes are swapped for little endian)
-        self.deviceID = b'0100'
+        self.deviceID = '0100'
 
         self.header = bytearray()
         self.data = bytearray()
@@ -150,33 +169,42 @@ class JetiEx:
         '''EX packet header
         '''
         # start header with message separator
-        self.header.extend(unhexlify('7E'))
+        self.header.extend('7E')
 
         # add EX packet identifier '0xnF', with 'n' beeing any number
-        self.header.extend(unhexlify('1F'))
+        self.header.extend('1F')
 
         # 2 bits for packet type (0=text, 1=data, 2=message)
-        type_bits = format(packet_type, '02b')
+        type_bits ='{:02b}'.format(packet_type)
         # 6 bits for packet length
-        length_bits = format(packet_length, '06b')
+        length_bits ='{:06b}'.format(packet_length)
         number = int(type_bits + length_bits, 2)
         hx = hex(number)
+        print('Number:', number)
+        print('hx:', hx)
         self.header.extend(unhexlify(hx))
 
         # serial number
-        sn = unhexlify(self.productID) + unhexlify(self.deviceID)
-        self.header.extend(sn)
+        self.header.extend(self.productID)
+        self.header.extend(self.deviceID)
+
+        # reserved byte
+        self.header.extend('00')
 
         # finish header with crc for telemetry (8-bit crc)
-        # FIXME
-        # FIXME check crc calculation and argument type
-        # FIXME
         pk = unhexlify('FF')
         crc = crc8.crc8(pk, 3)
         self.header.extend(crc)
 
     def Data(self, sensor):
         self.data = self.i2c_sensors.read(sensor)
+
+        if self.i2c_sensors.available_sensors[sensor]['type'] == 'pressure':
+            pressure = self.data[0]
+            temperature = self.data[1]
+            print('pressure in Data', pressure)
+
+        return self.data
 
     def Text(self, sensor):
 
@@ -197,11 +225,10 @@ class JetiEx:
     def SimpleText(self, text):
         '''Messages to be displayed on the JetiBox.
         The packet is always 34 bytes long, inlcuding 2 message separator bytes (begin, end).
-        So each message has to have 32 bytes of text.
+        So each message has to have 32 bytes length. Even if the text is shorter.
 
         Args:
             text (str): A simple text message (maximum 32 characters)
-
         '''
 
         # do a hard limit on the text length (limit to max allowed)
@@ -212,8 +239,7 @@ class JetiEx:
             text = text[:32]
 
         # separator of message (begin)
-        begin = unhexlify('FE')
-        self.simple_text.extend(begin)
+        self.simple_text.extend('FE')
 
         # add the text to the packet
         text_encoded = text.encode('utf-8')
@@ -221,8 +247,7 @@ class JetiEx:
         self.simple_text.extend(text_hex)
 
         # separator of message (end)
-        end = unhexlify('FF')
-        self.simple_text.extend(end)
+        self.simple_text.extend('FF')
 
         return self.simple_text
 
@@ -233,20 +258,19 @@ class JetiEx:
 
         packet = bytearray()
 
-        text = 'Hallodrio'
-        self.SimpleText(text)
-
         if packet_type == 'data':
             self.Data(sensor)
-            length_message = len(self.data)
         elif packet_type == 'text':
             self.Text(sensor)
-            length_message = len(self.text)
 
-        # packet length only known after data, text and simpletext
-        # max 32 bytes
-        packet_length = length_message + len(self.simple_text)
-        self.Header(packet_type, packet_length)
+        # packet length only known after data, text
+        # max 29 bytes
+        packet_length = length_message
+        self.Header(pt, packet_length)
+
+        # compile simple text protocol
+        text = 'Hallodrio'
+        self.SimpleText(text)
 
         # compose packet
         packet.extend(self.header)
