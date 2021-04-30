@@ -150,10 +150,10 @@ class JetiEx:
         '''EX packet header
         '''
         # start header with message separator
-        self.header.extend(bytearray.fromhex('7E'))
+        self.header.extend(unhexlify('7E'))
 
         # add EX packet identifier '0xnF', with 'n' beeing any number
-        self.header.extend(bytearray.fromhex('1F'))
+        self.header.extend(unhexlify('1F'))
 
         # 2 bits for packet type (0=text, 1=data, 2=message)
         type_bits = format(packet_type, '02b')
@@ -161,7 +161,7 @@ class JetiEx:
         length_bits = format(packet_length, '06b')
         number = int(type_bits + length_bits, 2)
         hx = hex(number)
-        self.header.extend(bytearray.fromhex(hx))
+        self.header.extend(unhexlify(hx))
 
         # serial number
         sn = unhexlify(self.productID) + unhexlify(self.deviceID)
@@ -171,7 +171,7 @@ class JetiEx:
         # FIXME
         # FIXME check crc calculation and argument type
         # FIXME
-        pk = bytearray.fromhex('FF')
+        pk = unhexlify('FF')
         crc = crc8.crc8(pk, 3)
         self.header.extend(crc)
 
