@@ -165,7 +165,7 @@ class JetiEx:
         # setup a logger for the REPL
         self.logger = Logger.Logger()
 
-    def Header(self, packet_type, packet_length):
+    def Header(self, packet_type):
         '''EX packet header
         '''
 
@@ -180,7 +180,7 @@ class JetiEx:
         # 2 bits for packet type (0=text, 1=data, 2=message)
         type_bits ='{:02b}'.format(packet_types[packet_type])
         # 6 bits for packet length
-        length_bits ='{:06b}'.format(packet_length)
+        length_bits ='{:06b}'.format(self.packet_length + 2)
 
         self.header.extend(unhexlify(hx))
 
@@ -209,6 +209,7 @@ class JetiEx:
             # FIXME send "pressure" and "temperature"
             # FIXME value just for testing; refactoring needed
             self.data = ['E823', 'E823']
+            self.packet_length = 4
 
         return self.data
 
@@ -217,9 +218,11 @@ class JetiEx:
         # BME280 pressure sensor
         if 'BME280' in sensor:
             self.text = 'Pressure' + 'Pa'
+            self.packet_length = 4
         # MS5611 pressure sensor
         if 'MS5611' in sensor:
             self.text = 'Pressure' + 'Pa'
+            self.packet_length = 4
 
     def Message(self):
         pass
@@ -261,6 +264,15 @@ class JetiEx:
         self.i2c_sensors = i2c_sensors
 
     def Packet(self, sensor, packet_type):
+        '''Compile the telemetry packet (Header, data or text, etc.)
+
+        Args:
+            sensor (str): Sensor ID (e.g. 'BME280')
+            packet_type (str): Any of 'data', 'text', 'message'
+
+        Returns:
+            packet (hex): The complete packet describing the telemetry
+        '''
 
         packet = bytearray()
 
@@ -272,7 +284,7 @@ class JetiEx:
 
         # packet length only known after data, text
         # max 29 bytes
-        self.Header(packet_type, packet_length)
+        self.Header(packet_type)
 
         # compile simple text protocol
         text = 'Hallodrio'
