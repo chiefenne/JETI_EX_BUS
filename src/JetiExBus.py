@@ -146,11 +146,11 @@ class JetiExBus:
         telemetry_request = self.exbus[0:2] == b'=\x01' and \
                             self.exbus[4:5] == b':'
 
-        # store packet ID for telemetry answers
-        self.packet_ID = self.exbus[4]
+        # packet ID is used to link request and telemetry answer
+        packet_ID = self.exbus[4]
 
         if telemetry_request:
-            self.sendTelemetry()
+            self.sendTelemetry(packet_ID)
             return True
 
         return False
@@ -190,7 +190,7 @@ class JetiExBus:
 
         return False
 
-    def sendTelemetry(self):
+    def sendTelemetry(self, packet_ID):
         '''Send telemetry data back to the receiver. Each call of this function
         sends data from the next sensor or data type in the queue.
         '''
@@ -206,7 +206,12 @@ class JetiExBus:
         else:     
             current_EX_type = 'text'
         
-        packet = self.jetiex.Packet(current_sensor, current_EX_type)
+        ex_bus_packet = self.EX_bus_header(packet_ID)
+
+        # get the EX packet of the current sensor data
+        ex_packet = self.jetiex.Packet(current_sensor, current_EX_type)
+
+        exbus_packet = self.EX_bus_header(packet_ID)
 
         # write packet to the EX bus stream
         bytes_written = self.serial.write(packet)
@@ -214,6 +219,22 @@ class JetiExBus:
         # failed to write to serial stream
         if bytes_written is None:
             pass
+
+    def EX_bus_header(self, packet_ID):
+
+        self.exbus_header = bytearray()
+        
+        # telemetry identifier
+        self.exbus_header.extend('3B01')
+
+        # EX bus packet length including header and CRC16
+        # FIXME
+        # FIXME this needs to calculated
+        # FIXME
+        packet_length = 24
+        self.exbus_header.extend(hex(packet_length)[2:])
+
+        return self.exbus_header
 
     def sendJetiBoxMenu(self):
         pass
@@ -302,7 +323,7 @@ class JetiExBus:
         '''
         self.serial.deinit()
 
-    def checkCRC(self, packet):
+    def checkCRC(self, packet, crc_check):
         '''Do a CRC check using CRC16-CCITT
 
         Args:
@@ -313,6 +334,6 @@ class JetiExBus:
         Returns:
             bool: True if the crc check is OK, False if NOT
         '''
-        crc_ok = crc16_ccitt.crc16(packet, 0, len(packet))
+        crc = crc16_ccitt.crc16(packet, 0, len(packet))
 
-        return crc_ok
+        return crc == crc_check
