@@ -29,7 +29,7 @@ data = b'\x3D\x01\x08\x06\x3A\x00'
 '''
 
 
-def crc16(data : bytearray, offset , length):
+def crc16_ccitt(data : bytearray, offset , length):
     '''CRC check using the CRC16-CCITT algorithm
 
     Args:
