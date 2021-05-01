@@ -53,7 +53,7 @@ Date: 04-2021
 from machine import UART
 from ubinascii import hexlify
 
-import crc16_ccitt
+import CRC16
 import Logger
 import Streamrecorder
 import bme280_float as bme280
@@ -211,7 +211,16 @@ class JetiExBus:
         # get the EX packet of the current sensor data
         ex_packet = self.jetiex.Packet(current_sensor, current_EX_type)
 
+        # get the EX bus header
         exbus_packet = self.EX_bus_header(packet_ID)
+
+        crc_packet = exbus_packet + ex_packet
+
+        # calculate the crc for the packet
+        crc = CRC16.crc16_ccitt(crc_packet, offset, length)
+
+        # compile final telemetry packet
+        packet = crc_packet + crc
 
         # write packet to the EX bus stream
         bytes_written = self.serial.write(packet)
