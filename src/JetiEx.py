@@ -178,11 +178,15 @@ class JetiEx:
         self.header.extend('1F')
 
         # 2 bits for packet type (0=text, 1=data, 2=message)
-        type_bits ='{:02b}'.format(packet_types[packet_type])
-        # 6 bits for packet length
-        length_bits ='{:06b}'.format(self.packet_length + 2)
+        # these are the two leftmost bits and thus shift to the left by 6
+        type_bits = packet_types[packet_type] << 6
 
-        self.header.extend(unhexlify(hx))
+        # 6 bits for packet length
+        length_bits =self.packet_length +2
+
+        # combine 2+6 bits to make up the 3rd byte of EX header
+        type_length = type_bits | length_bits
+        self.header.extend(hex(type_length)[2:])
 
         # serial number
         self.header.extend(self.productID)
@@ -190,6 +194,7 @@ class JetiEx:
 
         # reserved byte
         self.header.extend('00')
+        print('self.header', self.header)
 
         # finish header with crc for telemetry (8-bit crc)
         pk = unhexlify('FF')
