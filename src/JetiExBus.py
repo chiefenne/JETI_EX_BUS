@@ -146,6 +146,9 @@ class JetiExBus:
         telemetry_request = self.exbus[0:2] == b'=\x01' and \
                             self.exbus[4:5] == b':'
 
+        # store packet ID for telemetry answers
+        self.packet_ID = self.exbus[4]
+
         if telemetry_request:
             self.sendTelemetry()
             return True
