@@ -22,12 +22,9 @@ def update_crc(crc_element, crc_seed):
 
     for i in range(8):
 
-        # C ternery operation
-        # condition ? value_if_true : value_if_false
+        # C ternery operation --> condition ? value_if_true : value_if_false
         #  crc_u = (crc_u & 0x80) ? POLY ^ (crc_u << 1) : (crc_u << 1)
-
-        # Python ternery operation
-        # a if condition else b
+        # Python ternery operation --> a if condition else b
         crc_u = POLY ^ (crc_u << 1) if (crc_u & 0x80) else (crc_u << 1)
 
     return crc_u
