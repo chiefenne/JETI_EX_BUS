@@ -40,24 +40,21 @@ def crc8(packet):
         crc_intermediate = update_crc(packet[i], crc_up)
         crc_up = copy.deepcopy(crc_intermediate)
    
-    return crc_up
+    return hex(crc_up)[-2:].upper()
 
 
 if __name__ == '__main__':
 
-    # run a test on the Jeti example slave answer
-    # 0x7E 0x9F 0x4C 0xA1 0xA8 0x5D 0x55 0x00 0x11 0xE8 0x23 0x21 0x1B 0x00 0xF4
-    # Counting of checksum value begins at the third byte of a message (length of data)
-    # This is byte "0x4C"
-    # So we use "0x4C 0xA1 0xA8 0x5D 0x55 0x00 0x11 0xE8 0x23 0x21 0x1B 0x00"
+    # Run a test on the Jeti EX telemetry examples
+    # Counting of checksum value begins at the third byte of the message (length of data)
 
-    # data telemetry example
+    # data telemetry example (without separators 0x7E, 0x9F and crc value 0xF4)
     packet = [0x4C, 0xA1, 0xA8, 0x5D, 0x55, 0x00, 0x11, 0xE8,
                   0x23, 0x21, 0x1B, 0x00]
 
     crc = crc8(packet)
 
-    print('Jeti CRC8 value:', hex(crc))
+    print('Jeti CRC8 value:', crc)
     print('Expected result:', 'F4')
 
     # text telemetry example
@@ -66,5 +63,5 @@ if __name__ == '__main__':
 
     crc = crc8(packet)
 
-    print('Jeti CRC8 value:', hex(crc))
+    print('Jeti CRC8 value:', crc)
     print('Expected result:', '28')
