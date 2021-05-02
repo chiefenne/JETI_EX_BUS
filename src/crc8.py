@@ -1,61 +1,70 @@
-
 '''Function to calculate the CRC8 value of an EX packet
 
 Description of the corresponding C code used by Jeti:
 JETI_Telem_protocol_EN_V1.07.pdf
 
 Test data from Jeti EX protocol. EX data specification on page 8 of
-the protocol description:
+the protocol description.
 
-    0x7E 0x9F 0x4C 0xA1 0xA8 0x5D 0x55 0x00 0x11 0xE8 0x23 0x21 0x1B 0x00 0xF4
-
-Above data written in hex string format:
-    hexstr = '7E 9F 4C A1 A8 5D 55 00 11 E8 23 21 1B 00 F4'
-
-Hex string converted to bytes via bytearray.fromhex(hexstr)
-    data = b'~\x9fL\xa1\xa8]U\x00\x11\xe8#!\x1b\x00\xf4'
-
-The last byte above contains the checksum of the packet.
+Bitwise HEX manipulation:
+https://stackoverflow.com/a/11119660/2264936
 
 '''
 
+import copy
 
-def crc8(data : bytearray, offset, crc=0):
-    '''CRC check (8-bit)
-    CRC polynomial: X^8 + X^2 + X + 1 */
-    poly = b'0x07'
+def update_crc(crc_element, crc_seed):
+    
+    POLY = 0x07
 
-    Args:
-        data (bytearray): EX packet
-        offset (int): start of packet
-        length (int): length of packet
+    crc_u = crc_element
+    crc_u ^= crc_seed
 
-    Returns:
-        int: checksum
-    '''
+    for i in range(8):
 
-    g = 1 << offset | b'0x07'  # Generator polynomial
+        # C ternery operation
+        # condition ? value_if_true : value_if_false
+        #  crc_u = (crc_u & 0x80) ? POLY ^ (crc_u << 1) : (crc_u << 1)
 
-    # Loop over the data
-    for d in data:
+        # Python ternery operation
+        # a if condition else b
+        crc_u = POLY ^ (crc_u << 1) if (crc_u & 0x80) else (crc_u << 1)
 
-        # XOR the top byte in the CRC with the input byte
-        crc ^= d << (offset - 8)
+    return crc_u
 
-        # Loop over all the bits in the byte
-        for _ in range(8):
-            # Start by shifting the CRC, so we can check for the top bit
-            crc <<= 1
+def crc8(packet):
+    
+    crc_up = 0
 
-            # XOR the CRC if the top bit is 1
-            if crc & (1 << offset):
-                crc ^= g
-
-    # Return the CRC value
-    return crc
+    for i in range(0, len(packet)):
+        crc_intermediate = update_crc(packet[i], crc_up)
+        crc_up = copy.deepcopy(crc_intermediate)
+   
+    return crc_up
 
 
 if __name__ == '__main__':
 
-    # test with a packet from the documatation
-    pass
+    # run a test on the Jeti example slave answer
+    # 0x7E 0x9F 0x4C 0xA1 0xA8 0x5D 0x55 0x00 0x11 0xE8 0x23 0x21 0x1B 0x00 0xF4
+    # Counting of checksum value begins at the third byte of a message (length of data)
+    # This is byte "0x4C"
+    # So we use "0x4C 0xA1 0xA8 0x5D 0x55 0x00 0x11 0xE8 0x23 0x21 0x1B 0x00"
+
+    # data telemetry example
+    packet = [0x4C, 0xA1, 0xA8, 0x5D, 0x55, 0x00, 0x11, 0xE8,
+                  0x23, 0x21, 0x1B, 0x00]
+
+    crc = crc8(packet)
+
+    print('Jeti CRC8 value:', hex(crc))
+    print('Expected result:', 'F4')
+
+    # text telemetry example
+    packet = [0x0F, 0xA1, 0xA8, 0x5D, 0x55, 0x00, 0x02,
+                  0x2A, 0x54, 0x65, 0x6D, 0x70, 0x2E, 0xB0, 0x43]
+
+    crc = crc8(packet)
+
+    print('Jeti CRC8 value:', hex(crc))
+    print('Expected result:', '28')
