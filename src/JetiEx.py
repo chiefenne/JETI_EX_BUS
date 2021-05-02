@@ -132,7 +132,7 @@ together with the sign and zero the data range is fomr -8191 to 8191.
 # are stripped down in MicroPython to be efficient on microcontrollers
 from ubinascii import hexlify, unhexlify
 
-import crc8
+import CRC8
 import Logger
 
 # setup a logger for the REPL
@@ -175,7 +175,7 @@ class JetiEx:
         self.header.extend('7E')
 
         # add EX packet identifier '0xnF', with 'n' beeing any number
-        self.header.extend('1F')
+        self.header.extend('3F')
 
         # 2 bits for packet type (0=text, 1=data, 2=message)
         # these are the two leftmost bits and thus shift to the left by 6
@@ -198,7 +198,7 @@ class JetiEx:
 
         # finish header with crc for telemetry (8-bit crc)
         pk = unhexlify('FF')
-        crc = crc8.crc8(pk, 3)
+        crc = CRC8.crc8(data, offset)(pk, 3)
         self.header.extend(crc)
 
     def Data(self, sensor):
