@@ -197,8 +197,7 @@ class JetiEx:
         print('self.header', self.header)
 
         # finish header with crc for telemetry (8-bit crc)
-        pk = unhexlify('FF')
-        crc = CRC8.crc8(data, offset)(pk, 3)
+        crc = CRC8.crc8(self.header[2:])
         self.header.extend(crc)
 
     def Data(self, sensor):
