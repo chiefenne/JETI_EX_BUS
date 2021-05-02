@@ -11,7 +11,6 @@ https://stackoverflow.com/a/11119660/2264936
 
 '''
 
-import copy
 
 def update_crc(crc_element, crc_seed):
     
