@@ -1,8 +1,10 @@
 {
     "BME280": {"type": "pressure", "address": "0x76",
-              "data": {"pressure": "Pa", "temperature": "C", "humidity": "%"}},
+               "EX": {"pressure": {"name": "Air press.", "unit": "hPa", "precision": 1, "bytes": 3},
+                      "temperature": {"name": "Temp.", "unit": "C", "precision": 1, "bytes": 2}}},
     "MS5611": {"type": "pressure", "address": "0x77",
-              "data": {"pressure": "Pa", "temperature": "C"}},
+               "EX": {"pressure": {"name": "Air press.", "unit": "hPa", "precision": 1, "bytes": 3},
+                      "temperature": {"name": "Temp.", "unit": "C", "precision": 1, "bytes": 2}}},
     "NEO-M8": {"type": "gps", "address": "0x42",
-              "data": {"longitude": "gps", "latitude": "gps"}}
+               "EX": {"speed": {"name": "GPS speed", "unit": "km/h", "precision": 0, "bytes": 2}}}
 }
