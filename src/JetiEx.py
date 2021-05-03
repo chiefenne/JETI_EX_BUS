@@ -146,15 +146,7 @@ class JetiEx:
 
     def __init__(self):
 
-        serial_number = self.getSerialNumber()
-
-        # upper part of the serial number (range 0xA400 – 0xA41F)
-        self.productID = serial_number['productID']['lower'] + \
-                         serial_number['productID']['upper']
-
-        # lower part of the serial number
-        self.deviceID = serial_number['deviceID']['lower'] + \
-                        serial_number['deviceID']['upper']
+        self.getSerialNumber()
 
         self.header = bytearray()
         self.data = bytearray()
@@ -169,9 +161,18 @@ class JetiEx:
         # setup a logger for the REPL
         self.logger = Logger.Logger()
 
-    def getSerialNumber(self, filename='settings.json'):
+    def getSerialNumber(self, filename='serial_number.json'):
+
         with open(filename, 'r') as fp:
 	        serial_number = ujson.load(fp)
+
+        # upper part of the serial number (range 0xA400 – 0xA41F)
+        self.productID = serial_number['productID']['lower'] + \
+                         serial_number['productID']['upper']
+
+        # lower part of the serial number
+        self.deviceID = serial_number['deviceID']['lower'] + \
+                        serial_number['deviceID']['upper']
 
         return serial_number
 
