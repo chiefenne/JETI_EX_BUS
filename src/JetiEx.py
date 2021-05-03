@@ -131,6 +131,7 @@ together with the sign and zero the data range is fomr -8191 to 8191.
 # modules starting with 'u' are Python standard libraries which
 # are stripped down in MicroPython to be efficient on microcontrollers
 from ubinascii import hexlify, unhexlify
+import ujson
 
 import CRC8
 import Logger
@@ -145,12 +146,15 @@ class JetiEx:
 
     def __init__(self):
 
-        # upper part of the serial number (bytes are swapped for little endian)
-        # must be in the range 0xA400 – 0xA41F
-        self.productID = '00A4'
+        serial_number = self.getSerialNumber()
 
-        # lower part of the serial number (bytes are swapped for little endian)
-        self.deviceID = '0100'
+        # upper part of the serial number (range 0xA400 – 0xA41F)
+        self.productID = serial_number['productID']['lower'] + \
+                         serial_number['productID']['upper']
+
+        # lower part of the serial number
+        self.deviceID = serial_number['deviceID']['lower'] + \
+                        serial_number['deviceID']['upper']
 
         self.header = bytearray()
         self.data = bytearray()
@@ -165,34 +169,41 @@ class JetiEx:
         # setup a logger for the REPL
         self.logger = Logger.Logger()
 
+    def getSerialNumber(self, filename='settings.json'):
+        with open(filename, 'r') as fp:
+	        serial_number = ujson.load(fp)
+
+        return serial_number
+
     def Header(self, packet_type):
-        '''EX packet header
-        '''
+        '''EX packet header'''
 
         packet_types = {'text': 0, 'data': 1, 'message': 2}
 
-        # start header with message separator
+        # message separator (1st byte)
         self.header.extend('7E')
 
-        # add EX packet identifier '0xnF', with 'n' beeing any number
+        # packet identifier '0xnF', with 'n' beeing any number (2nd byte)
         self.header.extend('3F')
 
         # 2 bits for packet type (0=text, 1=data, 2=message)
-        # these are the two leftmost bits and thus shift to the left by 6
-        type_bits = packet_types[packet_type] << 6
+        # these are the two leftmost bits of 3rd byte; shift left by 6
+        telemetry_type = packet_types[packet_type] << 6
 
-        # 6 bits for packet length
-        length_bits =self.packet_length +2
+        # 6 bits (right part of 3rd byte) for packet length (max. 29 bytes)
+        # +5 are the bytes 3-8 from the header
+        # telemetry_length is the number of bytes from data or text packet
+        telemetry_length = self.telemetry_length + 5
 
-        # combine 2+6 bits to make up the 3rd byte of EX header
-        type_length = type_bits | length_bits
+        # combine 2+6 bits (3rd byte)
+        type_length = telemetry_type | telemetry_length
         self.header.extend(hex(type_length)[2:])
 
-        # serial number
+        # serial number (bytes 4-5 and 6-7)
         self.header.extend(self.productID)
         self.header.extend(self.deviceID)
 
-        # reserved byte
+        # reserved (8th byte)
         self.header.extend('00')
         print('self.header', self.header)
 
@@ -213,7 +224,7 @@ class JetiEx:
             # FIXME send "pressure" and "temperature"
             # FIXME value just for testing; refactoring needed
             self.data = ['E823', 'E823']
-            self.packet_length = 4
+            self.telemetry_length = 4
 
         return self.data
 
@@ -222,11 +233,11 @@ class JetiEx:
         # BME280 pressure sensor
         if 'BME280' in sensor:
             self.text = 'Pressure' + 'Pa'
-            self.packet_length = 4
+            self.telemetry_length = 4
         # MS5611 pressure sensor
         if 'MS5611' in sensor:
             self.text = 'Pressure' + 'Pa'
-            self.packet_length = 4
+            self.telemetry_length = 4
 
     def Message(self):
         pass
@@ -282,7 +293,7 @@ class JetiEx:
 
         if packet_type == 'data':
             self.Data(sensor)
-            packet_length = len(self.data[0]) + len(self.data[1]) + 2
+            telemetry_length = len(self.data[0]) + len(self.data[1]) + 2
         elif packet_type == 'text':
             self.Text(sensor)
 
