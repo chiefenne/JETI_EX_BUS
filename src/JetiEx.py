@@ -218,14 +218,9 @@ class JetiEx:
         if self.i2c_sensors.available_sensors[sensor]['type'] == 'pressure':
             pressure = values[0]
             temperature = values[1]
-            print('Pressure in Data', pressure)
-            print('Temperature in Data', temperature)
 
-            # FIXME value just for testing; refactoring needed
-            # FIXME send "pressure" and "temperature"
-            # FIXME value just for testing; refactoring needed
-            self.data = ['E823', 'E823']
-            self.telemetry_length = 4
+            self.data = self.value_to_EX(value=pressure, nbytes=3, precision=1)
+            self.telemetry_length = len(self.data) * 2
 
         return self.data
 
@@ -315,4 +310,33 @@ class JetiEx:
         packet.extend(self.simple_text)
 
         return packet
+
+    def value_to_EX(self, value=None, nbytes=2, precision=1):
+        '''Convert a value to the EX protocol specification
+
+        Args:
+            value (int, float): Any telemetry value
+            nbytes (int): Number of bytes (uint6_t = 1, uint14_t = 2, etc.)
+            precision ([type]): [description]
+
+        Returns:
+            (hex): Hex string describing the value
+        '''
+
+        # get the sign of the value
+        sign = 0 if value > 0.0 else 1
+
+        # use value without sign (as this is transferred on MSB)
+        value = abs(value)
+
+        # scale value according to precision
+        scaled_value = int(value * 10**precision) if precision > 0 else int(value)
+
+        # compile hex string from above
+        hex_str = hex((sign << nbytes*8 - 1 | precision << nbytes*8 - 3) | scaled_value)[2:]
+
+        # split hex into list of pairs and reverse it for little endian
+        hex_lr = [hex_str[i:i+2] for i in range(0,len(hex_str), 2)].reverse()
+
+        return hex_lr
 
