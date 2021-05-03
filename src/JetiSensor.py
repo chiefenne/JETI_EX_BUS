@@ -37,7 +37,7 @@ class I2C_Sensors:
         self.available_sensors = dict()
 
         # load information of known sensors 
-        self.knownSensors(filename='sensors.json')
+        self.knownSensors()
 
         # setup I2C connection to sensors
         if pyboard:
