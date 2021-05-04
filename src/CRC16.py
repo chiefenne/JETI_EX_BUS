@@ -7,12 +7,14 @@ The checksum starts at the first byte of the message (0x3B for Slave packet).
 '''
 
 
-def crc16(data : bytearray):
+def crc16_ccitt(data : bytearray):
     '''Calculate the CRC16-CCITT value from data packet.
     Args:
         data (bytearray): Jeti EX bus packet
     Returns:
         int: CRC16-CCITT value
+
+    NOTE: removed offset (see link below) as we start from 1st byte
 
     Credits: Mark Adler https://stackoverflow.com/a/67115933/2264936
     '''
