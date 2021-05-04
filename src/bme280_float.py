@@ -220,7 +220,7 @@ class BME280:
             result[2] = humidity
             return result
 
-        return array("f", (temp, pressure, humidity))
+        return temp, pressure, humidity
 
     @property
     def sealevel(self):
@@ -261,5 +261,4 @@ class BME280:
 
         t, p, h = self.read_compensated_data()
 
-        return ("{:.2f}".format(t), "{:.2f}".format(p/100),
-                "{:.2f}".format(h))
+        return t, p/100, h
