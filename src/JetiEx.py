@@ -187,9 +187,8 @@ class JetiEx:
         telemetry_type = packet_types[packet_type] << 6
 
         # 6 bits (right part of 3rd byte) for packet length (max. 29 bytes)
-        # +5 are the bytes 3-8 from the header
-        # telemetry_length is the number of bytes from data or text packet
-        telemetry_length = self.telemetry_length + 5
+        # telemetry_length is the number of bytes of data/text packet
+        telemetry_length = 5 + self.telemetry_length + 10
 
         # combine 2+6 bits (3rd byte)
         type_length = telemetry_type | telemetry_length
@@ -201,21 +200,50 @@ class JetiEx:
 
         # reserved (8th byte)
         self.header.extend(b'00')
-        print('self.header', self.header)
 
         # finish header with crc for telemetry (8-bit crc)
         crc = CRC8.crc8(self.header[2:])
         self.header.extend(crc)
 
     def Data(self, sensor):
+
+        # get dictionary with sensor specs
+        sensor_specs = self.i2c_sensors.available_sensors[sensor]
+
+        # read method has to be available in each sensor driver
         values = self.i2c_sensors.read(sensor)
 
-        if self.i2c_sensors.available_sensors[sensor]['type'] == 'pressure':
+        if sensor_specs['type'] == 'pressure':
             pressure = values[0]
             temperature = values[1]
 
-            self.data = self.value_to_EX(value=pressure, nbytes=3, precision=1, endian='little')
-            self.telemetry_length = len(self.data)
+            # compile 9th byte of EX data specification
+            id_press = sensor_specs['EX']['pressure']['id'] << 4
+            data_type_press = sensor_specs['EX']['pressure']['data_type']
+            id_data_type_press = id_press | data_type_press
+
+            bytes_press = sensor_specs['EX']['pressure']['bytes']
+            prec_press = sensor_specs['EX']['pressure']['precision']
+            self.data1 = self.value_to_EX(value=pressure, nbytes=bytes_press,
+                                         precision=prec_press, endian='little')
+
+            # compile 11th byte of EX data specification
+            id_temp = sensor_specs['EX']['temperature']['id'] << 4
+            data_type_temp = sensor_specs['EX']['temperature']['data_type']
+            id_data_type_temp = id_temp | data_type_temp
+                                         
+            bytes_temp = sensor_specs['EX']['temperature']['bytes']
+            prec_temp = sensor_specs['EX']['temperature']['precision']
+            self.data2 = self.value_to_EX(value=temperature, nbytes=bytes_temp,
+                                         precision=prec_temp, endian='little')
+
+            self.telemetry_length = len(self.data1) + len(self.data2)
+
+            self.data = list()
+            self.data.append(hex(id_data_type_press))
+            self.data.extend(self.data1)
+            self.data.append(hex(id_data_type_temp  ))
+            self.data.extend(self.data2)
 
         return self.data
 
@@ -245,7 +273,7 @@ class JetiEx:
         Args:
             text (str): A simple text message (maximum 32 characters)
         '''
-        
+
         self.simple_text = bytearray()
 
         # do a hard limit on the text length (limit to max allowed)
@@ -256,15 +284,14 @@ class JetiEx:
             text = text[:32]
 
         # separator of message (begin)
-        self.simple_text.extend('FE')
+        self.simple_text.extend(b'FE')
 
         # add the text to the packet
-        text_encoded = text.encode('utf-8')
-        text_hex = hexlify(text_encoded)
+        text_hex = hexlify(text)
         self.simple_text.extend(text_hex)
 
         # separator of message (end)
-        self.simple_text.extend('FF')
+        self.simple_text.extend(b'FF')
 
         return self.simple_text
 
