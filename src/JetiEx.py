@@ -340,7 +340,7 @@ class JetiEx:
 	
 	#  reverse bytes if little endian is required
 	if endian == 'little':
-		hex_str.reverse()
+	    hex_str.reverse()
 
         return hex_str
 
