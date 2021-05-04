@@ -39,7 +39,7 @@ This will allow to use boards like Raspbery Pi, ESP3286 or similar to act as a s
    - Those boards are much faster than Arduinos
    - There should be less or no restriction with respect to the program size (32Kb vs. 1Mb or more)
  - Simple firmware/software update via USB
-   - Firmware (i.e. MicroPython) flashed via [pydfu.py](https://github.com/micropython/micropython/blob/master/tools/pydfu.py
+   - Firmware (i.e. MicroPython) flashed via [pydfu.py](https://github.com/micropython/micropython/blob/master/tools/pydfu.py)
    - Software "flashed" via simple copy from command line
  - Easy logging of sensor data on the board (SD card, etc.)
 
