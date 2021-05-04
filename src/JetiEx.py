@@ -148,13 +148,6 @@ class JetiEx:
 
         self.getSerialNumber()
 
-        self.header = bytearray()
-        self.data = bytearray()
-        self.text = bytearray()
-        self.message = bytearray()
-        self.alarm = bytearray()
-        self.simple_text = bytearray()
-        self.packet = bytearray()
 
         self.i2c_sensors = None
 
@@ -179,13 +172,15 @@ class JetiEx:
     def Header(self, packet_type):
         '''EX packet header'''
 
+        self.header = bytearray()
+
         packet_types = {'text': 0, 'data': 1, 'message': 2}
 
         # message separator (1st byte)
-        self.header.extend('7E')
+        self.header.extend(b'7E')
 
         # packet identifier '0xnF', with 'n' beeing any number (2nd byte)
-        self.header.extend('3F')
+        self.header.extend(b'3F')
 
         # 2 bits for packet type (0=text, 1=data, 2=message)
         # these are the two leftmost bits of 3rd byte; shift left by 6
@@ -205,7 +200,7 @@ class JetiEx:
         self.header.extend(self.deviceID)
 
         # reserved (8th byte)
-        self.header.extend('00')
+        self.header.extend(b'00')
         print('self.header', self.header)
 
         # finish header with crc for telemetry (8-bit crc)
@@ -250,6 +245,8 @@ class JetiEx:
         Args:
             text (str): A simple text message (maximum 32 characters)
         '''
+        
+        self.simple_text = bytearray()
 
         # do a hard limit on the text length (limit to max allowed)
         if len(text) > 32:
@@ -289,12 +286,10 @@ class JetiEx:
 
         if packet_type == 'data':
             self.Data(sensor)
-            telemetry_length = len(self.data[0]) + len(self.data[1]) + 2
         elif packet_type == 'text':
             self.Text(sensor)
 
         # packet length only known after data, text
-        # max 29 bytes
         self.Header(packet_type)
 
         # compile simple text protocol
@@ -304,7 +299,8 @@ class JetiEx:
         # compose packet
         packet.extend(self.header)
         if packet_type == 'data':
-            packet.extend(self.data)
+            for element in self.data:
+                packet.extend(element)
         elif packet_type == 'text':
             packet.extend(self.text)
         packet.extend(self.simple_text)
@@ -333,7 +329,12 @@ class JetiEx:
         scaled_value = int(value * 10**precision) if precision > 0 else int(value)
 
         # compile hex string from above
-        hex_str = hex((sign << nbytes*8 - 1 | precision << nbytes*8 - 3) | scaled_value)[2:]
+        val = sign << (nbytes*8 - 1) | precision << (nbytes*8 - 3) | scaled_value
+        hex_str = hex(val)[2:]
+
+        # compile even number of hex (add leading "0")
+        if len(hex_str) % 2 == 1:
+            hex_str = '0' + hex_str
 
         # split hex into list of pairs
         hex_str = [hex_str[i:i+2] for i in range(0,len(hex_str), 2)]
@@ -342,4 +343,4 @@ class JetiEx:
         if endian == 'little':
 	        hex_str.reverse()
 
-        return hex_str
+        return [e.encode('utf-8') for e in hex_str]
