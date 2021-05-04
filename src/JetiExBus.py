@@ -209,9 +209,6 @@ class JetiExBus:
         ex_bus_packet = self.EX_bus_header(packet_ID)
 
         # get the EX packet of the current sensor data
-        print(self.get_new_sensor)
-        print(self.current_sensor)
-        print(current_EX_type)
         ex_packet = self.jetiex.Packet(self.current_sensor, current_EX_type)
 
         # get the EX bus header
