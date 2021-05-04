@@ -324,7 +324,7 @@ class JetiEx:
         '''
 
         # get the sign of the value
-        sign = 0 if value > 0.0 else 1
+        sign = 0 if value >= 0x0 else 1
 
         # use value without sign (as this is transferred on MSB)
         value = abs(value)
@@ -338,9 +338,8 @@ class JetiEx:
         # split hex into list of pairs
         hex_str = [hex_str[i:i+2] for i in range(0,len(hex_str), 2)]
 	
-	#  reverse bytes if little endian is required
-	if endian == 'little':
-	    hex_str.reverse()
+	    #  reverse bytes if little endian is required
+        if endian == 'little':
+	        hex_str.reverse()
 
         return hex_str
-
