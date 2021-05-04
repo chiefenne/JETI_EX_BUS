@@ -219,8 +219,8 @@ class JetiEx:
             pressure = values[0]
             temperature = values[1]
 
-            self.data = self.value_to_EX(value=pressure, nbytes=3, precision=1)
-            self.telemetry_length = len(self.data) * 2
+            self.data = self.value_to_EX(value=pressure, nbytes=3, precision=1, endian='little')
+            self.telemetry_length = len(self.data)
 
         return self.data
 
@@ -311,7 +311,7 @@ class JetiEx:
 
         return packet
 
-    def value_to_EX(self, value=None, nbytes=2, precision=1):
+    def value_to_EX(self, value=None, nbytes=2, precision=1, endian='little'):
         '''Convert a value to the EX protocol specification
 
         Args:
@@ -335,8 +335,12 @@ class JetiEx:
         # compile hex string from above
         hex_str = hex((sign << nbytes*8 - 1 | precision << nbytes*8 - 3) | scaled_value)[2:]
 
-        # split hex into list of pairs and reverse it for little endian
-        hex_lr = [hex_str[i:i+2] for i in range(0,len(hex_str), 2)].reverse()
+        # split hex into list of pairs
+        hex_str = [hex_str[i:i+2] for i in range(0,len(hex_str), 2)]
+	
+	#  reverse bytes if little endian is required
+	if endian == 'little':
+		hex_str.reverse()
 
-        return hex_lr
+        return hex_str
 
