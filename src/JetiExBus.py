@@ -146,10 +146,10 @@ class JetiExBus:
         telemetry_request = self.exbus[0:2] == b'=\x01' and \
                             self.exbus[4:5] == b':'
 
-        # packet ID is used to link request and telemetry answer
-        packet_ID = self.exbus[4]
 
         if telemetry_request:
+            # packet ID is used to link request and telemetry answer
+            packet_ID = self.exbus[4]
             self.sendTelemetry(packet_ID)
             return True
 
@@ -201,7 +201,7 @@ class JetiExBus:
         # send data and text messages for each sensor alternating
         if self.get_new_sensor:
             # get next sensor to send its data
-            current_sensor = next(self.next_sensor)
+            self.current_sensor = next(self.next_sensor)
             current_EX_type = 'data'
         else:     
             current_EX_type = 'text'
@@ -209,7 +209,10 @@ class JetiExBus:
         ex_bus_packet = self.EX_bus_header(packet_ID)
 
         # get the EX packet of the current sensor data
-        ex_packet = self.jetiex.Packet(current_sensor, current_EX_type)
+        print(self.get_new_sensor)
+        print(self.current_sensor)
+        print(current_EX_type)
+        ex_packet = self.jetiex.Packet(self.current_sensor, current_EX_type)
 
         # get the EX bus header
         exbus_packet = self.EX_bus_header(packet_ID)
@@ -217,7 +220,7 @@ class JetiExBus:
         crc_packet = exbus_packet + ex_packet
 
         # calculate the crc for the packet
-        crc = CRC16.crc16_ccitt(crc_packet, offset, length)
+        crc = CRC16.crc16_ccitt(crc_packet)
 
         # compile final telemetry packet
         packet = crc_packet + crc
@@ -312,7 +315,7 @@ class JetiExBus:
         packet_crc = self.telemetryRequest[-2:]
 
         # calculate the crc16-ccitt value of the packet
-        crc = crc16_ccitt.crc16(packet, offset, len(packet))
+        crc = CRC16.crc16_ccitt(packet)
 
         if crc == packet_crc:
             speed_changed = False
@@ -343,6 +346,6 @@ class JetiExBus:
         Returns:
             bool: True if the crc check is OK, False if NOT
         '''
-        crc = crc16_ccitt.crc16(packet, 0, len(packet))
+        crc = CRC16.crc16_ccitt(packet)
 
         return crc == crc_check
