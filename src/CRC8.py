@@ -33,8 +33,7 @@ def crc8(packet):
     crc_up = 0
 
     for i in range(0, len(packet)):
-        crc_intermediate = update_crc(packet[i], crc_up)
-        crc_up = copy.deepcopy(crc_intermediate)
+        crc_up = update_crc(packet[i], crc_up)
    
     return hex(crc_up)[-2:].upper()
 
