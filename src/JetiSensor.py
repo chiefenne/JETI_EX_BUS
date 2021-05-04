@@ -85,8 +85,7 @@ class I2C_Sensors:
                     message = 'Found known sensor {} ({})'.format(
                         sensor, self.known_sensors[sensor]['type'])
                     self.logger.log('info', message)
-                    self.available_sensors[sensor] = {'type': sensor_type,
-                                               'address': address}
+                    self.available_sensors[sensor] = self.known_sensors[sensor]
 
         return self.available_sensors
 
@@ -120,7 +119,7 @@ class I2C_Sensors:
             reader = self.available_sensors[sensor]['reader']
             t, p, h = reader.values
             message = 'Sensor: {}, Address {}, Pressure {}, Temperature {}, humidity {}' \
-                .format(sensor, hex(address), p, t, h)
+                .format(sensor, address, p, t, h)
             self.logger.log('info', message)
 
             return p, t, h
