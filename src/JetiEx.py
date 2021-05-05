@@ -316,7 +316,7 @@ class JetiEx:
     def Sensors(self, i2c_sensors):
         self.i2c_sensors = i2c_sensors
 
-    def Packet(self, sensor, packet_type):
+    def ExPacket(self, sensor, packet_type):
         '''Compile the telemetry packet (Header, data or text, etc.)
 
         Args:
