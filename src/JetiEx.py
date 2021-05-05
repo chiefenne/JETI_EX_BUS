@@ -217,7 +217,7 @@ class JetiEx:
             pressure = values[0]
             temperature = values[1]
 
-            # compile 9th byte of EX data specification
+            # compile 9th byte of EX data specification (2x 4bit)
             id_press = sensor_specs['EX']['pressure']['id'] << 4
             data_type_press = sensor_specs['EX']['pressure']['data_type']
             id_data_type_press = id_press | data_type_press
@@ -227,7 +227,7 @@ class JetiEx:
             self.data1 = self.value_to_EX(value=pressure, nbytes=bytes_press,
                                          precision=prec_press, endian='little')
 
-            # compile 11th byte of EX data specification
+            # compile 11th byte of EX data specification (2x 4bit)
             id_temp = sensor_specs['EX']['temperature']['id'] << 4
             data_type_temp = sensor_specs['EX']['temperature']['data_type']
             id_data_type_temp = id_temp | data_type_temp
@@ -268,7 +268,10 @@ class JetiEx:
     def SimpleText(self, text):
         '''Messages to be displayed on the JetiBox.
         The packet is always 34 bytes long, inlcuding 2 message separator bytes (begin, end).
-        So each message has to have 32 bytes length. Even if the text is shorter.
+        
+        All separators have bit No. 8 set to log. zero. Other characters (simple text) have
+        this bit set to log. 1. It is mandatory to transmit the whole packet consisting
+        of 34 bytes and it is not possible to send only a part of text.
 
         Args:
             text (str): A simple text message (maximum 32 characters)
@@ -276,19 +279,14 @@ class JetiEx:
 
         self.simple_text = bytearray()
 
-        # do a hard limit on the text length (limit to max allowed)
-        if len(text) > 32:
-            self.logger.log('debug', 'Text too long for simple text.')
-
-            # crop text if too long (this is dirty error handling)
-            text = text[:32]
+        # crop text if too long and fill up if needed (no rjust() in MicroPython)
+        text = '{:>32}'.format(text[:32])
 
         # separator of message (begin)
         self.simple_text.extend(b'FE')
 
         # add the text to the packet
-        text_hex = hexlify(text)
-        self.simple_text.extend(text_hex)
+        self.simple_text.extend(hexlify(text))
 
         # separator of message (end)
         self.simple_text.extend(b'FF')
@@ -322,6 +320,7 @@ class JetiEx:
         # compile simple text protocol
         text = 'Hallodrio'
         self.SimpleText(text)
+        # print('self.simple_text (JetiEx.py)', self.bytes2hex(self.simple_text))
 
         # compose packet
         packet.extend(self.header)
@@ -331,6 +330,9 @@ class JetiEx:
         elif packet_type == 'text':
             packet.extend(self.text)
         packet.extend(self.simple_text)
+
+        # print in readable format
+        print('Packet (JetiEx.py)', self.bytes2hex(packet))
 
         return packet
 
@@ -371,3 +373,8 @@ class JetiEx:
 	        hex_str.reverse()
 
         return [e.encode('utf-8') for e in hex_str]
+
+    def bytes2hex(self, _bytes, separator='-'):
+        p_d = _bytes.decode()
+        hex_str = separator.join([p_d[x:x+2] for x in range(0, len(p_d), 2)])
+        return hex_str
