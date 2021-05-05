@@ -258,7 +258,9 @@ class JetiEx:
             self.toggle_value ^= True
             val = {1: 'pressure', 0: 'temperature'}
             value = val[self.toggle_value]
-            print('value', value)
+
+            # print toggle value for debugging
+            # print('value', value)
 
             self.text = list()
             # compile 9th byte of EX text specification (1 byte)
@@ -359,7 +361,7 @@ class JetiEx:
         packet.extend(self.simple_text)
 
         # print in readable format
-        print('Packet (JetiEx.py)', self.bytes2hex(packet))
+        print('Ex Packet (JetiEx.py)', self.bytes2hex(packet))
 
         return packet
 
