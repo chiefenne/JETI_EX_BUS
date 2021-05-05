@@ -150,6 +150,7 @@ class JetiEx:
 
 
         self.i2c_sensors = None
+        self.toggle_value = False
 
         # setup a logger for the REPL
         self.logger = Logger.Logger()
@@ -201,10 +202,6 @@ class JetiEx:
         # reserved (8th byte)
         self.header.extend(b'00')
 
-        # finish header with crc for telemetry (8-bit crc)
-        crc = CRC8.crc8(self.header[2:])
-        self.header.extend(crc)
-
     def Data(self, sensor):
 
         # get dictionary with sensor specs
@@ -222,16 +219,18 @@ class JetiEx:
             data_type_press = sensor_specs['EX']['pressure']['data_type']
             id_data_type_press = id_press | data_type_press
 
+            # data of 1st telemetry value
             bytes_press = sensor_specs['EX']['pressure']['bytes']
             prec_press = sensor_specs['EX']['pressure']['precision']
             self.data1 = self.value_to_EX(value=pressure, nbytes=bytes_press,
                                          precision=prec_press, endian='little')
 
-            # compile 11th byte of EX data specification (2x 4bit)
+            # compile 11th+x byte of EX data specification (2x 4bit)
             id_temp = sensor_specs['EX']['temperature']['id'] << 4
             data_type_temp = sensor_specs['EX']['temperature']['data_type']
             id_data_type_temp = id_temp | data_type_temp
                                          
+            # data of 2nd telemetry value
             bytes_temp = sensor_specs['EX']['temperature']['bytes']
             prec_temp = sensor_specs['EX']['temperature']['precision']
             self.data2 = self.value_to_EX(value=temperature, nbytes=bytes_temp,
@@ -240,23 +239,44 @@ class JetiEx:
             self.telemetry_length = len(self.data1) + len(self.data2)
 
             self.data = list()
-            self.data.append(hex(id_data_type_press))
+            self.data.append('{:02x}'.format(id_data_type_press))
             self.data.extend(self.data1)
-            self.data.append(hex(id_data_type_temp  ))
+
+            self.data.append('{:02x}'.format(id_data_type_temp))
             self.data.extend(self.data2)
 
         return self.data
 
     def Text(self, sensor):
 
-        # BME280 pressure sensor
-        if 'BME280' in sensor:
-            self.text = 'Pressure' + 'Pa'
-            self.telemetry_length = 4
-        # MS5611 pressure sensor
-        if 'MS5611' in sensor:
-            self.text = 'Pressure' + 'Pa'
-            self.telemetry_length = 4
+        # get dictionary with sensor specs
+        sensor_specs = self.i2c_sensors.available_sensors[sensor]
+
+        if sensor_specs['type'] == 'pressure':
+
+            # toggle text for the two telemetry values
+            self.toggle_value ^= True
+            val = {1: 'pressure', 0: 'temperature'}
+            value = val[self.toggle_value]
+            print('value', value)
+
+            self.text = list()
+            # compile 9th byte of EX text specification (1 byte)
+            id_press = sensor_specs['EX'][value]['id']
+            self.text.append('{:02x}'.format(id_press))
+
+            # compile 10th byte of EX text specification (5bits + 3bits)
+            len_description = len(sensor_specs['EX'][value]['description']) << 3
+            len_unit = len(sensor_specs['EX'][value]['unit'])
+
+            len_description_unit = len_description | len_unit
+            self.text.append('{:02x}'.format(len_description_unit))
+
+            description = sensor_specs['EX'][value]['description']
+            self.text.append(hexlify(description))
+
+            unit = sensor_specs['EX'][value]['unit']
+            self.text.append(hexlify(unit))
 
     def Message(self):
         pass
@@ -324,11 +344,18 @@ class JetiEx:
 
         # compose packet
         packet.extend(self.header)
+
         if packet_type == 'data':
             for element in self.data:
                 packet.extend(element)
         elif packet_type == 'text':
-            packet.extend(self.text)
+            for element in self.text:
+                packet.extend(element)
+
+        # crc for telemetry (8-bit crc)
+        crc = CRC8.crc8(packet[2:])
+        self.header.extend(crc)
+
         packet.extend(self.simple_text)
 
         # print in readable format
