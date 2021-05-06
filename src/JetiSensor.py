@@ -120,7 +120,7 @@ class I2C_Sensors:
             t, p, h = reader.values
             message = 'Sensor: {}({}), Pressure {}, Temperature {}' \
                 .format(sensor, address, p, t)
-            self.logger.log('info', message)
+            # self.logger.log('info', message)
 
             return p, t, h
 
