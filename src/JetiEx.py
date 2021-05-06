@@ -132,6 +132,7 @@ together with the sign and zero the data range is fomr -8191 to 8191.
 # are stripped down in MicroPython to be efficient on microcontrollers
 from ubinascii import hexlify, unhexlify
 import ujson
+import utime
 
 import CRC8
 import Logger
@@ -361,7 +362,7 @@ class JetiEx:
         packet.extend(self.simple_text)
 
         # print in readable format
-        print('Ex Packet (JetiEx.py)', self.bytes2hex(packet))
+        # print('Ex Packet (JetiEx.py)', self.bytes2hex(packet))
 
         return packet
 
