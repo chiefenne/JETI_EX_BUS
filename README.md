@@ -14,7 +14,9 @@ Trick for text coloring as its not implemented yet in Github flavored markdown
 ```
 -->
 ```diff
-+ WORK IN PROGRESS, NOT YET READY FOR USE.
+- WORK IN PROGRESS, NOT YET READY FOR USE.
++ THE CORE PART OF THE BUS STRUCTURE EXISTS (still with errors)
+- PREPARATION OF ASYNCHRONOUS COMMUNICATION NEEDED NOW
 ```
 
 
