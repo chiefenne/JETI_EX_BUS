@@ -52,6 +52,7 @@ Date: 04-2021
 # are stripped down in MicroPython to be efficient on microcontrollers
 from machine import UART
 from ubinascii import hexlify, unhexlify
+import utime
 
 import CRC16
 import Logger
@@ -198,9 +199,20 @@ class JetiExBus:
         # compile the complete EX bus packet
         exbus_packet = self.ExBusPacket(packet_ID)
 
+        # FIXME        
+        # FIXME check for uneven number and if it matters at all        
+        # FIXME        
+        if len(exbus_packet) % 2 == 1:
+            return
+
         # write packet to the EX bus stream
         # bytes_written = self.serial.write(exbus_packet)
-        bytes_written = self.serial.write(unhexlify(exbus_packet))
+        # bytes_written = self.serial.write(unhexlify(exbus_packet))
+        start = utime.ticks_us()
+        bytes_written = self.serial.write(exbus_packet)
+        end = utime.ticks_us()
+        diff = utime.ticks_diff(end, start)
+        #print('Time for answer:', diff / 1000., 'ms')
 
         # failed to write to serial stream
         if bytes_written is None:
@@ -223,7 +235,7 @@ class JetiExBus:
         
         # get the EX packet for the current sensor
         ex_packet = self.jetiex.ExPacket(self.current_sensor, current_EX_type)
-        
+
         # EX bus header
         self.exbus_packet.extend(b'3B01')
 
@@ -256,7 +268,8 @@ class JetiExBus:
         self.exbus_packet.extend(crc[2:4])
         self.exbus_packet.extend(crc[0:2])
 
-        print('Ex Bus Packet (JetiExBus.py)', self.jetiex.bytes2hex(self.exbus_packet))
+        # print('Ex Bus Packet (JetiExBus.py)', self.jetiex.bytes2hex(self.exbus_packet))
+        # print('Ex Bus Packet (JetiExBus.py)', self.exbus_packet)
 
         return self.exbus_packet
 
