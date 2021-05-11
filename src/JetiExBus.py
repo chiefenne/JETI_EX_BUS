@@ -298,7 +298,7 @@ class JetiExBus:
         self.next_message = self.round_robin(['data', 'text'])
 
     def round_robin(self, cycled_list):
-        '''Light weight implementation for cycling periodically through lists
+        '''Light weight implementation for cycling periodically through sensors
         Source: https://stackoverflow.com/a/36657230/2264936
         
         Args:
