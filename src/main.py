@@ -23,10 +23,6 @@ import pyb
 
 import JetiExBus
 import JetiSensor
-import Logger
-
-# setup a logger for the REPL
-logger = Logger.Logger()
 
 # show led for activity
 blue = pyb.LED(4)
