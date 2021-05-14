@@ -208,70 +208,11 @@ class JetiExBus:
         # write packet to the EX bus stream
         # bytes_written = self.serial.write(exbus_packet)
         # bytes_written = self.serial.write(unhexlify(exbus_packet))
-        start = utime.ticks_us()
         bytes_written = self.serial.write(exbus_packet)
-        end = utime.ticks_us()
-        diff = utime.ticks_diff(end, start)
-        #print('Time for answer:', diff / 1000., 'ms')
 
         # failed to write to serial stream
         if bytes_written is None:
             print('NOTHING WAS WRITTEN')
-
-    def ExBusPacket(self, packet_ID):
-
-        self.exbus_packet = bytearray()
-
-        # toggles True and False
-        self.get_new_sensor ^= True
-        
-        # send data and text messages for each sensor alternating
-        if self.get_new_sensor:
-            # get next sensor to send its data
-            self.current_sensor = next(self.next_sensor)
-            current_EX_type = 'data'
-        else:     
-            current_EX_type = 'text'
-        
-        # get the EX packet for the current sensor
-        ex_packet = self.jetiex.ExPacket(self.current_sensor, current_EX_type)
-
-        # EX bus header
-        self.exbus_packet.extend(b'3B01')
-
-        # EX bus packet length in bytes including the header and CRC
-        exbus_packet_length = 8 + len(ex_packet)
-        self.exbus_packet.extend('{:02x}'.format(exbus_packet_length))
-        
-        # packet ID (answer with same ID as by the request)
-        # FIXME
-        # FIXME check how this works with data and 2x text from EX values???
-        # FIXME
-        int_ID = int(str(packet_ID), 16)
-        bin_ID = '{:02x}'.format(int_ID)
-        self.exbus_packet.extend(bin_ID)
-        
-        # telemetry identifier
-        self.exbus_packet.extend(b'3A')
-
-        # packet length in bytes of EX packet
-        ex_packet_length = len(ex_packet)
-        self.exbus_packet.extend('{:02x}'.format(ex_packet_length))
-
-        # add EX packet
-        self.exbus_packet.extend(ex_packet)
-
-        # calculate the crc for the packet
-        crc = CRC16.crc16_ccitt(self.exbus_packet)
-
-        # compile final telemetry packet
-        self.exbus_packet.extend(crc[2:4])
-        self.exbus_packet.extend(crc[0:2])
-
-        # print('Ex Bus Packet (JetiExBus.py)', self.jetiex.bytes2hex(self.exbus_packet))
-        # print('Ex Bus Packet (JetiExBus.py)', self.exbus_packet)
-
-        return self.exbus_packet
 
     def sendJetiBoxMenu(self):
         pass
