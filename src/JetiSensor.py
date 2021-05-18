@@ -11,3 +11,8 @@ class Sensor:
 
     def __init__(self):
         pass
+
+    def read(self):
+        '''This method neeeds to be implemented in subclasses
+        '''
+        pass
