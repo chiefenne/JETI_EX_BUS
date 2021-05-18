@@ -72,7 +72,6 @@ class I2C_Sensors:
         '''
 
         # the return value per I2C device is its hex address
-        # Scan all I2C addresses between 0x08 and 0x77 inclusive
         addresses = self.i2c.scan()
         message = 'Addresses available on I2C: {}'.format([hex(a) for a in addresses])
         self.logger.log('info', message)
