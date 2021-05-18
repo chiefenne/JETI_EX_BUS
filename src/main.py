@@ -21,7 +21,7 @@ import uos as os
 import pyb
 
 import JetiExBus
-import JetiSensor
+import I2C
 
 # show led for activity
 blue = pyb.LED(4)
@@ -34,7 +34,7 @@ exbus = JetiExBus.JetiExBus(baudrate=125000, bits=8, parity=None, stop=1)
 exbus.connect()
 
 # collect sensors attached via I2C
-i2c_sensors = JetiSensor.I2C_Sensors()
+i2c_sensors = I2C.Devices()
 
 # transfer sensor meta data
 exbus.Sensors(i2c_sensors)
