@@ -9,7 +9,7 @@ class VarioSensor(JetiSensor):
         JetiSensor (class): Base class for all sensors
     '''
 
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__()
     
     def read(self, sensor):
