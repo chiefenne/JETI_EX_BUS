@@ -29,8 +29,6 @@ blue.on()
 
 # instantiate a Jeti ex bus connection
 exbus = JetiExBus.JetiExBus(baudrate=125000, bits=8, parity=None, stop=1)
-
-# establish the serial connection
 exbus.connect()
 
 # collect sensors attached via I2C
