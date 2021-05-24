@@ -25,7 +25,7 @@ class Sensor:
             await asyncio.sleep_ms(read_delay)
 
     def __iter__(self):
-        '''This class is called exactly once (see iterators)
+        '''This method is called exactly once
         Await 1st reading
         '''
         while self.value is None:
