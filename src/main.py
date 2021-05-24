@@ -25,7 +25,7 @@ import uasyncio as asyncio
 
 import pyb
 
-import JetiExBus
+# import JetiExBus
 import I2C
 import dummy_sensor
 
@@ -34,8 +34,8 @@ blue = pyb.LED(4)
 blue.on()
 
 # instantiate a Jeti ex bus connection (UART)
-exbus = JetiExBus.JetiExBus(baudrate=125000, bits=8, parity=None, stop=1)
-exbus.connect()
+# exbus = JetiExBus.JetiExBus(baudrate=125000, bits=8, parity=None, stop=1)
+# exbus.connect()
 
 # collect hardware attached via I2C
 i2c = I2C.Connect()
@@ -56,18 +56,20 @@ async def main():
     set_global_exception()
 
     # the constructor creates an asynchronous task
-    sensor1 = dummy_sensor(1, i2c.bus, read_delay=500)
-    sensor2 = dummy_sensor(2, i2c.bus, read_delay=1000)
-    sensor3 = dummy_sensor(3, i2c.bus, read_delay=4000)
+    sensor1 = dummy_sensor.Sensor(1, i2c.bus, read_delay=500)
+    sensor2 = dummy_sensor.Sensor(2, i2c.bus, read_delay=1000)
+    sensor3 = dummy_sensor.Sensor(3, i2c.bus, read_delay=4000)
 
     # Wait for device to be ready (implicitly calls __iter__ ???)
     await sensor1
+    await sensor2
+    await sensor3
 
     while True:
-        print('Sensor 1 value {:5.1f}'.format(sensor1.value))
-        print('Sensor 2 value {:5.1f}'.format(sensor2.value))
-        print('Sensor 3 value {:5.1f}'.format(sensor3.value))
-        await asyncio.sleep(3)
+        print('Sensor 1 value {}'.format(sensor1.value))
+        print('Sensor 2 value {}'.format(sensor2.value))
+        print('Sensor 3 value {}'.format(sensor3.value))
+        await asyncio.sleep(2)
 
 try:
     asyncio.run(main())

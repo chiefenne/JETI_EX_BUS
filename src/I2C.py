@@ -1,4 +1,4 @@
-'''Class for connecting to the I2C bus and collecting attached hardware'''
+'''Class for connecting to the bus bus and collecting attached hardware'''
 
 # modules starting with 'u' are Python standard libraries which
 # are stripped down in MicroPython to be efficient on microcontrollers
@@ -37,18 +37,16 @@ class Connect:
         '''
 
         # the return value per I2C device is its hex address
-        addresses = self.i2c.scan()
-        message = 'Addresses available on I2C: {}'.format([hex(a) for a in addresses])
-        self.logger.log('info', message)
+        addresses = self.bus.scan()
+        print('Addresses available on I2C: {}'.format([hex(a) for a in addresses]))
 
         # populate available sensors (subset or all of known sensors)
         for address in addresses:
             for sensor in self.known_sensors:
                 if hex(address) in self.known_sensors[sensor]['address']:
                     sensor_type = self.known_sensors[sensor]['type']
-                    message = 'Found known sensor {} ({})'.format(
-                        sensor, self.known_sensors[sensor]['type'])
-                    self.logger.log('info', message)
+                    print('Found known sensor {} ({})'.format(
+                        sensor, self.known_sensors[sensor]['type']))
                     self.available_sensors[sensor] = self.known_sensors[sensor]
 
         return self.available_sensors

@@ -10,21 +10,23 @@ from micropython import const
 _PAUSE_MS = const(60)  # sensor acquisition delay
 
 
-class DUMMY_SENSOR:
+class Sensor:
 
     def __init__(self, id, i2c_bus, read_delay=10):
         self.i2c = i2c_bus
         self.value = None
         self.id = id
+        self.current_sensor_value = self.id * 10.0
+
         asyncio.create_task(self._run(read_delay))
 
     async def _run(self, read_delay):
 
         while True:
             # 
-            self.value = self._get_data()
+            self.value = await self._get_data()
 
-            await asyncio.sleep(read_delay)
+            await asyncio.sleep_ms(read_delay)
 
     def __iter__(self):  # Await 1st reading
         while self.value is None:
@@ -33,11 +35,9 @@ class DUMMY_SENSOR:
             yield from asyncio.sleep(0)
 
     async def _get_data(self):
-
         
         await asyncio.sleep_ms(_PAUSE_MS)  # Wait for device
-        await asyncio.sleep_ms(_PAUSE_MS)  # Wait for device
 
-        # simulate global warming
-        value = self.id * 10.0 + 0.2
-        return value
+        # simulate changing values
+        self.current_sensor_value += 0.2
+        return self.current_sensor_value
