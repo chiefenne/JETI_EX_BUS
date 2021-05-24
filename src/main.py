@@ -61,7 +61,7 @@ async def main_loop(exbus):
     sensor2 = dummy_sensor.Sensor(2, i2c.bus, read_delay=1000)
     sensor3 = dummy_sensor.Sensor(3, i2c.bus, read_delay=4000)
 
-    # Wait for sensors to be ready
+    # Wait for sensors and EX Bus to be ready
     await sensor1
     await sensor2
     await sensor3
@@ -75,7 +75,8 @@ async def main_loop(exbus):
         print('Sensor 1 value {}'.format(sensor1.value))
         print('Sensor 2 value {}'.format(sensor2.value))
         print('Sensor 3 value {}'.format(sensor3.value))
-        # wait 2 seconds; sensors can meanwhile measure data
+        # wait 2 seconds until next print
+        # sensors are meanwhile asynchronously measuring
         await asyncio.sleep(2)
 
 try:
