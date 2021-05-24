@@ -1,9 +1,4 @@
-'''Class for handling a sensor
-
-For example the sensor can be a pressure sensor (e.g. BME280) which in turn
-is used to make up a vario.
-
-'''
+'''Class for connecting to the I2C bus and collecting attached hardware'''
 
 # modules starting with 'u' are Python standard libraries which
 # are stripped down in MicroPython to be efficient on microcontrollers
@@ -11,54 +6,24 @@ import usys as sys
 from machine import I2C, Pin
 import ujson
 
-# check if we are on a Pyboard (main development platform for this code)
-pyboard = False
-if 'pyboard' in sys.platform:
-    import pyb
-    pyboard = True
 
-
-import bme280_float as bme280
-import MS5611
-import Logger
-
-
-class Devices:
+class Connect:
     '''This class represents all sensors attached via I2C
     '''
 
     def __init__(self):
-        # call constructor of JetiEx
-        super().__init__()
 
-        # setup a logger for the REPL
-        self.logger = Logger.Logger()
-
+        self.bus = None
         self.available_sensors = dict()
 
         # load information of known sensors 
         self.knownSensors()
 
-        # setup I2C connection to sensors
-        if pyboard:
-            self.setupI2C(1, 'X9', 'X10')
-        else:
-            self.setupI2C(1, 25, 26)
+        # setup I2C bus
+        self.bus = I2C(scl=Pin('X9'), sda=Pin('X10'), freq=400000)
 
-        # get all attached sensors
+        # get attached devices
         self.scanI2C()
-
-        # arm sensors
-        self.armSensors()
-
-    def setupI2C(self, id, scl, sda, freq=400000):
-        '''Setup an I2C connection.
-        Pins 25 and 26 are the default I2C pins (board dependend)
-        '''
-        # self.i2c = I2C(Pin(scl), Pin(sda))
-        self.logger.log('info', 'Setting up I2C')
-        self.i2c = I2C(scl=Pin('X9'), sda=Pin('X10'))
-        self.logger.log('info', 'I2C setup done')
 
     def knownSensors(self, filename='sensors.json'):
         '''Load id, address, type, etc. of known sensors from json file
@@ -87,19 +52,3 @@ class Devices:
                     self.available_sensors[sensor] = self.known_sensors[sensor]
 
         return self.available_sensors
-
-    def armSensors(self):
-        '''Arm available sensors by attaching their drivers
-        '''
-
-        for sensor in self.available_sensors:
-
-            if sensor == 'BME280':
-                bme280s = bme280.BME280(address=0x76, i2c=self.i2c)
-                self.available_sensors[sensor]['reader'] = bme280s
-                self.logger.log('info', 'Sensor BME280 armed')
-
-            if sensor == 'MS5611':
-                ms5611 = MS5611.MS5611(bus=self.i2c)
-                self.available_sensors[sensor]['reader'] = ms5611
-

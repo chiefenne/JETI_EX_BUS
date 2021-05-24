@@ -27,21 +27,18 @@ import pyb
 
 import JetiExBus
 import I2C
-import HTU21D
+import dummy_sensor
 
 # show led for activity
 blue = pyb.LED(4)
 blue.on()
 
-# instantiate a Jeti ex bus connection
+# instantiate a Jeti ex bus connection (UART)
 exbus = JetiExBus.JetiExBus(baudrate=125000, bits=8, parity=None, stop=1)
 exbus.connect()
 
-# collect sensors attached via I2C
-i2c_sensors = I2C.Devices()
-
-# transfer sensor meta data
-exbus.Sensors(i2c_sensors)
+# collect hardware attached via I2C
+i2c = I2C.Connect()
 
 
 def set_global_exception():
@@ -55,13 +52,22 @@ def set_global_exception():
     loop.set_exception_handler(handle_exception)
 
 async def main():
-    set_global_exception()  # Debug aid
-    htu = HTU21D(I2C(1))  # Constructor creates task
-    await htu  # Wait for device to be ready (implicitly calls __iter__ ???)
+    # debug aid
+    set_global_exception()
+
+    # the constructor creates an asynchronous task
+    sensor1 = dummy_sensor(1, i2c.bus, read_delay=500)
+    sensor2 = dummy_sensor(2, i2c.bus, read_delay=1000)
+    sensor3 = dummy_sensor(3, i2c.bus, read_delay=4000)
+
+    # Wait for device to be ready (implicitly calls __iter__ ???)
+    await sensor1
+
     while True:
-        fstr = 'Temp {:5.1f} Humidity {:5.1f}'
-        print(fstr.format(htu.temperature, htu.humidity))
-        await asyncio.sleep(5)
+        print('Sensor 1 value {:5.1f}'.format(sensor1.value))
+        print('Sensor 2 value {:5.1f}'.format(sensor2.value))
+        print('Sensor 3 value {:5.1f}'.format(sensor3.value))
+        await asyncio.sleep(3)
 
 try:
     asyncio.run(main())
