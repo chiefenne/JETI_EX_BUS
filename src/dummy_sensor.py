@@ -1,9 +1,5 @@
-# based on htu21d_mc.py
-# Author: Peter Hinch
-# Copyright Peter Hinch 2018-2020 Released under the MIT license
+# based on htu21d_mc.py. Copyright Peter Hinch 2018-2020 Released under the MIT license
 
-import machine
-import ustruct
 import uasyncio as asyncio
 from micropython import const
 
@@ -28,11 +24,14 @@ class Sensor:
 
             await asyncio.sleep_ms(read_delay)
 
-    def __iter__(self):  # Await 1st reading
+    def __iter__(self):
+        '''This class is called exactly once (see iterators)
+        Await 1st reading
+        '''
         while self.value is None:
-            # yield without delay to be instantly back on scheduler stack
-            print('Reading NONE from sensor {}'.format(self.id))
-            yield from asyncio.sleep(0)
+            # wait on other running tasks (one of them being the _run function of this class)
+            # 0 delay to be instantly back on scheduler stack "fair round-robin"
+            yield from asyncio.sleep_ms(0)
 
     async def _get_data(self):
         
