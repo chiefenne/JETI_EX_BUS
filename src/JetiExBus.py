@@ -14,14 +14,10 @@ JETI Ex Bus specification:
 # modules starting with 'u' are Python standard libraries which
 # are stripped down in MicroPython to be efficient on microcontrollers
 from machine import UART
-from ubinascii import hexlify, unhexlify
-import utime
+import uasyncio as asyncio
 
 import CRC16
 import Logger
-import Streamrecorder
-import bme280_float as bme280
-import JetiAsync
 
 
 class JetiExBus:
@@ -45,14 +41,16 @@ class JetiExBus:
         self.stop = stop
         self.port = port
 
-        # instantiate the telemetry (EX and EX BUS protocols)
-        self.telemetry = JetiAsync.Async()
-
         self.telemetry = bytearray()
         self.get_new_sensor = False
 
         # setup a logger for the REPL
         self.logger = Logger.Logger()
+
+        # connect to the serial stream of the Jeti receiver
+        self.connect()
+
+        asyncio.create_task(self.run_forever())
 
     def connect(self):
         '''Setup the serial conection via UART
@@ -67,7 +65,14 @@ class JetiExBus:
                          parity=self.parity,
                          stop=self.stop)
 
-    def run_forever(self):
+    def __iter__(self):
+        '''This method is called exactly once.
+        See sensor classes.
+        '''
+        while self.value is None:
+            yield from asyncio.sleep_ms(0)
+
+    async def run_forever(self):
         '''This is the main loop and will run forever. This function is called
         at the end of the function "main.py". It does exactly the same as the
         Arduino "loop()" function.
@@ -102,6 +107,7 @@ class JetiExBus:
             self.exbus = bytearray()
 
             # endless loop continues here
+            await asyncio.sleep_ms(0)
     
     def checkTelemetryRequest(self):
         '''Check if a telemetry request was sent by the master (receiver)

@@ -25,7 +25,7 @@ import uasyncio as asyncio
 
 import pyb
 
-# import JetiExBus
+import JetiExBus
 import I2C
 import dummy_sensor
 
@@ -34,8 +34,8 @@ blue = pyb.LED(4)
 blue.on()
 
 # instantiate a Jeti ex bus connection (UART)
-# exbus = JetiExBus.JetiExBus(baudrate=125000, bits=8, parity=None, stop=1)
-# exbus.connect()
+# the constructor creates an asynchronous task (run_forever)
+exbus = JetiExBus.JetiExBus(baudrate=125000, bits=8, parity=None, stop=1)
 
 # collect hardware attached via I2C
 i2c = I2C.Connect()
@@ -51,27 +51,34 @@ def set_global_exception():
     loop = asyncio.get_event_loop()
     loop.set_exception_handler(handle_exception)
 
-async def main():
+async def main_loop(exbus):
     # debug aid
     set_global_exception()
 
-    # the constructor creates an asynchronous task
+    # the constructor of dummy_sensor creates an asynchronous task
+    # so each sensor runs asynchronously
     sensor1 = dummy_sensor.Sensor(1, i2c.bus, read_delay=500)
     sensor2 = dummy_sensor.Sensor(2, i2c.bus, read_delay=1000)
     sensor3 = dummy_sensor.Sensor(3, i2c.bus, read_delay=4000)
 
-    # Wait for devices to be ready
+    # Wait for sensors to be ready
     await sensor1
     await sensor2
     await sensor3
+    await exbus
+
+    # at this code line all sensors are already sensing "concurrently" and
+    # the Jeti EX Bus is ready as well
 
     while True:
+        # most recent sensor values are instantly available here
         print('Sensor 1 value {}'.format(sensor1.value))
         print('Sensor 2 value {}'.format(sensor2.value))
         print('Sensor 3 value {}'.format(sensor3.value))
+        # wait 2 seconds; sensors can meanwhile measure data
         await asyncio.sleep(2)
 
 try:
-    asyncio.run(main())
+    asyncio.run(main_loop(exbus))
 finally:
     asyncio.new_event_loop()  # Clear retained state
