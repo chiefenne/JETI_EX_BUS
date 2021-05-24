@@ -60,7 +60,7 @@ async def main():
     sensor2 = dummy_sensor.Sensor(2, i2c.bus, read_delay=1000)
     sensor3 = dummy_sensor.Sensor(3, i2c.bus, read_delay=4000)
 
-    # Wait for device to be ready (implicitly calls __iter__ ???)
+    # Wait for devices to be ready
     await sensor1
     await sensor2
     await sensor3
