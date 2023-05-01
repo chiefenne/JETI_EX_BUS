@@ -161,7 +161,7 @@ class JetiEx:
         with open(filename, 'r') as fp:
 	        serial_number = ujson.load(fp)
 
-        # upper part of the serial number (range 0xA400 – 0xA41F)
+        # upper part of the serial number
         self.productID = serial_number['productID']['lower'] + \
                          serial_number['productID']['upper']
 
