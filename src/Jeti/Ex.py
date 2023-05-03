@@ -135,7 +135,7 @@ import ujson
 import utime
 
 import CRC8
-import Logger
+import Utils.Logger as Logger
 
 # setup a logger for the REPL
 logger = Logger.Logger()

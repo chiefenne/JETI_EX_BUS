@@ -20,7 +20,7 @@ if 'pyboard' in sys.platform:
 
 import Sensors.bme280_float as bme280
 import Sensors.MS5611 as MS5611
-import Logger
+import Utils.Logger as Logger
 
 
 class I2C_Sensors:

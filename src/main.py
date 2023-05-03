@@ -28,7 +28,7 @@ if 'pyboard' in sys.platform:
 
 from Jeti.Protocols.ExBus import ExBus
 import Sensors.JetiSensor as JetiSensor
-import Logger
+import Utils.Logger as Logger
 
 
 # setup a logger for the REPL

@@ -55,7 +55,7 @@ from ubinascii import hexlify, unhexlify
 import utime
 
 import CRC16
-import Logger
+import Utils.Logger as Logger
 import Streamrecorder
 from Ex import Ex
 
