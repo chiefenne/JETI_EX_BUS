@@ -54,7 +54,7 @@ from machine import UART
 from ubinascii import hexlify, unhexlify
 import utime
 
-import Jeti.CRC16 as CRC16
+import CRC16
 import Logger
 import Streamrecorder
 from Ex import Ex
