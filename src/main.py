@@ -27,7 +27,7 @@ if 'pyboard' in sys.platform:
     pyboard = True
 
 from Jeti.Protocols.ExBus import ExBus
-import Jeti.JetiSensor as JetiSensor
+import Sensors.JetiSensor as JetiSensor
 import Logger
 
 
