@@ -159,7 +159,7 @@ class Ex:
     def getSerialNumber(self, filename='serial_number.json'):
 
         with open(filename, 'r') as fp:
-	        serial_number = ujson.load(fp)
+            serial_number = ujson.load(fp)
 
         # upper part of the serial number
         self.productID = serial_number['productID']['lower'] + \
@@ -400,7 +400,7 @@ class Ex:
 	
 	    #  reverse bytes if little endian is required
         if endian == 'little':
-	        hex_str.reverse()
+            hex_str.reverse()
 
         return [e.encode('utf-8') for e in hex_str]
 
