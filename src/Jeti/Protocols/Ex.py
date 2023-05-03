@@ -23,8 +23,8 @@ carries data with this Jeti EX protocol.
      2   |    1B   |     0xNF     |  Distinct identifier of an EX packet (n is an arbitrary number)
      3   |    2b   |  Type (0-3)  |  0 - Text, 1 – Data, 2 – Message
      3   |    6b   | Length (0-31)|  Length of a packet (number of bytes following)
-    4-5  |    2B   |       SN     |  Upper part of a serial number, Manufacturer ID (Little Endian)
-    6-7  |    2B   |       SN     |  Lower part of a serial number, Device ID (Little Endian)
+    4-5  |    2B   |       SN     |  Upper part of a sensors serial number, Manufacturer ID (Little Endian)
+    6-7  |    2B   |       SN     |  Lower part of a sensors serial number, Device ID (Little Endian)
      8   |    1B   |     0x00     |  Reserved
 
    NOTE: Byte 3 of the packet is split into 2 and 6 bits (B=Byte, b=bit)

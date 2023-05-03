@@ -18,8 +18,8 @@ if 'pyboard' in sys.platform:
     pyboard = True
 
 
-import bme280_float as bme280
-import MS5611
+import Sensors.bme280_float as bme280
+import Sensors.MS5611 as MS5611
 import Logger
 
 
