@@ -54,14 +54,13 @@ from machine import UART
 from ubinascii import hexlify, unhexlify
 import utime
 
-import CRC16
+import Jeti.CRC16 as CRC16
 import Logger
 import Streamrecorder
-import bme280_float as bme280
-import JetiEx
+from Ex import Ex
 
 
-class JetiExBus:
+class ExBus:
     '''JETI Ex Bus protocol handler
     Allows to connect to sensors via serial cpmmunication (UART)
 
@@ -83,7 +82,7 @@ class JetiExBus:
         self.port = port
 
         # instantiate the EX protocol
-        self.jetiex = JetiEx.JetiEx()
+        self.ex = Ex()
 
         self.telemetry = bytearray()
         self.get_new_sensor = False
@@ -234,7 +233,7 @@ class JetiExBus:
             current_EX_type = 'text'
         
         # get the EX packet for the current sensor
-        ex_packet = self.jetiex.ExPacket(self.current_sensor, current_EX_type)
+        ex_packet = self.ex.ExPacket(self.current_sensor, current_EX_type)
 
         # EX bus header
         self.exbus_packet.extend(b'3B01')
@@ -268,8 +267,8 @@ class JetiExBus:
         self.exbus_packet.extend(crc[2:4])
         self.exbus_packet.extend(crc[0:2])
 
-        # print('Ex Bus Packet (JetiExBus.py)', self.jetiex.bytes2hex(self.exbus_packet))
-        # print('Ex Bus Packet (JetiExBus.py)', self.exbus_packet)
+        # print('Ex Bus Packet (ExBus.py)', self.ex.bytes2hex(self.exbus_packet))
+        # print('Ex Bus Packet (ExBus.py)', self.exbus_packet)
 
         return self.exbus_packet
 
@@ -289,7 +288,7 @@ class JetiExBus:
 
         self.i2c_sensors = i2c_sensors
 
-        self.jetiex.Sensors(self.i2c_sensors)
+        self.ex.Sensors(self.i2c_sensors)
 
         # cycle through sensors
         self.next_sensor = self.round_robin(i2c_sensors.available_sensors.keys())

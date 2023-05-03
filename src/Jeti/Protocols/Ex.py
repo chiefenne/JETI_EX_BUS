@@ -134,14 +134,14 @@ from ubinascii import hexlify, unhexlify
 import ujson
 import utime
 
-import CRC8
+import Jeti.CRC8 as CRC8
 import Logger
 
 # setup a logger for the REPL
 logger = Logger.Logger()
 
 
-class JetiEx:
+class Ex:
     '''Jeti EX protocol implementation. 
     '''
 

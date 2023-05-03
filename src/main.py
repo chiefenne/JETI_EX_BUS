@@ -26,9 +26,10 @@ if 'pyboard' in sys.platform:
     import pyb
     pyboard = True
 
-import JetiExBus
-import JetiSensor
+from Protocols import ExBus
+import Jeti.JetiSensor as JetiSensor
 import Logger
+
 
 # setup a logger for the REPL
 logger = Logger.Logger()
@@ -40,7 +41,7 @@ if pyboard:
 
 # instantiate a Jeti ex bus connection (using default parameters)
 # baudrate=125000, 8-N-1
-exbus = JetiExBus.JetiExBus()
+exbus = ExBus()
 
 # write information and debug messages (only for pyboard REPL)
 if pyboard:
