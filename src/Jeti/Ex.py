@@ -134,7 +134,7 @@ from ubinascii import hexlify, unhexlify
 import ujson
 import utime
 
-import CRC8
+from Jeti import CRC8
 from Utils.Logger import Logger
 
 # setup a logger for the REPL
@@ -154,9 +154,9 @@ class Ex:
         self.toggle_value = False
 
         # setup a logger for the REPL
-        self.logger = Logger.Logger()
+        self.logger = Logger()
 
-    def getSerialNumber(self, filename='serial_number.json'):
+    def getSerialNumber(self, filename='Sensors/serial_number.json'):
 
         with open(filename, 'r') as fp:
             serial_number = ujson.load(fp)
