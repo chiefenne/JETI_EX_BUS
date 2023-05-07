@@ -30,7 +30,11 @@ def crc16_ccitt(data : bytearray):
 
 
 if __name__ == '__main__':
-    '''Run a test on the Jeti EX bus checksum examples'''
+    '''Run a test on the Jeti EX bus checksum examples.
+    
+       The packet needs to be checked without the CRC values, i.e., the last
+       two bytes of the packet.
+    '''
 
     # example receiver (master) sends channel data (EX_Bus_protokol_v121_EN.pdf, page 6)
     packet = [0x3E, 0x03, 0x28, 0x06, 0x31, 0x20, 0x82, 0x1F, 0x82, 0x1F, 0x82,
