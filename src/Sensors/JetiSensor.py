@@ -55,12 +55,13 @@ class I2C_Sensors:
         '''Setup an I2C connection.
         Pins 25 and 26 are the default I2C pins (board dependend)
         '''
-        # self.i2c = I2C(Pin(scl), Pin(sda))
         self.logger.log('info', 'Setting up I2C')
-        self.i2c = I2C(scl=Pin('X9'), sda=Pin('X10'))
+        # self.i2c = I2C(scl=Pin('X9'), sda=Pin('X10'))
+        # use Pyboard specific I2C implementation
+        self.i2c = I2C(1)
         self.logger.log('info', 'I2C setup done')
 
-    def knownSensors(self, filename='sensors.json'):
+    def knownSensors(self, filename='Sensors/sensors.json'):
         '''Load id, address, type, etc. of known sensors from json file
         '''
         with open(filename, 'r') as fp:
