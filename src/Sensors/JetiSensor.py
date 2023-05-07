@@ -20,7 +20,7 @@ if 'pyboard' in sys.platform:
 
 import Sensors.bme280_float as bme280
 import Sensors.MS5611 as MS5611
-import Utils.Logger as Logger
+from Utils.Logger import Logger
 
 
 class I2C_Sensors:
@@ -32,7 +32,7 @@ class I2C_Sensors:
         super().__init__()
 
         # setup a logger for the REPL
-        self.logger = Logger.Logger()
+        self.logger = Logger()
 
         self.available_sensors = dict()
 

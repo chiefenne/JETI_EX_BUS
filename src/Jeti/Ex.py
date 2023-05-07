@@ -5,7 +5,7 @@ and from the Jeti receiver.
 
 The EX protocol is used in two ways:
   - In older Jeti devices at lower communication speed (9600-9800 baud)
-  - As part of the newer "EX Bus" protocol (125 or 250kbaud).
+  - As part of the newer "EX Bus" protocol (125 or 250kbaud)
 
 In both cases it carries the telemetry data (data, text, message, alarms).
 
@@ -135,10 +135,10 @@ import ujson
 import utime
 
 import CRC8
-import Utils.Logger as Logger
+from Utils.Logger import Logger
 
 # setup a logger for the REPL
-logger = Logger.Logger()
+logger = Logger()
 
 
 class Ex:

@@ -26,13 +26,13 @@ if 'pyboard' in sys.platform:
     import pyb
     pyboard = True
 
-from Jeti.Protocols.ExBus import ExBus
-import Sensors.JetiSensor as JetiSensor
-import Utils.Logger as Logger
+from Jeti.ExBus import ExBus
+from Sensors.JetiSensor import I2C_Sensors
+from Utils.Logger import Logger
 
 
 # setup a logger for the REPL
-logger = Logger.Logger()
+logger = Logger()
 
 # switch on blue led to show we are active (only for pyboard)
 if pyboard:
@@ -63,7 +63,7 @@ if pyboard:
 # exbus.checkSpeed()
 
 # collect sensors attached via I2C
-i2c_sensors = JetiSensor.I2C_Sensors()
+i2c_sensors = I2C_Sensors()
 
 # transfer sensor meta data
 exbus.Sensors(i2c_sensors)

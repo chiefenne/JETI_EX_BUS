@@ -34,7 +34,7 @@ Ex Bus protocol description:
          - byte 5 (0x3A) states that this is a telemetry request
 
 2) Packet (9 bytes) with the JetiBox request sent by the receiver (master)
-   There is only little difference to the telemerty request:
+   There is only little difference to the telemetry request:
 
     Byte | Length |     Data     |  Description
    ------|--------|--------------|----------------------------------------
@@ -55,8 +55,8 @@ from ubinascii import hexlify, unhexlify
 import utime
 
 import CRC16
-import Utils.Logger as Logger
-import Streamrecorder
+from Utils.Logger import Logger
+import Utils.Streamrecorder
 from Ex import Ex
 
 
@@ -88,7 +88,7 @@ class ExBus:
         self.get_new_sensor = False
 
         # setup a logger for the REPL
-        self.logger = Logger.Logger()
+        self.logger = Logger()
 
     def connect(self):
         '''Setup the serial conection via UART
@@ -121,7 +121,7 @@ class ExBus:
             if self.serial.any() == 0:
                 continue
 
-            # check for (channel, telemetry or JetiBox)
+            # check for channel data, telemetry or JetiBox
             characters = self.serial.read(8)
             self.exbus.extend(characters)
 
@@ -140,7 +140,7 @@ class ExBus:
             # endless loop continues here
     
     def checkTelemetryRequest(self):
-        '''Check if a telemetry request was sent by the master (receiver)
+        '''Check if a telemetry request was sent by the receiver (master)
         '''
 
         telemetry_request = self.exbus[0:2] == b'=\x01' and \
@@ -156,7 +156,7 @@ class ExBus:
         return False
 
     def checkJetiBoxRequest(self):
-        '''Check if a JetiBox menu request was sent by the master (receiver)
+        '''Check if a JetiBox menu request was sent by the receiver (master)
         '''
         jetibox_request = self.exbus[0:2] == b'=\x01' and \
                           self.exbus[4:5] == b';'
@@ -171,7 +171,7 @@ class ExBus:
         return False
 
     def checkChannelData(self):
-        '''Check if channel data were sent by the master (receiver)
+        '''Check if channel data were sent by the receiver (master)
         '''
         channels_available = self.exbus[0:2] == b'>\x03' and \
                              self.exbus[4:5] == b'1'
@@ -191,7 +191,7 @@ class ExBus:
         return False
 
     def sendTelemetry(self, packet_ID):
-        '''Send telemetry data back to the receiver. Each call of this function
+        '''Send telemetry data back to the receiver (master). Each call of this function
         sends data from the next sensor or data type in the queue.
         '''
 
