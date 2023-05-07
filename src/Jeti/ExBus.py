@@ -54,10 +54,10 @@ from machine import UART
 from ubinascii import hexlify, unhexlify
 import utime
 
-import CRC16
+from Jeti import CRC16
 from Utils.Logger import Logger
 from Utils.Streamrecorder import saveStream
-from Ex import Ex
+from Jeti.Ex import Ex
 
 
 class ExBus:
@@ -135,24 +135,32 @@ class ExBus:
 
             # read one byte from the serial stream (c is then of type bytes)
             c = self.serial.read(1)
+            if c == None:
+                continue
+            cx = hexlify(bytes(c)).decode()
+            print('c: ', c)
+            print('cx: ', cx)
+            print('type(c): ', type(c))
 
             if state == STATE_HEADER_1:
 
                 # check for EX bus header 1
-                if c in [bytes.fromhex('3e'), bytes.fromhex('3d')]:
-                    self.exbusBuffer = bytearray()
-                    self.exbusBuffer.extend(c)
+                if cx in ['3e', '3d']:
+                    self.exbusBuffer = list()
+                    print('cx in STATE_HEADER_1: ', cx)
+                    self.exbusBuffer.extend(cx)
                     
                     # change state
                     state = STATE_HEADER_2
 
             elif state == STATE_HEADER_2:
                 # check for EX bus header 2
-                if c in [bytes.fromhex('01'), bytes.fromhex('03')]:
-                    self.exbusBuffer.extend(c)
+                if cx in ['01', '03']:
+                    print('cx in STATE_HEADER_2: ', cx)
+                    self.exbusBuffer.extend(cx)
 
                     # check if telemetry or Jetibox request to allow answer
-                    if self.exbusBuffer[0:2] == bytes.fromhex('3d01'):
+                    if self.exbusBuffer[0:4] == unhexlify('3d01'):
                         self.bus_allows_answer = True
                     else:
                         self.bus_allows_answer = False
@@ -166,10 +174,18 @@ class ExBus:
 
             elif state == STATE_LENGTH:
                 # check for EX bus packet length
-                self.exbusBuffer.extend(c)
+                print('cx in STATE_LENGTH: ', cx)
+                print('type(cx) in STATE_LENGTH: ', type(cx))
+                self.exbusBuffer.extend(cx)
+
+                print('len(self.exbusBuffer): ', len(self.exbusBuffer))
+                print('self.exbusBuffer[0]: ', self.exbusBuffer[0])
+                print('self.exbusBuffer[1]: ', self.exbusBuffer[1])
+                print('self.exbusBuffer[2]: ', self.exbusBuffer[2])
+                print('type(self.exbusBuffer[2])', type(self.exbusBuffer[2]))
 
                 # packet length (including header and CRC)
-                self.packet_length = int(self.exbusBuffer[2], 16)
+                self.packet_length = int(hexlify(self.exbusBuffer[2]), 16)
 
                 # check if packet length is valid
                 # 6 bytes header + max. 24*2 bytes data + 2 bytes CRC
@@ -186,7 +202,8 @@ class ExBus:
             elif state == STATE_END:
                 # check for rest of EX bus packet
                 # ID, data identifier, data, CRC
-                self.exbusBuffer.extend(c)
+                print('cx in STATE_END: ', cx)
+                self.exbusBuffer.extend(cx)
 
                 # check if packet is complete
                 if len(self.exbusBuffer) == self.packet_length:
@@ -195,21 +212,21 @@ class ExBus:
                         # packet is complete and CRC is correct
                         
                         # check for channel data
-                        if self.exbusBuffer[0] == bytes.fromhex('3e') and \
-                           self.exbusBuffer[4] == bytes.fromhex('31'):
+                        if self.exbusBuffer[0] == unhexlify('3e') and \
+                           self.exbusBuffer[4] == unhexlify('31'):
                             # get the channel data
                             self.getChannelData()
 
                         # check for telemetry request
-                        elif self.exbusBuffer[0] == bytes.fromhex('3d') and \
-                             self.exbusBuffer[4] == bytes.fromhex('3a'):
+                        elif self.exbusBuffer[0] == unhexlify('3d') and \
+                             self.exbusBuffer[4] == unhexlify('3a'):
                             # send telemetry data
                             packet_id = self.exbusBuffer[3]
                             self.sendTelemetry(packet_id)
 
                         # check for JetiBox request
-                        elif self.exbusBuffer[0] == bytes.fromhex('3d') and \
-                             self.exbusBuffer[4] == bytes.fromhex('3b'):
+                        elif self.exbusBuffer[0] == unhexlify('3d') and \
+                             self.exbusBuffer[4] == unhexlify('3b'):
                             # send JetiBox menu data
                             self.sendJetiBoxMenu()
 
