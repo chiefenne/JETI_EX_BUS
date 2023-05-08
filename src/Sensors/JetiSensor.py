@@ -32,7 +32,7 @@ class I2C_Sensors:
         super().__init__()
 
         # setup a logger for the REPL
-        self.logger = Logger()
+        self.logger = Logger(prestring='JETI SENSOR')
 
         self.available_sensors = dict()
 
@@ -43,7 +43,10 @@ class I2C_Sensors:
         if pyboard:
             self.setupI2C(1, 'X9', 'X10')
         else:
-            self.setupI2C(1, 25, 26)
+            # TINY2040 GPIO6, GPIO7
+            sda = Pin(6)
+            scl = Pin(7)
+            self.setupI2C(1, scl, sda, freq=400000)
 
         # get all attached sensors
         self.scanI2C()
@@ -51,14 +54,14 @@ class I2C_Sensors:
         # arm sensors
         self.armSensors()
 
-    def setupI2C(self, id, scl, sda, freq=400000):
+    def setupI2C(self, id, scl, sda, freq=100000):
         '''Setup an I2C connection.
         Pins 25 and 26 are the default I2C pins (board dependend)
         '''
         self.logger.log('info', 'Setting up I2C')
-        # self.i2c = I2C(scl=Pin('X9'), sda=Pin('X10'))
-        # use Pyboard specific I2C implementation
-        self.i2c = I2C(1)
+
+        self.i2c = I2C(id, scl=scl, sda=sda, freq=freq)
+        self.logger.log('info', 'Settings: {}'.format(self.i2c))
         self.logger.log('info', 'I2C setup done')
 
     def knownSensors(self, filename='Sensors/sensors.json'):
