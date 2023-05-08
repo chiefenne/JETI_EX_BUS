@@ -175,9 +175,9 @@ class ExBus:
                 self.exbusBuffer.append(cx)
 
                 # packet length (including header and CRC)
-                print('Packet length', self.exbusBuffer[2])
                 print(self.exbusBuffer)
-                self.packet_length = int(self.exbusBuffer[2])
+                self.packet_length = int(self.exbusBuffer[2], 16)
+                print('Packet length', self.packet_length)
 
                 # check if packet length is valid
                 # 6 bytes header + max. 24*2 bytes data + 2 bytes CRC
@@ -199,7 +199,6 @@ class ExBus:
                 # check if packet is complete
                 if len(self.exbusBuffer) == self.packet_length:
                     
-                    print('self.packet_length', self.packet_length)
                     print('self.exbusBuffer', self.exbusBuffer)
                     
                     frame = [int(b, 16) for b in self.exbusBuffer]
