@@ -29,13 +29,9 @@ if 'pyboard' in sys.platform:
     print('We are on a pyboard')
 else:
     print('We are on a {}'.format(sys.platform))
+    print(sys.implementation)
 
 from ubinascii import hexlify, unhexlify
 
 # main script to run after this one
 # if not specified "main.py" will be executed
-# pyb.main('irgendwas.py')
-
-# run pyboard in different modes
-# pyb.usb_mode('CDC+MSC') # act as a serial and a storage device
-# pyb.usb_mode('CDC+HID') # act as a serial device and a mouse
