@@ -135,20 +135,19 @@ class ExBus:
 
             # read one byte from the serial stream (c is then of type bytes)
             c = self.serial.read(1)
+            
+            # check if something was read from the bus
             if c == None:
                 continue
             cx = hexlify(bytes(c)).decode()
-            print('c: ', c)
-            print('cx: ', cx)
-            print('type(c): ', type(c))
+            # print('c, cx', c, type(c), cx, type(cx))
 
             if state == STATE_HEADER_1:
 
                 # check for EX bus header 1
                 if cx in ['3e', '3d']:
                     self.exbusBuffer = list()
-                    print('cx in STATE_HEADER_1: ', cx)
-                    self.exbusBuffer.extend(cx)
+                    self.exbusBuffer.append(cx)
                     
                     # change state
                     state = STATE_HEADER_2
@@ -156,8 +155,7 @@ class ExBus:
             elif state == STATE_HEADER_2:
                 # check for EX bus header 2
                 if cx in ['01', '03']:
-                    print('cx in STATE_HEADER_2: ', cx)
-                    self.exbusBuffer.extend(cx)
+                    self.exbusBuffer.append(cx)
 
                     # check if telemetry or Jetibox request to allow answer
                     if self.exbusBuffer[0:4] == unhexlify('3d01'):
@@ -174,18 +172,12 @@ class ExBus:
 
             elif state == STATE_LENGTH:
                 # check for EX bus packet length
-                print('cx in STATE_LENGTH: ', cx)
-                print('type(cx) in STATE_LENGTH: ', type(cx))
-                self.exbusBuffer.extend(cx)
-
-                print('len(self.exbusBuffer): ', len(self.exbusBuffer))
-                print('self.exbusBuffer[0]: ', self.exbusBuffer[0])
-                print('self.exbusBuffer[1]: ', self.exbusBuffer[1])
-                print('self.exbusBuffer[2]: ', self.exbusBuffer[2])
-                print('type(self.exbusBuffer[2])', type(self.exbusBuffer[2]))
+                self.exbusBuffer.append(cx)
 
                 # packet length (including header and CRC)
-                self.packet_length = int(hexlify(self.exbusBuffer[2]), 16)
+                print('Packet length', self.exbusBuffer[2])
+                print(self.exbusBuffer)
+                self.packet_length = int(self.exbusBuffer[2])
 
                 # check if packet length is valid
                 # 6 bytes header + max. 24*2 bytes data + 2 bytes CRC
@@ -202,14 +194,21 @@ class ExBus:
             elif state == STATE_END:
                 # check for rest of EX bus packet
                 # ID, data identifier, data, CRC
-                print('cx in STATE_END: ', cx)
-                self.exbusBuffer.extend(cx)
+                self.exbusBuffer.append(cx)
 
                 # check if packet is complete
                 if len(self.exbusBuffer) == self.packet_length:
+                    
+                    print('self.packet_length', self.packet_length)
+                    print('self.exbusBuffer', self.exbusBuffer)
+                    
+                    frame = [int(b, 16) for b in self.exbusBuffer]
+                    print('frame', frame)
+                    
                     # check CRC
-                    if self.checkCRC(self.exbusBuffer):
+                    if self.checkCRC(frame):
                         # packet is complete and CRC is correct
+                        print('Confirmed a good frame')
                         
                         # check for channel data
                         if self.exbusBuffer[0] == unhexlify('3e') and \
@@ -422,8 +421,14 @@ class ExBus:
 
         # the last 2 bytes of the message makeup the crc value for the packet
         crc_check = packet[-2:]
-
-        return crc == crc_check
+        
+        print('crc', crc)
+        print('crc_check', crc_check)
+        
+        if crc == crc_check:
+            return True
+        else:
+            return False
 
     def debug(self):
         # write 1 second of the serial stream to a text file on the SD card
