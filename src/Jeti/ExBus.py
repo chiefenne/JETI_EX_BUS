@@ -113,6 +113,9 @@ class ExBus:
           3) Channel data (current status of the transmitter)
         '''
 
+        # log the start of the main loop
+        self.logger.log('info', 'Starting EX Bus main loop')
+
         # define states of the EX bus protocol
         #
         # header 1 is expected
@@ -209,6 +212,9 @@ class ExBus:
     
                         # NOTE: accessing the bytearray needs slicing in order
                         #       to return a byte and not an integer
+                        #       self.exbusBuffer[0] returns an integer
+                        #       self.exbusBuffer[0:1] returns a byte
+                        #       this way no conversion is needed
 
                         # check for channel data
                         if self.exbusBuffer[0:1] == b'\x3e' and \
