@@ -16,22 +16,14 @@
 
 import usys as sys
 from os import listdir as ls
-print (' ')
-print ('Imported os and os.listdir as ls')
-print ('You can use now ls() to list directory contents.')
-print (' ')
+# print (' ')
+# print ('INFO (boot.py): Imported os and os.listdir as ls')
+# print ('INFO (boot.py): You can use now ls() to list directory contents.')
+# print (' ')
 
-# check if we are on a Pyboard
-pyboard = False
-if 'pyboard' in sys.platform:
-    import pyb
-    pyboard = True
-    print('We are on a pyboard')
-else:
-    print('We are on a {}'.format(sys.platform))
-    print(sys.implementation)
-
-from ubinascii import hexlify, unhexlify
+# check platform
+print('INFO (boot.py): Microcontroller platform --> {}'.format(sys.platform))
+print(sys.implementation)
 
 # main script to run after this one
 # if not specified "main.py" will be executed
