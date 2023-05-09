@@ -206,29 +206,31 @@ class ExBus:
                     # check CRC
                     if self.checkCRC(self.exbusBuffer):
                         # packet is complete and CRC is correct
-                        # print('Confirmed a good frame')
-                        
+    
+                        # NOTE: accessing the bytearray needs slicing in order
+                        #       to return a byte and not an integer
+
                         # check for channel data
-                        if self.exbusBuffer[0] == b'\x3e' and \
-                           self.exbusBuffer[4] == b'\x31':
+                        if self.exbusBuffer[0:1] == b'\x3e' and \
+                           self.exbusBuffer[4:5] == b'\x31':
                             print('Receiving channel data')
                             # get the channel data
-                            self.getChannelData()
+                            # self.getChannelData()
 
                         # check for telemetry request
-                        elif self.exbusBuffer[0] == b'\x3d' and \
-                             self.exbusBuffer[4] == b'\x3a':
+                        elif self.exbusBuffer[0:1] == b'\x3d' and \
+                             self.exbusBuffer[4:5] == b'\x3a':
                             print('Need to send telemetry')
                             # send telemetry data
-                            packet_id = self.exbusBuffer[3]
-                            self.sendTelemetry(packet_id)
+                            packet_id = self.exbusBuffer[3:4]
+                            # self.sendTelemetry(packet_id)
 
                         # check for JetiBox request
-                        elif self.exbusBuffer[0] == b'\x3d' and \
-                             self.exbusBuffer[4] == b'\x3b':
+                        elif self.exbusBuffer[0:1] == b'\x3d' and \
+                             self.exbusBuffer[4:5] == b'\x3b':
                             print('Need to send JETIBOX')
                             # send JetiBox menu data
-                            self.sendJetiBoxMenu()
+                            # self.sendJetiBoxMenu()
 
                     # reset state
                     state = STATE_HEADER_1
