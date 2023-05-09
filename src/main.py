@@ -68,5 +68,4 @@ i2c_sensors = I2C_Sensors()
 # exbus.Sensors(i2c_sensors)
 
 # run JETI Ex Bus
-logger.log('info', 'Starting endless loop')
 exbus.run_forever()
