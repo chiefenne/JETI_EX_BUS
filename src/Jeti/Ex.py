@@ -137,9 +137,6 @@ import utime
 from Jeti import CRC8
 from Utils.Logger import Logger
 
-# setup a logger for the REPL
-logger = Logger()
-
 
 class Ex:
     '''Jeti EX protocol implementation. 
