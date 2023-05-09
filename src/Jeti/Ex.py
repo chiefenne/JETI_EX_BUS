@@ -154,7 +154,7 @@ class Ex:
         self.toggle_value = False
 
         # setup a logger for the REPL
-        self.logger = Logger()
+        self.logger = Logger(prestring='JETI EX')
 
     def getSerialNumber(self, filename='Sensors/serial_number.json'):
 
