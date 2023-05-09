@@ -32,7 +32,7 @@ from Utils.Logger import Logger
 
 
 # setup a logger for the REPL
-logger = Logger()
+logger = Logger(prestring='JETI MAIN')
 
 # switch on blue led to show we are active (only for pyboard)
 if pyboard:
