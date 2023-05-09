@@ -23,7 +23,9 @@ from os import listdir as ls
 
 # check platform
 print('INFO (boot.py): Microcontroller platform --> {}'.format(sys.platform))
-print(sys.implementation)
+si = sys.implementation
+print('INFO (boot.py): Operating system         --> ', si.name.upper(),
+      'v' + '.'.join([str(i) for i in si.version]))
 
 # main script to run after this one
 # if not specified "main.py" will be executed
