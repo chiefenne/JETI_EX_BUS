@@ -112,6 +112,8 @@ class ExBus:
           2) JetiBox request (modify parameters)
           3) Channel data (current status of the transmitter)
         '''
+        print('info', 'begin of run_forever')
+        self.logger('info', 'begin og run_forever')
 
         # define states of the EX bus protocol
         #
@@ -124,41 +126,49 @@ class ExBus:
         # packet end
         STATE_END = 3
 
-        # current state
+        # initial state
         state = STATE_HEADER_1
 
         # wait until the serial stream is available
         while not self.serial.any():
-            utime.sleep_ms(1)
+            utime.sleep_ms(10)
+        
+        self.logger('info', 'later in run_forever')
 
         while True:
 
-            # read one byte from the serial stream (c is then of type bytes)
+            # read one byte from the serial stream
             c = self.serial.read(1)
             
             # check if something was read from the bus
             if c == None:
                 continue
-            cx = hexlify(bytes(c)).decode()
-            # print('c, cx', c, type(c), cx, type(cx))
 
             if state == STATE_HEADER_1:
 
+                print('header 1 found', c)
+
                 # check for EX bus header 1
-                if cx in ['3e', '3d']:
-                    self.exbusBuffer = list()
-                    self.exbusBuffer.append(cx)
+                if c in [b'0x3e',  b'0x3d']:
+                    print('header 1 found', c)
+
+                    # initialize the buffer
+                    self.exbusBuffer = bytearray()
+
+                    # add the first byte to the buffer
+                    self.exbusBuffer.append(c)
                     
                     # change state
                     state = STATE_HEADER_2
 
             elif state == STATE_HEADER_2:
                 # check for EX bus header 2
-                if cx in ['01', '03']:
-                    self.exbusBuffer.append(cx)
+                if c in [b'0x01', b'0x03']:
+                    self.exbusBuffer.append(c)
 
                     # check if telemetry or Jetibox request to allow answer
-                    if self.exbusBuffer[0:4] == unhexlify('3d01'):
+                    if self.exbusBuffer[0] == 0x3d and \
+                       self.exbusBuffer[1] == 0x01:
                         self.bus_allows_answer = True
                     else:
                         self.bus_allows_answer = False
@@ -172,19 +182,18 @@ class ExBus:
 
             elif state == STATE_LENGTH:
                 # check for EX bus packet length
-                self.exbusBuffer.append(cx)
+                self.exbusBuffer.append(c)
 
                 # packet length (including header and CRC)
-                print(self.exbusBuffer)
                 self.packet_length = int(self.exbusBuffer[2], 16)
                 print('Packet length', self.packet_length)
 
                 # check if packet length is valid
                 # 6 bytes header + max. 24*2 bytes data + 2 bytes CRC
                 # FIXME:
-                # FIXME: check if this is correct
+                # FIXME: check if above is correct
                 # FIXME:
-                if self.packet_length > 56:
+                if self.packet_length > 64:
                     # reset state
                     state = STATE_HEADER_1
 
@@ -194,7 +203,7 @@ class ExBus:
             elif state == STATE_END:
                 # check for rest of EX bus packet
                 # ID, data identifier, data, CRC
-                self.exbusBuffer.append(cx)
+                self.exbusBuffer.append(c)
 
                 # check if packet is complete
                 if len(self.exbusBuffer) == self.packet_length:
