@@ -15,17 +15,36 @@
 # use it later in your program using os.mount).
 
 import usys as sys
-from os import listdir as ls
-# print (' ')
-# print ('INFO (boot.py): Imported os and os.listdir as ls')
-# print ('INFO (boot.py): You can use now ls() to list directory contents.')
-# print (' ')
+from machine import Pin
+import utime as time
 
 # check platform
-print('INFO (boot.py): Microcontroller platform --> {}'.format(sys.platform))
-si = sys.implementation
-print('INFO (boot.py): Operating system         --> ', si.name.upper(),
-      'v' + '.'.join([str(i) for i in si.version]))
+print('INFO (boot.py): Platform          --> ', sys.platform)
+print('INFO (boot.py): Operating system  --> ', sys.version)
+
+# switch off leds on TINY 2040 (they are on by default)
+if 'rp2' in sys.platform:
+    ledr = Pin(18, Pin.OUT)
+    ledg = Pin(19, Pin.OUT)
+    ledb = Pin(20, Pin.OUT)
+    ledr.value(1)
+    ledg.value(1)
+    ledb.value(1)
+
+    # blink red led s seconds with hz Hz
+    def blink(led, s, hz):
+        for i in range(s*hz):
+            led.toggle()
+            time.sleep(1/hz)
+        
+        # mak sure red is off
+        ledr.value(1)
+
+    # blink red led to show we are booting
+    blink(ledr, 1, 10)
+
+    # switch on green led to show we are active
+    ledg.value(0)
 
 # main script to run after this one
 # if not specified "main.py" will be executed
