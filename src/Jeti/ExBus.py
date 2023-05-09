@@ -244,7 +244,7 @@ class ExBus:
     def getChannelData(self):
         self.channel = dict()
         
-        num_channels = int.from_bytes(self.exbusBuffer[5:6], 'little') / 2
+        num_channels = int.from_bytes(self.exbusBuffer[5:6], 'little') // 2
         self.logger.log('info', 'Number of channels: ' + str(num_channels))
 
         for i in range(num_channels):
