@@ -87,7 +87,8 @@ class ExBus:
         self.get_new_sensor = False
 
         # setup a logger for the REPL
-        self.logger = Logger(prestring='JETI EXBUS'
+        self.logger = Logger(prestring='JETI EXBUS')
+
     def connect(self):
         '''Setup the serial conection via UART
         JETI uses 125kbaud or 250kbaud. The speed is prescribed by the
@@ -242,11 +243,17 @@ class ExBus:
 
     def getChannelData(self):
         self.channel = dict()
-        num_channels = self.exbusBuffer[5:6] / 2
+        
+        num_channels = int.from_bytes(self.exbusBuffer[5:6], 'little') / 2
+        self.logger.log('info', 'Number of channels: ' + str(num_channels))
+
         for i in range(num_channels):
-            self.channel[i] = self.exbusBuffer[7 + i * 2] + \
-                              self.exbusBuffer[6 + i * 2]
-            self.logger.log('info', 'Channel: ' + str(i) + ' Value: ' + str(self.channel[i]))
+            self.channel[i] = self.exbusBuffer[6 + i*2 : 7 + i*2] + \
+                              self.exbusBuffer[7 + i*2 : 8 + i*2]
+            self.logger.log('info',
+                'Channel: ' + str(i+1) + 
+                ' Value: ' + str(int.from_bytes(self.channel[i], 'little') / 8000)
+                           + ' ms')
     
     def sendTelemetry(self, packet_ID):
         '''Send telemetry data back to the receiver (master). Each call of this function
