@@ -8,7 +8,7 @@ code via the REPL
 
 class Logger:
 
-    def __init__(self, prestring='JETI EX BUS'):
+    def __init__(self, prestring='JETI EXBUS'):
         self.default_prestring = prestring
         self.prestring = prestring
 
