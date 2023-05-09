@@ -44,13 +44,12 @@ if pyboard:
 exbus = ExBus(port=0)
 
 # write information and debug messages (only for pyboard REPL)
-if pyboard:
-    message = 'EX Bus to run on {} at port {}'.format(sys.platform,
+message = 'EX Bus to run on {} at port {}'.format(sys.platform,
                                                        exbus.port)
-    logger.log('info', message)
-    message = 'Parameters for serial connection at port {}: {}-{}-{}-{}'.format(exbus.port,
-                exbus.baudrate, exbus.bits, exbus.parity, exbus.stop)
-    logger.log('info', message)
+logger.log('info', message)
+message = 'Parameters for serial connection at port {}: {}-{}-{}-{}'.format(exbus.port,
+        exbus.baudrate, exbus.bits, exbus.parity, exbus.stop)
+logger.log('info', message)
 
 # establish the serial connection
 exbus.connect()
@@ -66,7 +65,8 @@ if pyboard:
 i2c_sensors = I2C_Sensors()
 
 # transfer sensor meta data
-exbus.Sensors(i2c_sensors)
+# exbus.Sensors(i2c_sensors)
 
 # run JETI Ex Bus
+logger.log('info', 'Starting endless loop')
 exbus.run_forever()
