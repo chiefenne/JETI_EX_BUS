@@ -112,8 +112,6 @@ class ExBus:
           2) JetiBox request (modify parameters)
           3) Channel data (current status of the transmitter)
         '''
-        print('info', 'begin of run_forever')
-        self.logger('info', 'begin og run_forever')
 
         # define states of the EX bus protocol
         #
@@ -133,8 +131,6 @@ class ExBus:
         while not self.serial.any():
             utime.sleep_ms(10)
         
-        self.logger('info', 'later in run_forever')
-
         while True:
 
             # read one byte from the serial stream
@@ -146,25 +142,22 @@ class ExBus:
 
             if state == STATE_HEADER_1:
 
-                print('header 1 found', c)
-
                 # check for EX bus header 1
-                if c in [b'0x3e',  b'0x3d']:
-                    print('header 1 found', c)
+                if c in [b'\x3e',  b'\x3d']:
 
                     # initialize the buffer
                     self.exbusBuffer = bytearray()
 
                     # add the first byte to the buffer
-                    self.exbusBuffer.append(c)
+                    self.exbusBuffer += bytearray(c)
                     
                     # change state
                     state = STATE_HEADER_2
 
             elif state == STATE_HEADER_2:
                 # check for EX bus header 2
-                if c in [b'0x01', b'0x03']:
-                    self.exbusBuffer.append(c)
+                if c in [b'\x01', b'\x03']:
+                    self.exbusBuffer += bytearray(c)
 
                     # check if telemetry or Jetibox request to allow answer
                     if self.exbusBuffer[0] == 0x3d and \
@@ -182,11 +175,11 @@ class ExBus:
 
             elif state == STATE_LENGTH:
                 # check for EX bus packet length
-                self.exbusBuffer.append(c)
+                self.exbusBuffer += bytearray(c)
 
                 # packet length (including header and CRC)
-                self.packet_length = int(self.exbusBuffer[2], 16)
-                print('Packet length', self.packet_length)
+                self.packet_length = self.exbusBuffer[2]
+                # print('Packet length', self.packet_length)
 
                 # check if packet length is valid
                 # 6 bytes header + max. 24*2 bytes data + 2 bytes CRC
@@ -203,37 +196,37 @@ class ExBus:
             elif state == STATE_END:
                 # check for rest of EX bus packet
                 # ID, data identifier, data, CRC
-                self.exbusBuffer.append(c)
+                self.exbusBuffer += bytearray(c)
 
                 # check if packet is complete
                 if len(self.exbusBuffer) == self.packet_length:
                     
-                    print('self.exbusBuffer', self.exbusBuffer)
-                    
-                    frame = [int(b, 16) for b in self.exbusBuffer]
-                    print('frame', frame)
+                    # print('self.exbusBuffer', self.exbusBuffer)
                     
                     # check CRC
-                    if self.checkCRC(frame):
+                    if self.checkCRC(self.exbusBuffer):
                         # packet is complete and CRC is correct
-                        print('Confirmed a good frame')
+                        # print('Confirmed a good frame')
                         
                         # check for channel data
-                        if self.exbusBuffer[0] == unhexlify('3e') and \
-                           self.exbusBuffer[4] == unhexlify('31'):
+                        if self.exbusBuffer[0] == b'\x3e' and \
+                           self.exbusBuffer[4] == b'\x31':
+                            print('Receiving channel data')
                             # get the channel data
                             self.getChannelData()
 
                         # check for telemetry request
-                        elif self.exbusBuffer[0] == unhexlify('3d') and \
-                             self.exbusBuffer[4] == unhexlify('3a'):
+                        elif self.exbusBuffer[0] == b'\x3d' and \
+                             self.exbusBuffer[4] == b'\x3a':
+                            print('Need to send telemetry')
                             # send telemetry data
                             packet_id = self.exbusBuffer[3]
                             self.sendTelemetry(packet_id)
 
                         # check for JetiBox request
-                        elif self.exbusBuffer[0] == unhexlify('3d') and \
-                             self.exbusBuffer[4] == unhexlify('3b'):
+                        elif self.exbusBuffer[0] == b'\x3d' and \
+                             self.exbusBuffer[4] == b'\x3b':
+                            print('Need to send JETIBOX')
                             # send JetiBox menu data
                             self.sendJetiBoxMenu()
 
@@ -424,14 +417,14 @@ class ExBus:
         # packet to check is message without last 2 bytes
         crc = CRC16.crc16_ccitt(packet[:-2])
 
+        # the last 2 bytes of the message makeup the crc value for the packet
+        crc_check = hexlify(packet[-2:]).decode()
+
         # swap bytes in 2 byte crc value (LSB and MSB)
         crc = crc[2:4] + crc[0:2]
-
-        # the last 2 bytes of the message makeup the crc value for the packet
-        crc_check = packet[-2:]
         
-        print('crc', crc)
-        print('crc_check', crc_check)
+        # print('crc', crc)
+        # print('crc_check', crc_check)
         
         if crc == crc_check:
             return True
