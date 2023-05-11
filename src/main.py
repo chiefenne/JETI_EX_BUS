@@ -41,6 +41,6 @@ serial.connect()
 # collect sensors attached to the microcontroller via I2C
 sensors = Sensors()
 
-# run JETI Ex Bus
+# run JETI Ex Bus protocol and handle all data streams
 exbus = ExBus(serial, sensors)
 exbus.run_forever()
