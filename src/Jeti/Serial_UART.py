@@ -11,6 +11,7 @@ Date: 05-2023
 from machine import UART
 from Utils.Logger import Logger
 
+
 class Serial:
 
     def __init__(self, port=0,
@@ -31,6 +32,7 @@ class Serial:
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI SERIAL')
 
+        # instantiate UART connection
         self.uart = UART(port, baudrate, bits, parity, stop, timeout)
     
     def connect(self):
@@ -38,6 +40,7 @@ class Serial:
         '''
         self.uart.init(self.baudrate, self.bits, self.parity, self.stop, self.timeout)
         self.logger.log('info', 'Serial connection established')
+        self.logger.log('info', 'Settings: {}'.format(self.uart))
 
     def disconnect(self):
         '''Close the serial connection.
