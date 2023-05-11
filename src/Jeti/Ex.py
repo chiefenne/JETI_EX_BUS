@@ -72,6 +72,7 @@ carries data with this Jeti EX protocol.
 
   Message class semantics:
     Message class  |   Description
+   ----------------|----------------------------------------------------
            0       | Basic informative message (really unimportant messages)
            1       | Status message (device ready, motors armed, GPS position fix etc.)
            2       | Warning (alarm, high vibrations, preflight conditions check, …)
@@ -115,13 +116,13 @@ position of the decimal point (2 bits).
 
 Example for int14_t (needs 2 bytes = 16 bits). 3 bits are needed for sign and
 decimal position, so 13 bits are left for the value (2^13 = 8192). This means
-together with the sign and zero the data range is fomr -8191 to 8191.
+together with the sign and zero the data range is from -8191 to 8191.
 
     Telemetry:
         value = 115.3
     Convert scaled value to hex:
         hex(1153) --> '0x481'
-    Convert sign (0 = +) and decimal point position (01):
+    Convert sign (0 for +, 1 for -) and decimal point position (01):
         hex(001) --> '0x1'
     Combine results:
         '0x1481'

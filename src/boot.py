@@ -1,26 +1,25 @@
 # boot.py -- run on boot-up
-# this script is executed when the pyboard boots up. It sets
-# up various configuration options for the pyboard.
+# this script is executed when the microcontroller boots up. It sets
+# up various configuration options for the board.
 # can run arbitrary Python, but best to keep it minimal
 
-# IMPORTANT:
-# When the pyboard boots up, it needs to choose a filesystem to boot from.
-# If there is no SD card, then it uses the internal filesystem /flash as the boot filesystem,
-# otherwise, it uses the SD card /sd.
-# After the boot, the current directory is set to one of the directories above.
-# If needed, you can prevent the use of the SD card by creating an empty file called /flash/SKIPSD.
-# If this file exists when the pyboard boots up then the SD card will be skipped and
-# the pyboard will always boot from the internal filesystem
-# (in this case the SD card won’t be mounted but you can still mount and
-# use it later in your program using os.mount).
 
 import usys as sys
 from machine import Pin
 import utime as time
 
+
 # check platform
 print('INFO (boot.py): Platform          --> ', sys.platform)
 print('INFO (boot.py): Operating system  --> ', sys.version)
+print('INFO (boot.py): Vendor            --> ', sys.implementation._machine)
+
+
+# check if we are on a Pyboard (initially main development platform)
+if 'pyboard' in sys.platform:
+    import pyb
+    blue = pyb.LED(4)
+    blue.on()
 
 # switch off leds on TINY 2040 (they are on by default)
 if 'rp2' in sys.platform:
@@ -41,10 +40,12 @@ if 'rp2' in sys.platform:
         ledr.value(1)
 
     # blink red led to show we are booting
-    blink(ledr, 1, 10)
+    blink(ledr, 2, 10)
 
     # switch on green led to show we are active
     ledg.value(0)
+
+
 
 # main script to run after this one
 # if not specified "main.py" will be executed

@@ -19,53 +19,28 @@ Date: 04-2021
 import usys as sys
 import uos as os
 
-
-# check if we are on a Pyboard (main development platform for this code)
-pyboard = False
-if 'pyboard' in sys.platform:
-    import pyb
-    pyboard = True
-
+from Jeti.Serial_UART import Serial
 from Jeti.ExBus import ExBus
-from Sensors.JetiSensor import I2C_Sensors
+from Sensors.Sensor import Sensors
 from Utils.Logger import Logger
 
 
 # setup a logger for the REPL
 logger = Logger(prestring='JETI MAIN')
 
-# switch on blue led to show we are active (only for pyboard)
-if pyboard:
-    blue = pyb.LED(4)
-    blue.on()
+# print some information about the board
+logger.log('info', 'Board: {}'.format(os.uname().machine))
+logger.log('info', 'MicroPython version: {}'.format(sys.version))
+logger.log('info', 'MicroPython build: {}'.format(sys.implementation.name))
 
-# instantiate a Jeti ex bus connection (using default parameters)
+# Serial connection bewtween Jeti receiver and microcontroller
 # baudrate=125000, 8-N-1
-exbus = ExBus(port=0)
+serial = Serial()
+serial.connect()
 
-# write information and debug messages (only for pyboard REPL)
-message = 'EX Bus to run on {} at port {}'.format(sys.platform,
-                                                       exbus.port)
-logger.log('info', message)
-message = 'Parameters for serial connection at port {}: {}-{}-{}-{}'.format(exbus.port,
-        exbus.baudrate, exbus.bits, exbus.parity, exbus.stop)
-logger.log('info', message)
-
-# establish the serial connection
-exbus.connect()
-
-if pyboard:
-    message = 'Serial connection established'
-    logger.log('info', message)
-
-# check (and if needed set) the connection speed (125000 or 250000)
-# exbus.checkSpeed()
-
-# collect sensors attached via I2C
-i2c_sensors = I2C_Sensors()
-
-# transfer sensor meta data
-# exbus.Sensors(i2c_sensors)
+# collect sensors attached to the microcontroller via I2C
+sensors = Sensors()
 
 # run JETI Ex Bus
+exbus = ExBus(serial, sensors)
 exbus.run_forever()

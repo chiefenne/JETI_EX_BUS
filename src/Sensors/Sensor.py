@@ -11,19 +11,12 @@ import usys as sys
 from machine import I2C, Pin
 import ujson
 
-# check if we are on a Pyboard (main development platform for this code)
-pyboard = False
-if 'pyboard' in sys.platform:
-    import pyb
-    pyboard = True
-
-
 import Sensors.bme280_float as bme280
 import Sensors.MS5611 as MS5611
 from Utils.Logger import Logger
 
 
-class I2C_Sensors:
+class Sensors:
     '''This class represents all sensors attached via I2C
     '''
 
@@ -39,17 +32,18 @@ class I2C_Sensors:
         # load information of known sensors 
         self.knownSensors()
 
-        # setup I2C connection to sensors
-        if pyboard:
-            self.setupI2C(1, 'X9', 'X10')
-        else:
-            # TINY2040 GPIO6, GPIO7
-            sda = Pin(6)
-            scl = Pin(7)
-            self.setupI2C(1, scl, sda, freq=400000)
+        # setup I2C connection
+        # TINY2040 GPIO6, GPIO7
+        sda = Pin(6)
+        scl = Pin(7)
+        self.setupI2C(1, scl, sda, freq=400000)
 
         # get all attached sensors
         self.scanI2C()
+       
+        # number of sensors attached
+        message = 'Number of sensors attached: {}'.format(len(self.available_sensors))
+        self.logger.log('info', message)
 
         # arm sensors
         self.armSensors()
@@ -68,7 +62,7 @@ class I2C_Sensors:
         '''Load id, address, type, etc. of known sensors from json file
         '''
         with open(filename, 'r') as fp:
-	        self.known_sensors = ujson.load(fp)
+            self.known_sensors = ujson.load(fp)
 
     def scanI2C(self):
         '''Scan all I2C addresses between 0x08 and 0x77 inclusive and

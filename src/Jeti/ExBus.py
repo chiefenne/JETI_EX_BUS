@@ -50,7 +50,7 @@ Date: 04-2021
 
 # modules starting with 'u' are Python standard libraries which
 # are stripped down in MicroPython to be efficient on microcontrollers
-from machine import UART
+
 from ubinascii import hexlify, unhexlify
 import utime
 
@@ -69,38 +69,19 @@ class ExBus:
     The speed may be checked via the CRC check (see checkSpeed).
     '''
 
-    def __init__(self, baudrate=125000, bits=8, parity=None, stop=1, port=3):
-        self.serial = None
-        self.exbusBuffer = bytearray()
-
-        # Jeti ex bus protocol runs 8-N-1, speed any of 125000 or 250000
-        self.baudrate = baudrate
-        self.bits = bits
-        self.parity = parity
-        self.stop = stop
-        self.port = port
+    def __init__(self, serial, sensors):
+        self.serial = serial
+        self.sensors = sensors
 
         # instantiate the EX protocol
         self.ex = Ex()
 
+        self.exbusBuffer = bytearray()
         self.telemetry = bytearray()
         self.get_new_sensor = False
 
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI EXBUS')
-
-    def connect(self):
-        '''Setup the serial conection via UART
-        JETI uses 125kbaud or 250kbaud. The speed is prescribed by the
-        receiver (master). The speed has to be checked by the sensor (slave)
-        via the CRC check (see checkSpeed))
-        '''
-
-        self.serial = UART(self.port, self.baudrate)
-        self.serial.init(baudrate=self.baudrate,
-                         bits=self.bits,
-                         parity=self.parity,
-                         stop=self.stop)
 
     def run_forever(self):
         '''This is the main loop and will run forever. This function is called
@@ -219,17 +200,18 @@ class ExBus:
                         # check for channel data
                         if self.exbusBuffer[0:1] == b'\x3e' and \
                            self.exbusBuffer[4:5] == b'\x31':
-                            print('Receiving channel data')
                             # get the channel data
                             self.getChannelData()
 
                         # check for telemetry request
                         elif self.exbusBuffer[0:1] == b'\x3d' and \
                              self.exbusBuffer[4:5] == b'\x3a':
-                            print('Need to send telemetry')
-                            # send telemetry data
+                            
                             packet_id = self.exbusBuffer[3:4]
-                            # self.sendTelemetry(packet_id)
+                            print('Telemetry packet ID', packet_id)
+
+                            # send telemetry data
+                            self.sendTelemetry(packet_id)
 
                         # check for JetiBox request
                         elif self.exbusBuffer[0:1] == b'\x3d' and \
@@ -263,12 +245,6 @@ class ExBus:
         # compile the complete EX bus packet
         exbus_packet = self.ExBusPacket(packet_ID)
 
-        # FIXME        
-        # FIXME check for uneven number and if it matters at all        
-        # FIXME        
-        if len(exbus_packet) % 2 == 1:
-            return
-
         # write packet to the EX bus stream
         # start = utime.ticks_us()
         bytes_written = self.serial.write(exbus_packet)
@@ -287,22 +263,20 @@ class ExBus:
 
         self.exbus_packet = bytearray()
 
-        # toggles True and False
-        self.get_new_sensor ^= True
+        # check if there is a sensor in the queue
+        if len(self.sensor_queue) > 0:
+            # get the next sensor from the queue
+            self.current_sensor = self.sensor_queue.pop(0)
+            print('Current sensor:', self.current_sensor)
         
-        # send data and text messages for each sensor alternating
-        if self.get_new_sensor:
-            # get next sensor to send its data
-            self.current_sensor = next(self.next_sensor)
-            current_EX_type = 'data'
-        else:     
-            current_EX_type = 'text'
+        # set EX type
+        EX_type = 'data'
         
         # get the EX packet for the current sensor
-        ex_packet = self.ex.ExPacket(self.current_sensor, current_EX_type)
+        ex_packet = self.ex.ExPacket(self.current_sensor, EX_type)
 
         # EX bus header
-        self.exbus_packet.extend(b'3B01')
+        self.exbus_packet = b'\x3B\x01'
 
         # EX bus packet length in bytes including the header and CRC
         exbus_packet_length = 8 + len(ex_packet)
@@ -333,28 +307,7 @@ class ExBus:
         self.exbus_packet.extend(crc[2:4])
         self.exbus_packet.extend(crc[0:2])
 
-        # print('Ex Bus Packet (ExBus.py)', self.ex.bytes2hex(self.exbus_packet))
-        # print('Ex Bus Packet (ExBus.py)', self.exbus_packet)
-
         return self.exbus_packet
-
-    def Sensors(self, i2c_sensors):
-        '''Get I2C sensors attached to the board
-            i2c (I2C_Sensors instance): carries all hardware connected via I2c
-
-        Args:
-            i2c_sensors (JetiSensor object): Sensor meta data (id, type, address, driver, etc.)
-        '''
-
-        self.i2c_sensors = i2c_sensors
-
-        self.ex.Sensors(self.i2c_sensors)
-
-        # cycle through sensors
-        self.next_sensor = self.round_robin(i2c_sensors.available_sensors.keys())
-
-        # cycle through data and text message
-        self.next_message = self.round_robin(['data', 'text'])
 
     def round_robin(self, cycled_list):
         '''Light weight implementation for cycling periodically through sensors
@@ -364,51 +317,14 @@ class ExBus:
             sensors (list): Any list which should be cycled
         Yields:
             Next element in the list
+
+        Example usage:
+            next_sensor = self.round_robin(i2c_sensors.available_sensors.keys())
+
         '''
         while cycled_list:
             for element in cycled_list:
                 yield element
-
-    def checkSpeed(self):
-        '''Check the connection speed via CRC. This needs to be done by
-        the sensor (slave). The speed is either 125000 (default) or 250000
-            - if CRC ok, then speed is ok
-            - if CRC is not ok, then speed has to be set to the
-              respective 'other' speed
-
-        Args:
-            packet (bytes): one complete packet received from the
-                            Jeti receiver (master)
-
-        Returns:
-            bool: information if speed check was ok or failed
-        '''
-
-        # FIXME:
-        # FIXME: self.getChannelData() or similar needs to be implemented
-        # FIXME: in order to get a channel data packet
-        # FIXME:
-
-        # get channel data packet to check if CRC is ok
-        packet = self.getChannelData()[:-2]
-
-        # the last 2 bytes of the message makeup the crc value for the packet
-        packet_crc = self.getChannelData[-2:]
-
-        # calculate the crc16-ccitt value of the packet
-        crc = CRC16.crc16_ccitt(packet)
-
-        if crc == packet_crc:
-            speed_changed = False
-        else:
-            # change speed if CRC check fails
-            speed_changed = True
-            if self.baudrate == 125000:
-                self.baudrate = 250000
-            elif self.baudrate == 250000:
-                self.baudrate = 125000
-
-        return speed_changed
 
     def deconnect(self):
         '''Function to deconnect from the serial connection.
