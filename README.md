@@ -22,47 +22,27 @@ Trick for text coloring as its not implemented yet in Github flavored markdown
 
 
 A [JETI](http://www.jetimodel.com/en/) [Ex Bus protocol](http://www.jetimodel.com/en/Telemetry-Protocol/) implementation in Python or more specifically in [MicroPython](https://micropython.org/).
-This will allow to use boards like Raspbery Pi, ESP3286 or similar to act as a sensor hub for [Jeti RC receivers](http://www.jetimodel.com/en/katalog/Duplex-2-4-EX/Receivers-EX/) and to transmit telemetry data from the board to the receiver and thus back to the transmitter (i.e. RC controls like this [DC24](http://www.jetimodel.com/en/katalog/Transmitters/@produkt/DC-24/)).
+This will allow to use boards like Raspbery Pi, ESP32 or similar to act as a sensor hub for [Jeti RC receivers](http://www.jetimodel.com/en/katalog/Duplex-2-4-EX/Receivers-EX/) and to transmit telemetry data from the board to the receiver and thus back to the transmitter (i.e. RC controls like this [DC24](http://www.jetimodel.com/en/katalog/Transmitters/@produkt/DC-24/)).
 
-
-> NOTE: This is currently rather a proof of concept and NOT ready for use.
-> I use this mainly to learn about serial communication between microcontrollers and/or RC devices.
-
-> NOTE: My first tests will be done in a classical linear programming way (no asynchronous operations).
-> I'll check how far I can come with this somewhat simpler approach.
-
-> NOTE: Possibly I will be studying uasyncio which seems to be the proper way of implementing the Ex Bus protocol.
-> For reference see [this example](https://github.com/peterhinch/micropython-async/blob/master/v3/as_demos/auart_hd.py).
+> NOTE: The current implementation relies on threading using two cores. The development platform thus has changed from the [Pyboard](https://store.micropython.org/product/PYBv1.1) to the [Pimoroni Tiny 2040](https://shop.pimoroni.com/products/tiny-2040) which uses the Raspberry Pi [RP2040](https://www.raspberrypi.com/products/rp2040/) processor.
 
 
 ## Features
 
  - Pure Python (MicroPython) impementation of the Jeti Ex Bus protocol
  - Runs on boards which are supported by MicroPython (see [forum](https://forum.micropython.org/viewforum.php?f=10) or [code repository](https://github.com/micropython/micropython/tree/master/ports))
-   - Those boards are much faster than Arduinos
-   - There should be less or no restriction with respect to the program size (32Kb vs. 1Mb or more)
  - Simple firmware/software update via USB
-   - Firmware (i.e. MicroPython) flashed via [pydfu.py](https://github.com/micropython/micropython/blob/master/tools/pydfu.py)
-   - Software "flashed" via simple copy from command line
- - Easy logging of sensor data on the board (SD card, etc.)
+ - Easy logging of sensor data on the board
 
 ## Boards
 
- - [Pyboard](https://store.micropython.org/product/PYBv1.1) 
-   - This board is used for the development
-   - STM32F405RG microcontroller
-   - 168 MHz Cortex-M4 CPU
-   - 1024 KB Flash-ROM
- - Planned: [TINY2040](https://shop.pimoroni.com/products/tiny-2040) (22.9 x 18.2)
-  - 133 MHz Cortex-M0+
-  - 8MB QSPI flash
- - Planned: [ESP8266](https://en.wikipedia.org/wiki/ESP8266), [ESP32](https://en.wikipedia.org/wiki/ESP32)
+ - [TINY 2040](https://shop.pimoroni.com/products/tiny-2040) (22.9 x 18.2)
+   - 133 MHz Cortex-M0+
+   - 8MB QSPI flash
+ - Planned: [ESP32](https://en.wikipedia.org/wiki/ESP32)
    - 160 MHz - 240 MHz
    - up to 16 Mb flash memory
    - Wi-Fi (use the phone as a JetiBox ???)
- - Would be cool: [TEENSY 4.0](https://www.pjrc.com/store/teensy40.html)
-   - Not yet ported to MicroPython (CircuitPython port exists)
-   - 2Mb flash, 600 MHz Cortex-M7 and decent size (29.2 x 17.8mm)
 
 ## Dependencies
 
