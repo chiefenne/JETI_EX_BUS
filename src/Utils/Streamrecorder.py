@@ -14,7 +14,7 @@ def saveStream(serial, logger, filename='EX_Bus_stream.txt', duration=1000):
     https://forum.micropython.org/viewtopic.php?t=1259#p8002
 
     NOTE: Do not use this function during normal operation.
-            When debugging, use thsi call by 
+            When debugging, use this call by 
 
     NOTE: Writing to the SD card sometimes doesn't work.
             Do a hard reset when this function is active.
