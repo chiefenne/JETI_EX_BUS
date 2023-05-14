@@ -1,6 +1,6 @@
 '''
-Establishes a serial connection to the Jeti Transmitter via UART.
-Jeti ex bus protocol runs 8-N-1, speed any of 125000 or 250000 baud.
+Establishes an UART (serial) connection to the Jeti Transmitter.
+The Jeti ex bus protocol runs 8-N-1, speed any of 125000 or 250000 baud.
 Currently (2023) only 125000 baud is supported.
 
 
@@ -19,7 +19,7 @@ class Serial:
                        bits=8,
                        parity=None,
                        stop=1,
-                       timeout=1000):
+                       timeout=0):
         '''Constructor of Serial class.
         '''
         self.port = port
@@ -33,17 +33,20 @@ class Serial:
         self.logger = Logger(prestring='JETI SERIAL')
 
         # instantiate UART connection
-        self.uart = UART(port, baudrate, bits, parity, stop, timeout)
+        self.uart = UART(port, baudrate=self.baudrate,
+                               bits=self.bits,
+                               parity=self.parity,
+                               stop=self.stop,
+                               timeout=self.timeout)
     
-    def connect(self):
-        '''Establish a serial connection.
-        '''
-        self.uart.init(self.baudrate, self.bits, self.parity, self.stop, self.timeout)
         self.logger.log('info', 'Serial connection established')
         self.logger.log('info', 'Settings: {}'.format(self.uart))
 
     def disconnect(self):
-        '''Close the serial connection.
+        '''Close the UART (serial) connection.
+
+        This method is not used in the current implementation.
+
         '''
         self.uart.deinit()
         self.logger.log('info', 'Serial connection closed')
