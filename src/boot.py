@@ -10,9 +10,9 @@ import utime as time
 
 
 # check platform
-print('INFO (boot.py): Platform          --> ', sys.platform)
-print('INFO (boot.py): Operating system  --> ', sys.version)
-print('INFO (boot.py): Vendor            --> ', sys.implementation._machine)
+print('JETI BOOT - INFO: Platform:', sys.platform)
+print('JETI BOOT - INFO: Operating system:', sys.version)
+print('JETI BOOT - INFO: Vendor:', sys.implementation._machine)
 
 
 # check if we are on a Pyboard (initially main development platform)
