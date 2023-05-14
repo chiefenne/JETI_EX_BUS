@@ -56,32 +56,45 @@ import utime
 
 from Jeti import CRC16
 from Utils.Logger import Logger
-from Utils.Streamrecorder import saveStream
-from Jeti.Ex import Ex
+import Utils.lock as lock
 
 
 class ExBus:
-    '''JETI Ex Bus protocol handler
-    Allows to connect to sensors via serial cpmmunication (UART)
-
-    JETI uses 125kbaud or 250kbaud. The speed is prescribed by the
-    receiver (master).
-    The speed may be checked via the CRC check (see checkSpeed).
+    '''Jeti EX-BUS protocol handler.
     '''
 
-    def __init__(self, serial, sensors):
+    def __init__(self, serial, sensors, ex):
         self.serial = serial
         self.sensors = sensors
+        self.ex = ex
 
-        # instantiate the EX protocol
-        self.ex = Ex()
-
-        self.exbusBuffer = bytearray()
         self.telemetry = bytearray()
         self.get_new_sensor = False
 
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI EXBUS')
+
+    def lock(self):
+        '''Lock the EX bus to prevent other threads from accessing it.
+        '''
+        lock.lock.acquire()
+        self.logger.log('debug', 'core 0: EX BUS acquired')
+
+    def release(self):
+        '''Release the EX bus to allow other threads to access it.
+        '''
+        lock.lock.release()
+        self.logger.log('debug', 'core 0: EX BUS released')
+    
+    def dummy(self):
+        '''Dummy function for checking lock.
+        Stay 3 seconds in the lock.
+        '''
+        self.logger.log('info', 'core 0: EX BUS trying to acquire lock')
+        self.lock()
+        self.logger.log('info', 'core 0: EX BUS and now its mine')
+        utime.sleep(1)
+        self.release()
 
     def run_forever(self):
         '''This is the main loop and will run forever. This function is called
@@ -108,9 +121,6 @@ class ExBus:
         # packet end
         STATE_END = 3
 
-        # initial state
-        state = STATE_HEADER_1
-
         # wait until the serial stream is available
         while not self.serial.any():
             utime.sleep_ms(10)
@@ -130,10 +140,10 @@ class ExBus:
                 if c in [b'\x3e',  b'\x3d']:
 
                     # initialize the buffer
-                    self.exbusBuffer = bytearray()
+                    self.buffer = bytearray()
 
                     # add the first byte to the buffer
-                    self.exbusBuffer += bytearray(c)
+                    self.buffer += bytearray(c)
                     
                     # change state
                     state = STATE_HEADER_2
@@ -141,14 +151,7 @@ class ExBus:
             elif state == STATE_HEADER_2:
                 # check for EX bus header 2
                 if c in [b'\x01', b'\x03']:
-                    self.exbusBuffer += bytearray(c)
-
-                    # check if telemetry or Jetibox request to allow answer
-                    if self.exbusBuffer[0] == 0x3d and \
-                       self.exbusBuffer[1] == 0x01:
-                        self.bus_allows_answer = True
-                    else:
-                        self.bus_allows_answer = False
+                    self.buffer += bytearray(c)
 
                     # change state
                     state = STATE_LENGTH
@@ -156,13 +159,14 @@ class ExBus:
                 else:
                     # reset state
                     state = STATE_HEADER_1
+                    continue
 
             elif state == STATE_LENGTH:
                 # check for EX bus packet length
-                self.exbusBuffer += bytearray(c)
+                self.buffer += bytearray(c)
 
                 # packet length (including header and CRC)
-                self.packet_length = self.exbusBuffer[2]
+                self.packet_length = self.buffer[2]
                 # print('Packet length', self.packet_length)
 
                 # check if packet length is valid
@@ -173,6 +177,7 @@ class ExBus:
                 if self.packet_length > 64:
                     # reset state
                     state = STATE_HEADER_1
+                    continue
 
                 # change state
                 state = STATE_END
@@ -180,45 +185,47 @@ class ExBus:
             elif state == STATE_END:
                 # check for rest of EX bus packet
                 # ID, data identifier, data, CRC
-                self.exbusBuffer += bytearray(c)
+                self.buffer += bytearray(c)
 
                 # check if packet is complete
-                if len(self.exbusBuffer) == self.packet_length:
+                if len(self.buffer) == self.packet_length:
                     
-                    # print('self.exbusBuffer', self.exbusBuffer)
+                    # print('self.buffer', self.buffer)
                     
                     # check CRC
-                    if self.checkCRC(self.exbusBuffer):
+                    if self.checkCRC(self.buffer):
                         # packet is complete and CRC is correct
     
                         # NOTE: accessing the bytearray needs slicing in order
                         #       to return a byte and not an integer
-                        #       self.exbusBuffer[0] returns an integer
-                        #       self.exbusBuffer[0:1] returns a byte
+                        #       self.buffer[0] returns an integer
+                        #       self.buffer[0:1] returns a byte
                         #       this way no conversion is needed
 
                         # check for channel data
-                        if self.exbusBuffer[0:1] == b'\x3e' and \
-                           self.exbusBuffer[4:5] == b'\x31':
+                        if self.buffer[0:1] == b'\x3e' and \
+                           self.buffer[4:5] == b'\x31':
                             # get the channel data
                             self.getChannelData()
 
                         # check for telemetry request
-                        elif self.exbusBuffer[0:1] == b'\x3d' and \
-                             self.exbusBuffer[4:5] == b'\x3a':
+                        elif self.buffer[0:1] == b'\x3d' and \
+                             self.buffer[1:2] == b'\x01' and \
+                             self.buffer[4:5] == b'\x3a':
                             
-                            packet_id = self.exbusBuffer[3:4]
+                            packet_id = self.buffer[3:4]
                             print('Telemetry packet ID', packet_id)
 
                             # send telemetry data
                             self.sendTelemetry(packet_id)
 
                         # check for JetiBox request
-                        elif self.exbusBuffer[0:1] == b'\x3d' and \
-                             self.exbusBuffer[4:5] == b'\x3b':
+                        elif self.buffer[0:1] == b'\x3d' and \
+                             self.buffer[1:2] == b'\x01' and \
+                             self.buffer[4:5] == b'\x3b':
                             print('Need to send JETIBOX')
                             # send JetiBox menu data
-                            # self.sendJetiBoxMenu()
+                            self.sendJetiBoxMenu()
 
                     # reset state
                     state = STATE_HEADER_1
@@ -226,111 +233,78 @@ class ExBus:
     def getChannelData(self):
         self.channel = dict()
         
-        num_channels = int.from_bytes(self.exbusBuffer[5:6], 'little') // 2
+        num_channels = int.from_bytes(self.buffer[5:6], 'little') // 2
         self.logger.log('info', 'Number of channels: ' + str(num_channels))
 
         for i in range(num_channels):
-            self.channel[i] = self.exbusBuffer[6 + i*2 : 7 + i*2] + \
-                              self.exbusBuffer[7 + i*2 : 8 + i*2]
+            self.channel[i] = self.buffer[6 + i*2 : 7 + i*2] + \
+                              self.buffer[7 + i*2 : 8 + i*2]
             self.logger.log('info',
                 'Channel: ' + str(i+1) + 
                 ' Value: ' + str(int.from_bytes(self.channel[i], 'little') / 8000)
                            + ' ms')
     
     def sendTelemetry(self, packet_ID):
-        '''Send telemetry data back to the receiver (master). Each call of this function
-        sends data from the next sensor or data type in the queue.
-        '''
 
-        # compile the complete EX bus packet
-        exbus_packet = self.ExBusPacket(packet_ID)
+        # acquire lock to access the EX bus fram on stack
+        lock.acquire()
+
+        # FIXME
+        # FIXME check how this works with data and 2x text from EX values???
+        # FIXME
+        # packet ID (answer with same ID as by the request)
+        int_ID = int(str(packet_ID), 16)
+        bin_ID = '{:02x}'.format(int_ID)
+        self.telemetry[3] = (bin_ID)
 
         # write packet to the EX bus stream
         # start = utime.ticks_us()
-        bytes_written = self.serial.write(exbus_packet)
+        bytes_written = self.serial.write(self.telemetry)
         # end = utime.ticks_us()
         # diff = utime.ticks_diff(end, start)
         #print('Time for answer:', diff / 1000., 'ms')
 
-        # failed to write to serial stream
-        if bytes_written is None:
-            print('NOTHING WAS WRITTEN')
+        return bytes_written
 
-    def sendJetiBoxMenu(self):
-        pass
+    def updateTelemetry(self):
+        '''Send telemetry data back to the receiver (master).
+        '''
+        self.telemetry = bytearray()
 
-    def ExBusPacket(self, packet_ID):
-
-        self.exbus_packet = bytearray()
-
-        # check if there is a sensor in the queue
-        if len(self.sensor_queue) > 0:
-            # get the next sensor from the queue
-            self.current_sensor = self.sensor_queue.pop(0)
-            print('Current sensor:', self.current_sensor)
-        
-        # set EX type
-        EX_type = 'data'
-        
         # get the EX packet for the current sensor
-        ex_packet = self.ex.ExPacket(self.current_sensor, EX_type)
+        ex_packet = self.ex.ex_frame(self.current_sensor)
 
         # EX bus header
-        self.exbus_packet = b'\x3B\x01'
+        self.telemetry = b'\x3B\x01'
 
         # EX bus packet length in bytes including the header and CRC
         exbus_packet_length = 8 + len(ex_packet)
-        self.exbus_packet.extend('{:02x}'.format(exbus_packet_length))
+        self.telemetry.append('{:02x}'.format(exbus_packet_length))
         
-        # packet ID (answer with same ID as by the request)
-        # FIXME
-        # FIXME check how this works with data and 2x text from EX values???
-        # FIXME
-        int_ID = int(str(packet_ID), 16)
-        bin_ID = '{:02x}'.format(int_ID)
-        self.exbus_packet.extend(bin_ID)
-        
+        # put dummy id here
+        self.telemetry.append(b'\x00')
+
         # telemetry identifier
-        self.exbus_packet.extend(b'3A')
+        self.telemetry.append(b'3A')
 
         # packet length in bytes of EX packet
         ex_packet_length = len(ex_packet)
-        self.exbus_packet.extend('{:02x}'.format(ex_packet_length))
+        self.telemetry.append('{:02x}'.format(ex_packet_length))
 
         # add EX packet
-        self.exbus_packet.extend(ex_packet)
+        self.telemetry.append(ex_packet)
 
         # calculate the crc for the packet
-        crc = CRC16.crc16_ccitt(self.exbus_packet)
+        crc = CRC16.crc16_ccitt(self.telemetry)
 
         # compile final telemetry packet
-        self.exbus_packet.extend(crc[2:4])
-        self.exbus_packet.extend(crc[0:2])
+        self.telemetry.append(crc[2:])
+        self.telemetry.append(crc[:2])
 
-        return self.exbus_packet
+        return self.telemetry
 
-    def round_robin(self, cycled_list):
-        '''Light weight implementation for cycling periodically through sensors
-        Source: https://stackoverflow.com/a/36657230/2264936
-        
-        Args:
-            sensors (list): Any list which should be cycled
-        Yields:
-            Next element in the list
-
-        Example usage:
-            next_sensor = self.round_robin(i2c_sensors.available_sensors.keys())
-
-        '''
-        while cycled_list:
-            for element in cycled_list:
-                yield element
-
-    def deconnect(self):
-        '''Function to deconnect from the serial connection.
-        (Most likely not used in this application)
-        '''
-        self.serial.deinit()
+    def sendJetiBoxMenu(self):
+        pass
 
     def checkCRC(self, packet):
         '''Do a CRC check using CRC16-CCITT
@@ -360,10 +334,3 @@ class ExBus:
             return True
         else:
             return False
-
-    def debug(self):
-        # write 1 second of the serial stream to a text file on the SD card
-        # works for the Pyboard
-        saveStream(self.serial, self.logger, duration=1000)
-
-        return

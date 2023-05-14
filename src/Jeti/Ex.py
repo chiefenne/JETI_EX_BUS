@@ -137,37 +137,40 @@ import utime
 
 from Jeti import CRC8
 from Utils.Logger import Logger
+import Utils.lock as lock
 
 
 class Ex:
-    '''Jeti EX protocol implementation. 
+    '''Jeti EX protocol handler. 
     '''
 
     def __init__(self):
 
-        self.getSerialNumber()
-
-
-        self.i2c_sensors = None
         self.toggle_value = False
 
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI EX')
 
-    def getSerialNumber(self, filename='Sensors/serial_number.json'):
+    def lock(self):
+        '''Lock EX protocol for exclusive access'''
 
-        with open(filename, 'r') as fp:
-            serial_number = ujson.load(fp)
+        lock.lock.acquire()
+        self.logger.log('debug', 'core 1: EX lock acquired')
 
-        # upper part of the serial number
-        self.productID = serial_number['productID']['lower'] + \
-                         serial_number['productID']['upper']
+    def release(self):
+        '''Release EX protocol'''
 
-        # lower part of the serial number
-        self.deviceID = serial_number['deviceID']['lower'] + \
-                        serial_number['deviceID']['upper']
+        lock.lock.release()
+        self.logger.log('debug', 'core 1: EX lock released')
 
-        return serial_number
+    def dummy(self):
+        '''Dummy function for checking the lock.
+        Stay locked for 5 seconds.'''
+        self.logger.log('debug', 'core 1: EX, trying to acquire lock')
+        self.lock()
+        self.logger.log('debug', 'core 1: EX, I am on se ruder')
+        utime.sleep(2)
+        self.release()
 
     def Header(self, packet_type):
         '''EX packet header'''
@@ -203,35 +206,32 @@ class Ex:
 
     def Data(self, sensor):
 
-        # get dictionary with sensor specs
-        sensor_specs = self.i2c_sensors.available_sensors[sensor]
-
         # read method has to be available in each sensor driver
-        values = self.i2c_sensors.read(sensor)
+        values = sensor.read(sensor)
 
-        if sensor_specs['type'] == 'pressure':
+        if sensor['type'] == 'pressure':
             pressure = values[0]
             temperature = values[1]
 
             # compile 9th byte of EX data specification (2x 4bit)
-            id_press = sensor_specs['EX']['pressure']['id'] << 4
-            data_type_press = sensor_specs['EX']['pressure']['data_type']
+            id_press = sensor['pressure']['id'] << 4
+            data_type_press = sensor['pressure']['data_type']
             id_data_type_press = id_press | data_type_press
 
             # data of 1st telemetry value
-            bytes_press = sensor_specs['EX']['pressure']['bytes']
-            prec_press = sensor_specs['EX']['pressure']['precision']
+            bytes_press = sensor['pressure']['bytes']
+            prec_press = sensor['pressure']['precision']
             self.data1 = self.value_to_EX(value=pressure, nbytes=bytes_press,
                                          precision=prec_press, endian='little')
 
             # compile 11th+x byte of EX data specification (2x 4bit)
-            id_temp = sensor_specs['EX']['temperature']['id'] << 4
-            data_type_temp = sensor_specs['EX']['temperature']['data_type']
+            id_temp = sensor['temperature']['id'] << 4
+            data_type_temp = sensor['temperature']['data_type']
             id_data_type_temp = id_temp | data_type_temp
                                          
             # data of 2nd telemetry value
-            bytes_temp = sensor_specs['EX']['temperature']['bytes']
-            prec_temp = sensor_specs['EX']['temperature']['precision']
+            bytes_temp = sensor['temperature']['bytes']
+            prec_temp = sensor['temperature']['precision']
             self.data2 = self.value_to_EX(value=temperature, nbytes=bytes_temp,
                                          precision=prec_temp, endian='little')
 
@@ -248,10 +248,7 @@ class Ex:
 
     def Text(self, sensor):
 
-        # get dictionary with sensor specs
-        sensor_specs = self.i2c_sensors.available_sensors[sensor]
-
-        if sensor_specs['type'] == 'pressure':
+        if sensor['type'] == 'pressure':
 
             # toggle text for the two telemetry values
             self.toggle_value ^= True
@@ -263,20 +260,20 @@ class Ex:
 
             self.text = list()
             # compile 9th byte of EX text specification (1 byte)
-            id_press = sensor_specs['EX'][value]['id']
+            id_press = sensor[value]['id']
             self.text.append('{:02x}'.format(id_press))
 
             # compile 10th byte of EX text specification (5bits + 3bits)
-            len_description = len(sensor_specs['EX'][value]['description']) << 3
-            len_unit = len(sensor_specs['EX'][value]['unit'])
+            len_description = len(sensor[value]['description']) << 3
+            len_unit = len(sensor[value]['unit'])
 
             len_description_unit = len_description | len_unit
             self.text.append('{:02x}'.format(len_description_unit))
 
-            description = sensor_specs['EX'][value]['description']
+            description = sensor[value]['description']
             self.text.append(hexlify(description))
 
-            unit = sensor_specs['EX'][value]['unit']
+            unit = sensor[value]['unit']
             self.text.append(hexlify(unit))
 
     def Message(self):
@@ -314,15 +311,12 @@ class Ex:
 
         return self.simple_text
 
-    def Sensors(self, i2c_sensors):
-        self.i2c_sensors = i2c_sensors
-
-    def ExPacket(self, sensor, packet_type):
+    def ex_frame(self, sensor, type='data'):
         '''Compile the telemetry packet (Header, data or text, etc.)
 
         Args:
             sensor (str): Sensor ID (e.g. 'BME280')
-            packet_type (str): Any of 'data', 'text', 'message'
+            type (str): Any of 'data', 'text', 'message'
 
         Returns:
             packet (hex): The complete packet describing the telemetry
@@ -330,13 +324,13 @@ class Ex:
 
         packet = bytearray()
 
-        if packet_type == 'data':
+        if type == 'data':
             self.Data(sensor)
-        elif packet_type == 'text':
+        elif type == 'text':
             self.Text(sensor)
 
         # packet length only known after data, text
-        self.Header(packet_type)
+        self.Header(type)
 
         # compile simple text protocol
         text = 'Hallodrio'
@@ -346,10 +340,10 @@ class Ex:
         # compose packet
         packet.extend(self.header)
 
-        if packet_type == 'data':
+        if type == 'data':
             for element in self.data:
                 packet.extend(element)
-        elif packet_type == 'text':
+        elif type == 'text':
             for element in self.text:
                 packet.extend(element)
 
