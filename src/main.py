@@ -56,9 +56,9 @@ def core0():
     while True:
 
         # debug
-        exbus.dummy()
+        # exbus.dummy()
 
-        #exbus.run_forever()
+        exbus.run_forever()
 
 # function which is run on core 1
 def core1():
@@ -74,10 +74,10 @@ def core1():
         sensors.read(sensor)
 
         # debug
-        ex.dummy()
+        # ex.dummy()
 
         # compile data into a JETI EX frame
-        # frame = ex.ex_frame(sensors.get_data(), type='data')
+        frame = ex.ex_frame(sensors.get_data(), type='data')
 
 # start the second thread on core 1
 logger.log('info', 'Starting second thread on core 1')

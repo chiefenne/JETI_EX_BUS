@@ -78,23 +78,23 @@ class ExBus:
         '''Lock the EX bus to prevent other threads from accessing it.
         '''
         lock.lock.acquire()
-        self.logger.log('debug', 'core 0: EX BUS acquired')
 
     def release(self):
         '''Release the EX bus to allow other threads to access it.
         '''
         lock.lock.release()
-        self.logger.log('debug', 'core 0: EX BUS released')
     
     def dummy(self):
         '''Dummy function for checking lock.
         Stay 3 seconds in the lock.
         '''
         self.logger.log('info', 'core 0: EX BUS trying to acquire lock')
+        start = utime.ticks_us()
         self.lock()
-        self.logger.log('info', 'core 0: EX BUS and now its mine')
-        utime.sleep(1)
         self.release()
+        end = utime.ticks_us()
+        diff = utime.ticks_diff(end, start)
+        self.logger.log('info', 'core 0: EX BUS lock released after {} us'.format(diff))
 
     def run_forever(self):
         '''This is the main loop and will run forever. This function is called

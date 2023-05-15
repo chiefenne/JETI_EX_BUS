@@ -155,22 +155,22 @@ class Ex:
         '''Lock EX protocol for exclusive access'''
 
         lock.lock.acquire()
-        self.logger.log('debug', 'core 1: EX lock acquired')
 
     def release(self):
         '''Release EX protocol'''
 
         lock.lock.release()
-        self.logger.log('debug', 'core 1: EX lock released')
 
     def dummy(self):
         '''Dummy function for checking the lock.
         Stay locked for 5 seconds.'''
         self.logger.log('debug', 'core 1: EX, trying to acquire lock')
+        start = utime.ticks_us()
         self.lock()
-        self.logger.log('debug', 'core 1: EX, I am on se ruder')
-        utime.sleep(2)
         self.release()
+        end = utime.ticks_us()
+        diff = utime.ticks_diff(end, start)
+        self.logger.log('debug', 'core 1: EX, lock released after {} us'.format(diff))
 
     def Header(self, packet_type):
         '''EX packet header'''
