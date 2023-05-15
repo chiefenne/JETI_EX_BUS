@@ -108,7 +108,7 @@ The next figure depicts a telemetry answer from the sensor (slave). In this case
 <img src="docs/images/EX_Bus_logic_analyzer_04_telemetry.png" height="180" width="900" />
 </kbd>
 
-## Connecting Pyboard and receiver
+## Connecting TINY 2040 and receiver
 
 ### Setup used during develompent and testing
 
@@ -116,7 +116,10 @@ The following image shows the components and connections as used during the deve
 
 <!-- HTML syntax for image display allows to change the image size -->
 <kbd> <!-- make a frame around the image -->
-<img src="docs/images/setup_Pyboard_JetiRex6.png" width="600" />
+<img src="docs/images/setup_TINY2040_JetiRex6_04" width="600" />
+</kbd>
+<kbd> <!-- make a frame around the image -->
+<img src="docs/images/setup_TINY2040_JetiRex6_03" width="600" />
 </kbd>
 
 The figure below shows how the resistor is soldered at the split point of the wires. It is only active on the wire going to the **Y9** pin of the Pyboard.
