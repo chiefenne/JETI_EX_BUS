@@ -168,7 +168,7 @@ class Sensors:
             self.sensors[sensor]['temperature'] = t
             self.sensors[sensor]['pressure'] = p
             self.sensors[sensor]['humidity'] = h
-            message = 'Sensor {}:, Pressure {:.1f} (Pa), Temperature {:.1f} (C)'.format(sensor, p, t)
+            message = 'Sensor {}: Pressure {:.1f} (Pa), Temperature {:.1f} (C)'.format(sensor, p, t)
             self.logger.log('info', message)
         # MS5611 pressure sensor
         if 'MS5611' in sensor:
@@ -180,7 +180,7 @@ class Sensors:
             self.sensors[sensor]['temperature'] = t
             self.sensors[sensor]['pressure'] = p
             
-            message = 'Sensor {}:, Pressure {:.1f} (Pa), Temperature {:.1f} (C)'.format(sensor, p, t)
+            message = 'Sensor {}: Pressure {:.1f} (Pa), Temperature {:.1f} (C)'.format(sensor, p, t)
             self.logger.log('info', message)
 
         return
