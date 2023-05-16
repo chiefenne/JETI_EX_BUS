@@ -134,6 +134,7 @@ together with the sign and zero the data range is from -8191 to 8191.
 from ubinascii import hexlify, unhexlify
 import ujson
 import utime
+import ustruct
 
 from Jeti import CRC8
 from Utils.Logger import Logger
@@ -144,9 +145,10 @@ class Ex:
     '''Jeti EX protocol handler. 
     '''
 
-    def __init__(self):
+    def __init__(self, sensors):
 
-        self.toggle_value = False
+        # list of sensors
+        self.sensors = sensors
 
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI EX')
@@ -172,88 +174,138 @@ class Ex:
         diff = utime.ticks_diff(end, start)
         self.logger.log('debug', 'core 1: EX, lock released after {} us'.format(diff))
 
-    def Header(self, packet_type):
+    def Message(self):
+        pass
+
+    def Alarm(self, sensor):
+        '''[summary]
+        '''
+        pass
+
+    def packet(self, sensor):
+        '''Compile the telemetry packet (Header, data or text, etc.)
+
+        Returns:
+            packet (hex): The complete packet describing the telemetry
+        '''
+        self.current_sensor = sensor
+
+        packet = bytearray()
+
+        data = self.Data()
+
+        # packet length only known after data, text
+        # packet types text=0, data=1, message=2
+        type = 1
+        header = self.Header(type, len(data))
+
+        # compile simple text protocol
+        message = 'Hallodrio'
+        text = self.SimpleText(message)
+
+        # compose packet
+        packet += header
+
+        # add data
+        packet += data
+
+        # crc for telemetry (8-bit crc)
+        crc8 = CRC8.crc8(packet[2:])
+        packet += crc8
+
+        packet += text
+
+        return packet
+
+    def Header(self, ptype, length):
         '''EX packet header'''
 
-        self.header = bytearray()
+        header = bytearray()
 
-        packet_types = {'text': 0, 'data': 1, 'message': 2}
+        sensor = self.sensors[self.current_sensor]
+
+        # combine productID and deviceID (2 bytes), LSB first, MSB last
+        productID = self.sensors.productID
+        deviceID = ustruct.pack('b', sensor['deviceID']) + b'\x00'
 
         # message separator (1st byte)
-        self.header.extend(b'7E')
+        header += b'\x7E'
 
         # packet identifier '0xnF', with 'n' beeing any number (2nd byte)
-        self.header.extend(b'3F')
+        header += b'\x0F'
 
         # 2 bits for packet type (0=text, 1=data, 2=message)
         # these are the two leftmost bits of 3rd byte; shift left by 6
-        telemetry_type = packet_types[packet_type] << 6
+        telemetry_type = ptype << 6
 
         # 6 bits (right part of 3rd byte) for packet length (max. 29 bytes)
         # telemetry_length is the number of bytes of data/text packet
-        telemetry_length = 5 + self.telemetry_length + 10
+        telemetry_length = 5 + length + 10
 
         # combine 2+6 bits (3rd byte)
         type_length = telemetry_type | telemetry_length
-        self.header.extend(hex(type_length)[2:])
+        header += ustruct.pack('b', type_length)
 
         # serial number (bytes 4-5 and 6-7)
-        self.header.extend(self.productID)
-        self.header.extend(self.deviceID)
+        header += productID
+        header += deviceID
 
         # reserved (8th byte)
-        self.header.extend(b'00')
+        header += b'\x00'
 
-    def Data(self, sensor):
+        return header
 
-        # read method has to be available in each sensor driver
-        values = sensor.read(sensor)
+    def Data(self):
+
+        data = bytearray()
+
+        sensor = self.sensors[self.current_sensor]
 
         if sensor['type'] == 'pressure':
-            pressure = values[0]
-            temperature = values[1]
 
             # compile 9th byte of EX data specification (2x 4bit)
-            id_press = sensor['pressure']['id'] << 4
-            data_type_press = sensor['pressure']['data_type']
-            id_data_type_press = id_press | data_type_press
+            # 1st 4bit (from left): sensor id, 2nd 4bit: data type
+            id = sensor['pressure']['identifier'] << 4
+            type = sensor['pressure']['data_type']
+            id_type = id | type
+            # convert int to bytes (e.g. 20 --> b'\x14') and append to data
+            data += ustruct.pack('b', id_type)
 
             # data of 1st telemetry value
-            bytes_press = sensor['pressure']['bytes']
-            prec_press = sensor['pressure']['precision']
-            self.data1 = self.value_to_EX(value=pressure, nbytes=bytes_press,
-                                         precision=prec_press, endian='little')
+            nbytes = sensor['pressure']['bytes']
+            precision = sensor['pressure']['precision']
+            value = sensor['pressure']['value']
+            sign = 0 if value >= 0x0 else 1
+            value_s = int(value * 10**precision)
+
+            # convert value to EX format
+            val = sign << (nbytes*8 - 1) | precision << (nbytes*8 - 3) | value_s
+
+            data += ustruct.pack('b', val)
 
             # compile 11th+x byte of EX data specification (2x 4bit)
-            id_temp = sensor['temperature']['id'] << 4
-            data_type_temp = sensor['temperature']['data_type']
-            id_data_type_temp = id_temp | data_type_temp
+            id = sensor['temperature']['identifier'] << 4
+            type = sensor['temperature']['data_type']
+            id_type = id | type
                                          
             # data of 2nd telemetry value
-            bytes_temp = sensor['temperature']['bytes']
-            prec_temp = sensor['temperature']['precision']
-            self.data2 = self.value_to_EX(value=temperature, nbytes=bytes_temp,
-                                         precision=prec_temp, endian='little')
+            nbytes = sensor['temperature']['bytes']
+            precision = sensor['temperature']['precision']
+            value = sensor['temperature']['value']
+            sign = 0 if value >= 0x0 else 1
+            value_s = int(value * 10**precision)
 
-            self.telemetry_length = len(self.data1) + len(self.data2)
+            # convert value to EX format
+            val = sign << (nbytes*8 - 1) | precision << (nbytes*8 - 3) | value_s
 
-            self.data = list()
-            self.data.append('{:02x}'.format(id_data_type_press))
-            self.data.extend(self.data1)
-
-            self.data.append('{:02x}'.format(id_data_type_temp))
-            self.data.extend(self.data2)
-
-        return self.data
+        return data
 
     def Text(self, sensor):
 
         if sensor['type'] == 'pressure':
 
-            # toggle text for the two telemetry values
-            self.toggle_value ^= True
-            val = {1: 'pressure', 0: 'temperature'}
-            value = val[self.toggle_value]
+            # get value to be sent
+            value = 'pressure' if sensor[val[0]]['toggle'] else 'temperature'
 
             # print toggle value for debugging
             # print('value', value)
@@ -276,13 +328,6 @@ class Ex:
             unit = sensor[value]['unit']
             self.text.append(hexlify(unit))
 
-    def Message(self):
-        pass
-
-    def Alarm(self, sensor):
-        '''[summary]
-        '''
-
     def SimpleText(self, text):
         '''Messages to be displayed on the JetiBox.
         The packet is always 34 bytes long, inlcuding 2 message separator bytes (begin, end).
@@ -301,62 +346,15 @@ class Ex:
         text = '{:>32}'.format(text[:32])
 
         # separator of message (begin)
-        self.simple_text.extend(b'FE')
+        self.simple_text += b'\xFE'
 
         # add the text to the packet
-        self.simple_text.extend(hexlify(text))
+        self.simple_text += hexlify(text)
 
         # separator of message (end)
-        self.simple_text.extend(b'FF')
+        self.simple_text += b'FF'
 
         return self.simple_text
-
-    def ex_frame(self, sensor, type='data'):
-        '''Compile the telemetry packet (Header, data or text, etc.)
-
-        Args:
-            sensor (str): Sensor ID (e.g. 'BME280')
-            type (str): Any of 'data', 'text', 'message'
-
-        Returns:
-            packet (hex): The complete packet describing the telemetry
-        '''
-
-        packet = bytearray()
-
-        if type == 'data':
-            self.Data(sensor)
-        elif type == 'text':
-            self.Text(sensor)
-
-        # packet length only known after data, text
-        self.Header(type)
-
-        # compile simple text protocol
-        text = 'Hallodrio'
-        self.SimpleText(text)
-        # print('self.simple_text (JetiEx.py)', self.bytes2hex(self.simple_text))
-
-        # compose packet
-        packet.extend(self.header)
-
-        if type == 'data':
-            for element in self.data:
-                packet.extend(element)
-        elif type == 'text':
-            for element in self.text:
-                packet.extend(element)
-
-        # crc for telemetry (8-bit crc)
-        crc = CRC8.crc8(packet[2:])
-        self.header.extend(crc)
-
-        packet.extend(self.simple_text)
-
-        # print in readable format
-        # print('Ex Packet (JetiEx.py)', self.bytes2hex(packet))
-
-        return packet
 
     def value_to_EX(self, value=None, nbytes=2, precision=1, endian='little'):
         '''Convert a value to the EX protocol specification

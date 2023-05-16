@@ -19,11 +19,13 @@ Date: 04-2021
 import usys as sys
 import uos as os
 import _thread
+from machine import Pin
 
 from Jeti.Serial_UART import Serial
 from Jeti.ExBus import ExBus
 from Jeti.Ex import Ex
 from Sensors.Sensors import Sensors
+from Sensors.I2C import I2C_bus
 from Utils.Logger import Logger
 from Utils.Streamrecorder import saveStream
 from Utils.round_robin import cycler
@@ -33,19 +35,25 @@ from Utils.round_robin import cycler
 logger = Logger(prestring='JETI MAIN')
 
 # Serial connection bewtween Jeti receiver and microcontroller
-# baudrate=125000, 8-N-1
-serial = Serial()
+# defaults: baudrate=125000, 8-N-1
+s = Serial(port=0)
+serial = s.connect()
 
 # write 1 second of the serial stream to a text file for debugging purposes
 DEBUG = False
 if DEBUG:
     saveStream(serial, logger, filename='EX_Bus_stream.txt', duration=1000)
 
-# collect sensors attached to the microcontroller via I2C
-sensors = Sensors()
+# setup the I2C bus (pins are board specific)
+#    TINY2040 board: GPIO6, GPIO7 at port 1 (id=1)
+i2c = I2C_bus(1, scl=Pin(7), sda=Pin(6), freq=400000)
+addresses = i2c.scan()
+
+# check for sensors attached to the microcontroller
+sensors = Sensors(addresses, i2c.i2c)
 
 # setup the JETI EX protocol
-ex = Ex()
+ex = Ex(sensors.get_sensors())
 
 # setup the JETI EX BUS protocol
 exbus = ExBus(serial, sensors, ex)
@@ -63,6 +71,7 @@ def core0():
 # function which is run on core 1
 def core1():
 
+    # make a generator out of the list of sensors
     cycle_sensors = cycler(sensors.get_sensors())
     
     while True:
@@ -71,13 +80,14 @@ def core1():
         sensor = next(cycle_sensors)
 
         # collect data from currently selected sensor
-        sensors.read(sensor)
+        sensor.read()
 
         # debug
         # ex.dummy()
 
         # compile data into a JETI EX frame
-        frame = ex.ex_frame(sensors.get_data(), type='data')
+        frame = ex.packet(sensor)
+        # print('EX Frame: {}'.format(frame))
 
 # start the second thread on core 1
 logger.log('info', 'Starting second thread on core 1')

@@ -121,19 +121,14 @@ class ExBus:
         # packet end
         STATE_END = 3
 
-        # wait until the serial stream is available
-        while not self.serial.any():
-            utime.sleep_ms(10)
-        
+        # initialize the state
+        state = STATE_HEADER_1
+
         while True:
 
             # read one byte from the serial stream
             c = self.serial.read(1)
             
-            # check if something was read from the bus
-            if c == None:
-                continue
-
             if state == STATE_HEADER_1:
 
                 # check for EX bus header 1
@@ -272,7 +267,7 @@ class ExBus:
         self.telemetry = bytearray()
 
         # get the EX packet for the current sensor
-        ex_packet = self.ex.ex_frame(self.current_sensor)
+        ex_packet = self.ex.frame(self.current_sensor)
 
         # EX bus header
         self.telemetry = b'\x3B\x01'

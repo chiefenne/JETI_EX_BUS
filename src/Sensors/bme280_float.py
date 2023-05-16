@@ -16,7 +16,7 @@ Usage:
 
     print(bme.values)
 
-'''
+        
 # Updated 2018 and 2020
 # This module is based on the below cited resources, which are all
 # based on the documentation as provided in the Bosch Data Sheet and
@@ -58,6 +58,7 @@ Usage:
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+'''
 
 import time
 from ustruct import unpack, unpack_from
@@ -91,13 +92,21 @@ class BME280:
                  i2c=None,
                  **kwargs):
         # Check that mode is valid.
-        if mode not in [BME280_OSAMPLE_1, BME280_OSAMPLE_2, BME280_OSAMPLE_4,
-                        BME280_OSAMPLE_8, BME280_OSAMPLE_16]:
-            raise ValueError(
-                'Unexpected mode value {0}. Set mode to one of '
-                'BME280_OSAMPLE_1, BME280_OSAMPLE_2, BME280_OSAMPLE_4,'
-                'BME280_OSAMPLE_8, BME280_OSAMPLE_16'.format(mode))
-        self._mode = mode
+        if type(mode) is tuple and len(mode) == 3:
+            self._mode_hum, self._mode_temp, self._mode_press = mode
+        elif type(mode) == int:
+            self._mode_hum, self._mode_temp, self._mode_press = mode, mode, mode
+        else:
+            raise ValueError("Wrong type for the mode parameter, must be int or a 3 element tuple")
+
+        for mode in (self._mode_hum, self._mode_temp, self._mode_press):
+            if mode not in [BME280_OSAMPLE_1, BME280_OSAMPLE_2, BME280_OSAMPLE_4,
+                            BME280_OSAMPLE_8, BME280_OSAMPLE_16]:
+                raise ValueError(
+                    'Unexpected mode value {0}. Set mode to one of '
+                    'BME280_ULTRALOWPOWER, BME280_STANDARD, BME280_HIGHRES, or '
+                    'BME280_ULTRAHIGHRES'.format(mode))
+
         self.address = address
         if i2c is None:
             raise ValueError('An I2C object is required.')
@@ -124,7 +133,7 @@ class BME280:
         self._l8_barray = bytearray(8)
         self._l3_resultarray = array("i", [0, 0, 0])
 
-        self._l1_barray[0] = self._mode << 5 | self._mode << 2 | MODE_SLEEP
+        self._l1_barray[0] = self._mode_temp << 5 | self._mode_press << 2 | MODE_SLEEP
         self.i2c.writeto_mem(self.address, BME280_REGISTER_CONTROL,
                              self._l1_barray)
         self.t_fine = 0
@@ -139,10 +148,10 @@ class BME280:
                 None
         """
 
-        self._l1_barray[0] = self._mode
+        self._l1_barray[0] = self._mode_hum
         self.i2c.writeto_mem(self.address, BME280_REGISTER_CONTROL_HUM,
                              self._l1_barray)
-        self._l1_barray[0] = self._mode << 5 | self._mode << 2 | MODE_FORCED
+        self._l1_barray[0] = self._mode_temp << 5 | self._mode_press << 2 | MODE_FORCED
         self.i2c.writeto_mem(self.address, BME280_REGISTER_CONTROL,
                              self._l1_barray)
 
@@ -220,7 +229,7 @@ class BME280:
             result[2] = humidity
             return result
 
-        return temp, pressure, humidity
+        return array("f", (temp, pressure, humidity))
 
     @property
     def sealevel(self):
@@ -261,4 +270,5 @@ class BME280:
 
         t, p, h = self.read_compensated_data()
 
-        return t, p/100, h
+        return ("{:.2f}C".format(t), "{:.2f}hPa".format(p/100),
+                "{:.2f}%".format(h))

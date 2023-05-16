@@ -32,15 +32,20 @@ class Serial:
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI SERIAL')
 
+    def connect(self):
+
         # instantiate UART connection
-        self.uart = UART(port, baudrate=self.baudrate,
-                               bits=self.bits,
-                               parity=self.parity,
-                               stop=self.stop,
-                               timeout=self.timeout)
+        self.uart = UART(self.port, 
+                         baudrate=self.baudrate,
+                         bits=self.bits,
+                         parity=self.parity,
+                         stop=self.stop,
+                         timeout=self.timeout)
     
         self.logger.log('info', 'Serial connection established')
         self.logger.log('info', 'Settings: {}'.format(self.uart))
+
+        return self.uart
 
     def disconnect(self):
         '''Close the UART (serial) connection.
