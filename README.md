@@ -56,7 +56,7 @@ This will allow to use boards like Raspbery Pi, ESP32 or similar to act as a sen
 
  The connection between the board and the sensors is established via [I2C](https://de.wikipedia.org/wiki/I%C2%B2C). Four wires are (vcc, gnd, sda, scl) needed to connect each of the sensors.
  
-> NOTE: During testing the microcontroller is supplied via USB power (thus no vcc connection between board and receiver) and the Jeti receiver is supplied via NiMh batteries. They share a common ground. In the real application the microcontroller will also be powered via the the battery (through the receiver).
+> NOTE: During testing the microcontroller is supplied via USB power (thus no vcc connection between board and receiver) and the Jeti receiver is powered via 4S NiMH batteries. They share a common ground. In the real application the microcontroller will also be powered via the the battery (through the receiver).
 
 </br>
 
@@ -94,7 +94,7 @@ The program logic consists of two parts. Those are the similar to the Arduino <b
 ## Sample EX Bus data stream
 Written by function [Streamrecorder.py](https://github.com/chiefenne/JETI_EX_BUS/blob/main/src/Utils/Streamrecorder.py).
 
-The receiver is the master and triggers the half-duplex communication. As an example **3e:03** is the beginning of a packet containing channel data sent by the receiver (the packet describes the current actuator settings of the transmitter). A telemetry request (from receiver/master to the Pyboard/sensor) is indicated by **3d:01** which is the start of an 8 byte packet. After this there is a 4ms window to send telemetry data back from the board to the receiver (not visible in this data stream).
+The receiver is the master and triggers the half-duplex communication. As an example **3e:03** is the beginning of a packet containing channel data sent by the receiver (the packet describes the current actuator settings of the transmitter). A telemetry request (from receiver/master to the microcontroller/sensor) is indicated by **3d:01** which is the start of an 8 byte packet. After this there is a 4ms window to send telemetry data back from the board to the receiver (not visible in this data stream).
 
 ```Text
 02:02:7d:dd:2e:e7:2e:f2:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:78:69:3e:03:28:42:31:20:40:1f:dd:2e:e7:2e:f2:2e:e0
@@ -215,7 +215,7 @@ The figure below shows how the signal cable coming from the receiver is "split" 
 
 <br>
 
-The Pyboard is in a small housing and a Jeti REX6 receiver is attached. The yellow wire (channel 6) splits into two wires (one with a 2.4kOhm resistor as per the Jeti specification) which are connected to TX(Y9) and RX(Y10) on UART(3) on the Pyboard. The black wire establishes a common ground. The receiver is powered by a 4S NiMH accumulator via channel 1. Channel 6 of the receiver was set to "Ex Bus" (see image below) in the device manager of the Jeti transmitter.
+The Pyboard is in a small housing and a Jeti REX6 receiver is attached. The yellow wire (here channel 6 on the receiver) splits into two wires (one with a 2.4kOhm resistor as per the Jeti specification) which are connected to TX(Y9) and RX(Y10) on UART(3) on the Pyboard. The black wire establishes a common ground. The receiver is powered by a 4S NiMH accumulator via channel 1. Channel 6 of the receiver was set to "Ex Bus" (see image below) in the device manager of the Jeti transmitter.
 
 ### Channel setup in the device manager of the transmitter
 
