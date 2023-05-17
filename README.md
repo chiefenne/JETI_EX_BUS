@@ -249,7 +249,7 @@ The Pyboard is in a small housing and a Jeti REX6 receiver is attached. The yell
 
 Connection cable for the EX Bus. A standard RC servo cable has 3 wires (signal, vcc, gnd). When connecting to an EX Bus channel on the receiver, one needs one wire (yellow here) which splits into two wires (yellow, green). The yellow cable gets a resistor (2.4k&Omega;) soldered in line which needs to be connected to <b>*TX*</b> on the microcontroller. The green cable splits off the yellow cable before the transistor and needs to be connected to <b>*RX*</b> on the microcontroller.
 
- The figure describes the setup for the referenced Pyboard setup. The yellow wire is the one that needs to be connected to the signal pin on the receiver. The black wire (as described above) establishes a common ground between receiver and Pyboard. Since the Pyboard is powered via USB here, we do not need to connect the vcc (red plus wire). This is obviously only meaningful, while in a development phase on the computer. In normal operation, the Pyboard (or any other board running MicroPython) when acting as a sensor or sensor hub, would need a voltage supply (normally it comes then  from the receiver).
+ The yellow wire is the one that needs to be connected to the signal pin on the receiver. The black wire (as described above) establishes a common ground between receiver and the microcontroller. Since the board is powered via USB here, we do not need to connect the vcc (red plus wire). This is obviously only meaningful, while in a development phase on the computer. In normal operation, the board running MicroPython would need a voltage supply (normally it comes from the receiver then).
 
 <br><br>
 2023 Andreas Ennemoser – andreas.ennemoser@aon.at
