@@ -50,7 +50,7 @@ This will allow to use boards like Raspbery Pi, ESP32 or similar to act as a sen
 
 ## Hardware Layer
 
- The flowchart (Fig. 1) describes the setup of the hardware and indicates the physical connections. The microcontroller is connected with the receiver via a serial connection [UART](https://de.wikipedia.org/wiki/Universal_Asynchronous_Receiver_Transmitter). Physically the connection uses three wires (vcc, gnd, signal).
+ The flowchart (Fig. 1) describes the setup of the hardware and indicates the physical connections. The microcontroller is connected with the receiver via a serial asynchronous interface [UART](https://de.wikipedia.org/wiki/Universal_Asynchronous_Receiver_Transmitter). Physically the connection uses three wires (vcc, gnd, signal).
 
  The Jeti telemetry runs via a half-duplex serial communication protocol. This means that there is a master (receiver) controlling the data flow and a slave (microcontroller/sensor) which is only allowed to answer upon request from the master. The master reserves a 4ms period for this to work.
 
@@ -224,7 +224,7 @@ The Pyboard is in a small housing and a Jeti REX6 receiver is attached. The yell
   </kbd>
 </p>
 <p align="center">
-    <i>Fig. 9: Development setup. Closeup view.</i>
+    <i>Fig. 10: The receiver channel where the microcontroller is connected needs the <b>EX Bus</b> setting.</i>
 </p>
 
 <br>
@@ -238,6 +238,11 @@ The Pyboard is in a small housing and a Jeti REX6 receiver is attached. The yell
     <img src="docs/images/EX_Bus_connection_cable.png" width="800" />
   </kbd>
 </p>
+<p align="center">
+    <i>Fig. 11: Comparison of standard servo cable vs. EX bus cable attached to a RP2040 Zero.</i>
+</p>
+
+<br>
 
 Connection cable for the EX Bus. A standard RC servo cable has 3 wires (signal, vcc, gnd). When connecting to an EX Bus channel on the receiver, one needs one wire (yellow here) which splits into two wires (yellow, green). One of them gets a resistor (2.4k&Omega;) soldered in line (this one goes into GPIO Y9 (TX); see [Pyboard pinout](https://micropython.org/resources/pybv11-pinout.jpg)). The figure describes the setup for the referenced Pyboard setup. The yellow wire is the one that needs to be connected to the signal pin on the receiver. The black wire (as described above) establishes a common ground between receiver and Pyboard. Since the Pyboard is powered via USB here, we do not need to connect the vcc (red plus wire). This is obviously only meaningful, while in a development phase on the computer. In normal operation, the Pyboard (or any other board running MicroPython) when acting as a sensor or sensor hub, would need a voltage supply (normally it comes then  from the receiver).
 
