@@ -73,7 +73,10 @@ This will allow to use boards like Raspbery Pi, ESP32 or similar to act as a sen
 
 ## Program Logic
 
-The program logic consists of two parts. In the beginning the communication channels (UART, I2C) are initialized. A serial connection (UART) is established between the microcontroller and the receiver. Additionally an I2C connection is setup between the microcontroller and the sensor(s).
+The program logic consists of two parts. Those are the similar to the Arduino <b>*setup()*</b> and <b>*loop()*</b> functions.
+
+  * In the beginning the communication channels (UART, I2C) are initialized. A serial connection (UART) is established between the microcontroller and the receiver. Additionally an I2C connection is setup between the microcontroller and the sensor(s).
+  * After the setup of the communication, the main (infinite) loop starts. 
 
 </br>
 
