@@ -22,10 +22,11 @@ class BME280_Sensor():
         self.address = address
         self.i2c = i2c
         # unique device ID used for second (lower) part of the serial number
-        self.device_id = 1
+        self.deviceID = 1
+        self.type = 'pressure'
 
         # setup a logger for the REPL
-        self.logger = Logger(prestring='JETI SENSOR BME280')
+        self.logger = Logger(prestring='JETI SENSOR')
 
         return
     

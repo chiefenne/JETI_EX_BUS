@@ -41,72 +41,84 @@ class Sensors:
                 'description': 'Voltage',
                 'unit': 'V',
                 'data_type': 1, # int14_t
+                'bytes':2,
                 'precision': 1
             },
             'ID_ALTITUDE': {
                 'description': 'Altitude',
                 'unit': 'm',
                 'data_type': 1, # int14_t
+                'bytes':2,
                 'precision': 0
             },
             'ID_CLIMB': {
                 'description': 'Climb',
                 'unit': 'm/s',
                 'data_type': 1, # int14_t
+                'bytes':2,
                 'precision': 2
             },
             'ID_PRESSURE': {
                 'description': 'Pressure',
                 'unit': 'hPa',
                 'data_type': 4, # int22_t
+                'bytes':3,
                 'precision': 1
             },
             'ID_TEMP': {
                 'description': 'Temperature',
                 'unit': 'C',
                 'data_type': 1, # int14_t
+                'bytes':2,
                 'precision': 1
             },
             'ID_CAPACITY': {
                 'description': 'Capacity',
                 'unit': '%',
                 'data_type': 1, # int14_t
+                'bytes':2,
                 'precision': 0
             },
             'ID_RPM': {
                 'description': 'RPM',
                 'unit': '1/min',
                 'data_type': 1, # int14_t
+                'bytes':2,
                 'precision': 1
             },
             'ID_GPSLAT': {
                 'description': 'Latitude',
                 'unit': ' ',
                 'data_type': 9, # GPS
+                'bytes':2,
                 'precision': 0
             },
             'ID_GPSLON': {
                 'description': 'Longitude',
                 'unit': ' ',
                 'data_type': 9, # GPS
+                'bytes':4,
                 'precision': 0
             },
             'ID_DISTANCE': {
                 'description': 'Distance',
                 'unit': 'm',
                 'data_type': 1, # int14_t
+                'bytes':2,
                 'precision': 0
             },
             'ID_HEADING': {
                 'description': 'Heading',
                 'unit': '-',
                 'data_type': 1, # int14_t
+                'bytes':2,
                 'precision': 0
             },
             'ID_SATELLITES': {
                 'description': 'Satellites',
                 'unit': '_',
                 'data_type': 1, # int14_t
+                'bytes':2,
                 'precision': 0
             }
         }
@@ -130,16 +142,20 @@ class Sensors:
         '''Arm the sensors
         '''
 
+        # FIXME: this is a hack to get the sensors working
+        # FIXME: this is a hack to get the sensors working
+        # FIXME: this is a hack to get the sensors working
+
         # arm the sensors
-        bme280 = BME280_Sensor(address=0x76, i2c=self.i2c)
-        bme280.arm()
+        if 0x76 in self.addresses:
+            bme280 = BME280_Sensor(address=0x76, i2c=self.i2c)
+            bme280.arm()
+            self.sensors.append(bme280)
+        if 0x77 in self.addresses:
+            ms5611 = MS5611_Sensor(address=0x77, i2c=self.i2c, elevation=0)
+            ms5611.arm()
+            self.sensors.append(ms5611)
 
-        ms5611 = MS5611_Sensor(address=0x77, i2c=self.i2c, elevation=0)
-        ms5611.arm()
-
-        # add the sensors to the list of sensors
-        self.sensors.append(bme280)
-        self.sensors.append(ms5611)
 
         # number of sensors attached
         message = 'Number of sensors attached: {}'.format(len(self.sensors))

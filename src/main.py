@@ -53,7 +53,7 @@ addresses = i2c.scan()
 sensors = Sensors(addresses, i2c.i2c)
 
 # setup the JETI EX protocol
-ex = Ex(sensors.get_sensors())
+ex = Ex(sensors)
 
 # setup the JETI EX BUS protocol
 exbus = ExBus(serial, sensors, ex)
@@ -87,7 +87,7 @@ def core1():
 
         # compile data into a JETI EX frame
         frame = ex.packet(sensor)
-        # print('EX Frame: {}'.format(frame))
+        print('EX Frame: {}'.format(frame))
 
 # start the second thread on core 1
 logger.log('info', 'Starting second thread on core 1')

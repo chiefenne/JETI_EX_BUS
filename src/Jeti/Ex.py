@@ -222,11 +222,9 @@ class Ex:
 
         header = bytearray()
 
-        sensor = self.sensors[self.current_sensor]
-
         # combine productID and deviceID (2 bytes), LSB first, MSB last
         productID = self.sensors.productID
-        deviceID = ustruct.pack('b', sensor['deviceID']) + b'\x00'
+        deviceID = ustruct.pack('b', self.current_sensor.deviceID) + b'\x00'
 
         # message separator (1st byte)
         header += b'\x7E'
@@ -259,22 +257,21 @@ class Ex:
 
         data = bytearray()
 
-        sensor = self.sensors[self.current_sensor]
 
-        if sensor['type'] == 'pressure':
+        if self.current_sensor.type == 'pressure':
 
             # compile 9th byte of EX data specification (2x 4bit)
             # 1st 4bit (from left): sensor id, 2nd 4bit: data type
-            id = sensor['pressure']['identifier'] << 4
-            type = sensor['pressure']['data_type']
+            id = self.sensors.ID_PRESSURE << 4
+            type = self.sensors.meta['ID_PRESSURE']['data_type']
             id_type = id | type
             # convert int to bytes (e.g. 20 --> b'\x14') and append to data
             data += ustruct.pack('b', id_type)
 
             # data of 1st telemetry value
-            nbytes = sensor['pressure']['bytes']
-            precision = sensor['pressure']['precision']
-            value = sensor['pressure']['value']
+            nbytes = self.sensors.meta['ID_PRESSURE']['bytes']
+            precision = self.sensors.meta['ID_PRESSURE']['precision']
+            value = self.current_sensor.pressure
             sign = 0 if value >= 0x0 else 1
             value_s = int(value * 10**precision)
 
@@ -284,14 +281,14 @@ class Ex:
             data += ustruct.pack('b', val)
 
             # compile 11th+x byte of EX data specification (2x 4bit)
-            id = sensor['temperature']['identifier'] << 4
-            type = sensor['temperature']['data_type']
+            id = self.sensors.ID_TEMP << 4
+            type = self.sensors.meta['ID_TEMP']['data_type']
             id_type = id | type
                                          
             # data of 2nd telemetry value
-            nbytes = sensor['temperature']['bytes']
-            precision = sensor['temperature']['precision']
-            value = sensor['temperature']['value']
+            nbytes = self.sensors.meta['ID_TEMP']['bytes']
+            precision = self.sensors.meta['ID_TEMP']['bytes']
+            value = self.current_sensor.temperature
             sign = 0 if value >= 0x0 else 1
             value_s = int(value * 10**precision)
 

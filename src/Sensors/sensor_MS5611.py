@@ -22,10 +22,11 @@ class MS5611_Sensor():
         self.address = address
         self.i2c = i2c
         # unique device ID used for second (lower) part of the serial number
-        self.device_id = 2
+        self.deviceID = 2
+        self.type = 'pressure'
 
         # setup a logger for the REPL
-        self.logger = Logger(prestring='JETI SENSOR MS5611')
+        self.logger = Logger(prestring='JETI SENSOR')
 
         return
     
@@ -48,7 +49,7 @@ class MS5611_Sensor():
         self.pressureAdj = self.sensor.pressureAdj
         self.temperature = self.sensor.tempC
 
-        message = 'Sensor {}: Pressure {:.1f} (hPa), Temperature {:.1f} (C)'.format(self.name, p, t)
+        message = 'Sensor {}: Pressure {:.1f} (hPa), Temperature {:.1f} (C)'.format(self.name, self.pressureAdj, self.temperature)
         self.logger.log('info', message)
 
         return self.pressure, self.temperature
