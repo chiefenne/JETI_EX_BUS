@@ -62,7 +62,7 @@ This will allow to use boards like Raspbery Pi, ESP32 or similar to act as a sen
 
 <p align="center">
   <kbd> <!-- make a frame around the image -->
-    <img src="docs/images/program_logic1.png" height="400"/>
+    <img src="docs/images/program_logic.png" height="400"/>
   </kbd>
 </p>
 
