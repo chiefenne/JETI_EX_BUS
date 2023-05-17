@@ -182,7 +182,7 @@ class Ex:
         '''
         pass
 
-    def packet(self, sensor):
+    def frame(self, sensor):
         '''Compile the telemetry packet (Header, data or text, etc.)
 
         Returns:
@@ -190,7 +190,10 @@ class Ex:
         '''
         self.current_sensor = sensor
 
-        packet = bytearray()
+        # acquire lock
+        self.lock()
+
+        self.packet = bytearray()
 
         data = self.Data()
 
@@ -204,18 +207,21 @@ class Ex:
         text = self.SimpleText(message)
 
         # compose packet
-        packet += header
+        self.packet += header
 
         # add data
-        packet += data
+        self.packet += data
 
         # crc for telemetry (8-bit crc)
-        crc8 = CRC8.crc8(packet[2:])
-        packet += crc8
+        crc8 = CRC8.crc8(self.packet[2:])
+        self.packet += crc8
 
-        packet += text
+        self.packet += text
 
-        return packet
+        # release lock
+        self.release()
+
+        return self.packet
 
     def Header(self, ptype, length):
         '''EX packet header'''
