@@ -240,6 +240,11 @@ class ExBus:
                            + ' ms')
     
     def sendTelemetry(self, packet_ID):
+        '''Send telemetry data back to the receiver (master).
+
+        The packet ID is required to answer the request with the same ID.
+
+        '''
 
         # acquire lock to access the EX bus fram on stack
         lock.acquire()
@@ -261,13 +266,10 @@ class ExBus:
 
         return bytes_written
 
-    def updateTelemetry(self):
+    def updateTelemetry(self, ex_packet):
         '''Send telemetry data back to the receiver (master).
         '''
         self.telemetry = bytearray()
-
-        # get the EX packet for the current sensor
-        ex_packet = self.ex.frame(self.current_sensor)
 
         # EX bus header
         self.telemetry = b'\x3B\x01'
