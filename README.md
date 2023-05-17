@@ -50,21 +50,43 @@ This will allow to use boards like Raspbery Pi, ESP32 or similar to act as a sen
 
 ## Hardware Layer
 
- The following flowchart describes the setup of the hardware and indicates the physical connections. The receiver is connected with the board (RP2040 board, ESP32, etc.) via three wires (vcc, gnd, signal). The connection between the board and the sensors is established via four wires (vcc, gnd, sda, scl) for each of the sensors (I2C). 
+ The flowchart (Fig. 1) describes the setup of the hardware and indicates the physical connections. The microcontroller is connected with the receiver via a serial connection [UART](https://de.wikipedia.org/wiki/Universal_Asynchronous_Receiver_Transmitter). Physically the connection uses three wires (vcc, gnd, signal).
+
+ The Jeti telemetry runs via a half-duplex serial communication protocol. This means that there is a master (receiver) controlling the data flow and a slave (microcontroller/sensor) which is only allowed to answer upon request from the master. The master reserves a 4ms period for this to work.
+
+ The connection between the board and the sensors is established via [I2C](https://de.wikipedia.org/wiki/I%C2%B2C). Four wires are (vcc, gnd, sda, scl) needed to connect each of the sensors.
+ 
+> NOTE: During testing the microcontroller is supplied via USB power (thus no vcc connection between board and receiver) and the Jeti receiver is supplied via NiMh batteries. They share a common ground. In the real application the microcontroller will also be powered via the the battery (through the receiver).
+
+</br>
 
 <p align="center">
   <kbd> <!-- make a frame around the image -->
     <img src="docs/images/hardware_layer.png" width="700" />
   </kbd>
 </p>
+<p align="center">
+    <i>Fig. 1: Data flow and physical connections</i>
+</p>
+
+</br>
 
 ## Program Logic
+
+The program logic consists of two parts. In the beginning the communication channels (UART, I2C) are initialized. A serial connection (UART) is established between the microcontroller and the receiver. Additionally an I2C connection is setup between the microcontroller and the sensor(s).
+
+</br>
 
 <p align="center">
   <kbd> <!-- make a frame around the image -->
     <img src="docs/images/program_logic.png" height="400"/>
   </kbd>
 </p>
+<p align="center">
+    <i>Fig. 2: Communication layer and multicore protocol handler</i>
+</p>
+
+</br>
 
 ## Sample EX Bus data stream
 Written by function [Streamrecorder.py](https://github.com/chiefenne/JETI_EX_BUS/blob/main/src/Utils/Streamrecorder.py).
@@ -86,27 +108,62 @@ See [EX_Bus_stream.txt](https://github.com/chiefenne/JETI_EX_BUS/blob/main/docs/
 
 The data recorded are coming from the master (receiver) and show a duration of approximately **3.8ms** for the channel data and the concatenated telemetry request (see figure below). Click on the image to see a larger version.
 
-<kbd> <!-- make a frame around the image -->
-<img src="docs/images/EX_Bus_logic_analyzer_01.png" width="900" />
-</kbd>
+<br>
+
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/EX_Bus_logic_analyzer_01.png" width="900" />
+  </kbd>
+</p>
+<p align="center">
+    <i>Fig. 3: Jeti EX BUS protocol. Example shows channel data (i.e., transmitter controls) and then a telemtry request</i>
+</p>
+
+<br>
 
 The time between two channel/telemetry request packages is approximately **6.2ms**. The EX bus protocol documentation states that a period of **4ms** after the telemetry/JetiBox request is reserved for the answer from the sensor, etc. Click on the image to see a larger version.
 
+<p align="center">
 <kbd> <!-- make a frame around the image -->
 <img src="docs/images/EX_Bus_logic_analyzer_02.png" width="900" />
 </kbd>
+</p>
+<p align="center">
+    <i>Fig. 4: Jeti EX BUS protocol. Example shows the waiting period allowed for answering with telemetry</i>
+</p>
+
+<br>
 
 The image below shows a detailed view of the beginning of a packet (digital and analog). Click on the image to see a larger version.
 
-<kbd> <!-- make a frame around the image -->
-<img src="docs/images/EX_Bus_logic_analyzer_03.png" height="180" width="900" />
-</kbd>
+<br>
 
-The next figure depicts a telemetry answer from the sensor (slave). In this case it is an answer from a Jeti MVario 2 sensor. The telemetry data were sent in aprox. **2.7ms**. In order to answer a telemetry request, there are **4ms** reserved on the EX bus, so this packet fits well into that. Click on the image to see a larger version.
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/EX_Bus_logic_analyzer_03.png" height="180" width="900" />
+  </kbd>
+</p>
+</p>
+<p align="center">
+    <i>Fig. 5: Jeti EX BUS protocol. Zoomed view (digital/analog data from the logic level analyzer).</i>
+</p>
 
-<kbd> <!-- make a frame around the image -->
-<img src="docs/images/EX_Bus_logic_analyzer_04_telemetry.png" height="180" width="900" />
-</kbd>
+<br>
+
+The next figure depicts a telemetry answer from the microcontroller/sensor (slave). In this case it is an answer from a Jeti MVario 2 sensor. The telemetry data were sent in aprox. **2.7ms**. In order to answer a telemetry request, there are **4ms** reserved on the EX bus, so this packet fits well into that. Click on the image to see a larger version.
+
+<br>
+
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/EX_Bus_logic_analyzer_04_telemetry.png" height="180" width="900" />
+  </kbd>
+</p>
+<p align="center">
+    <i>Fig. 6: Jeti EX BUS protocol. Example of Jeti MVario 2 telemetry answer.</i>
+</p>
+
+<br>
 
 ## Connecting TINY 2040 and receiver
 
@@ -115,32 +172,72 @@ The next figure depicts a telemetry answer from the sensor (slave). In this case
 The following image shows the components and connections as used during the development.
 
 <!-- HTML syntax for image display allows to change the image size -->
-<kbd> <!-- make a frame around the image -->
-<img src="docs/images/setup_TINY2040_JetiRex6_04.png" width="600" />
-</kbd>
-<kbd> <!-- make a frame around the image -->
-<img src="docs/images/setup_TINY2040_JetiRex6_03.png" width="600" />
-</kbd>
 
-The figure below shows how the resistor is soldered at the split point of the wires. It is only active on the wire going to the **Y9** pin of the Pyboard.
+<br>
 
-<kbd> <!-- make a frame around the image -->
-<img src="docs/images/setup_Pyboard_JetiRex6_02.png" height="600" />
-</kbd>
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/setup_TINY2040_JetiRex6_04.png" width="600" />
+  </kbd>
+</p>
+<p align="center">
+    <i>Fig. 7: Development setup. Note: no vcc from receiver to microcontroller.</i>
+</p>
+
+<br>
+
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/setup_TINY2040_JetiRex6_03.png" width="600" />
+  </kbd>
+</p>
+<p align="center">
+    <i>Fig. 8: Development setup. Closeup view.</i>
+</p>
+
+<br>
+
+The figure below shows how the signal cable coming from the receiver is "split" to create the half-duplex communication. The resistor is soldered only on one of the split wires. The wire with the resistor needs to be connected with the <b>TX</b> pin of the board. The other wire connects to the <b>RX</b> pin respectively.
+
+<br>
+
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/setup_Pyboard_JetiRex6_02.png" height="600" />
+  </kbd>
+</p>
+<p align="center">
+    <i>Fig. 9: Development setup (here on the Pyboard). Closeup view on the cable split and resistor.</i>
+</p>
+
+<br>
 
 The Pyboard is in a small housing and a Jeti REX6 receiver is attached. The yellow wire (channel 6) splits into two wires (one with a 2.4kOhm resistor as per the Jeti specification) which are connected to TX(Y9) and RX(Y10) on UART(3) on the Pyboard. The black wire establishes a common ground. The receiver is powered by a 4S NiMH accumulator via channel 1. Channel 6 of the receiver was set to "Ex Bus" (see image below) in the device manager of the Jeti transmitter.
 
 ### Channel setup in the device manager of the transmitter
 
-<kbd> <!-- make a frame around the image -->
-<img src="docs/images/EX_Bus_channel_6.png"/>
-</kbd>
+<br>
+
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/EX_Bus_channel_6.png"/>
+  </kbd>
+</p>
+<p align="center">
+    <i>Fig. 9: Development setup. Closeup view.</i>
+</p>
+
+<br>
 
 ### EX Bus connection cable
 
-<kbd> <!-- make a frame around the image -->
-<img src="docs/images/EX_Bus_connection_cable.png" width="800" />
-</kbd>
+<br>
+
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/EX_Bus_connection_cable.png" width="800" />
+  </kbd>
+</p>
 
 Connection cable for the EX Bus. A standard RC servo cable has 3 wires (signal, vcc, gnd). When connecting to an EX Bus channel on the receiver, one needs one wire (yellow here) which splits into two wires (yellow, green). One of them gets a resistor (2.4k&Omega;) soldered in line (this one goes into GPIO Y9 (TX); see [Pyboard pinout](https://micropython.org/resources/pybv11-pinout.jpg)). The figure describes the setup for the referenced Pyboard setup. The yellow wire is the one that needs to be connected to the signal pin on the receiver. The black wire (as described above) establishes a common ground between receiver and Pyboard. Since the Pyboard is powered via USB here, we do not need to connect the vcc (red plus wire). This is obviously only meaningful, while in a development phase on the computer. In normal operation, the Pyboard (or any other board running MicroPython) when acting as a sensor or sensor hub, would need a voltage supply (normally it comes then  from the receiver).
 
