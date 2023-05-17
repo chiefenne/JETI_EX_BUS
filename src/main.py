@@ -86,11 +86,8 @@ def core1():
         # ex.dummy()
 
         # compile data into a JETI EX frame
-        ex_packet = ex.packet(sensor)
+        ex_packet = ex.frame(sensor)
         print('EX Frame: {}'.format(ex_packet))
-
-        # update the EX BUS packet with the new EX frame
-        exbus.updateTelemetry(ex_packet)
 
 # start the second thread on core 1
 logger.log('info', 'Starting second thread on core 1')
