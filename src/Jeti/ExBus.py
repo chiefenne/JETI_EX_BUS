@@ -249,6 +249,9 @@ class ExBus:
         # acquire lock to access the EX bus fram on stack
         lock.acquire()
 
+        # update the telemetry data
+        self.updateTelemetry()
+
         # FIXME
         # FIXME check how this works with data and 2x text from EX values???
         # FIXME
@@ -266,10 +269,20 @@ class ExBus:
 
         return bytes_written
 
-    def updateTelemetry(self, ex_packet):
+    def updateTelemetry(self):
         '''Send telemetry data back to the receiver (master).
         '''
         self.telemetry = bytearray()
+
+        # acquire lock to access the EX packet on stack
+        # core 1 cannot acquire the lock if core 0 has it
+        lock.acquire()
+
+        # EX packet
+        ex_packet = self.ex.packet
+
+        # release lock
+        lock.release()
 
         # EX bus header
         self.telemetry = b'\x3B\x01'
