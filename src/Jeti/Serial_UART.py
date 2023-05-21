@@ -15,7 +15,7 @@ from Utils.Logger import Logger
 class Serial:
 
     def __init__(self, port=0,
-                       baudrate=115200,
+                       baudrate=125000,
                        bits=8,
                        parity=None,
                        stop=1,
