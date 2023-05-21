@@ -6,3 +6,4 @@ howto_connect_to_Pyboard_REPL.txt
 update_pyboard_from_src.sh
 upload_code_via_ampy_and_use_screen_for_REPL.txt
 upload_code_via_rshell.txt
+EX_Bus_stream.txt
