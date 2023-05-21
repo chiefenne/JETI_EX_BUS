@@ -127,8 +127,12 @@ class ExBus:
         while True:
 
             # read one byte from the serial stream
-            c = self.serial.read(1)
-            
+            if self.serial.any():
+                c = self.serial.read(1)
+
+            # read as much bytes as possible from the serial stream
+            # c = self.serial.read()
+
             if state == STATE_HEADER_1:
 
                 # check for EX bus header 1
@@ -146,15 +150,15 @@ class ExBus:
             elif state == STATE_HEADER_2:
                 # check for EX bus header 2
                 if c in [b'\x01', b'\x03']:
+                
                     self.buffer += bytearray(c)
 
                     # change state
                     state = STATE_LENGTH
                 
-                else:
-                    # reset state
-                    state = STATE_HEADER_1
-                    continue
+                # else:
+                #     # reset state
+                #     state = STATE_HEADER_1
 
             elif state == STATE_LENGTH:
                 # check for EX bus packet length
@@ -172,7 +176,6 @@ class ExBus:
                 if self.packet_length > 64:
                     # reset state
                     state = STATE_HEADER_1
-                    continue
 
                 # change state
                 state = STATE_END
@@ -181,7 +184,7 @@ class ExBus:
                 # check for rest of EX bus packet
                 # ID, data identifier, data, CRC
                 self.buffer += bytearray(c)
-
+                
                 # check if packet is complete
                 if len(self.buffer) == self.packet_length:
                     
@@ -190,6 +193,7 @@ class ExBus:
                     # check CRC
                     if self.checkCRC(self.buffer):
                         # packet is complete and CRC is correct
+                        print('Packet complete and CRC correct')
     
                         # NOTE: accessing the bytearray needs slicing in order
                         #       to return a byte and not an integer
@@ -200,6 +204,7 @@ class ExBus:
                         # check for channel data
                         if self.buffer[0:1] == b'\x3e' and \
                            self.buffer[4:5] == b'\x31':
+                            print('Channel data received')
                             # get the channel data
                             self.getChannelData()
 
@@ -244,10 +249,10 @@ class ExBus:
 
         The packet ID is required to answer the request with the same ID.
 
-        '''
+        The send cycle is limited between 75 and 150 ms. The lower value leeds
+        to lower latency. 
 
-        # acquire lock to access the EX bus fram on stack
-        lock.acquire()
+        '''
 
         # update the telemetry data
         self.updateTelemetry()
