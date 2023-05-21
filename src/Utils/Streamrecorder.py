@@ -22,13 +22,13 @@ def saveStream(serial, logger, filename='EX_Bus_stream.txt', duration=1000):
     '''
 
     start = utime.ticks_ms()
-    time = 0
-    duration = 1000
+    time = 0.
+
     f = open(filename, 'w')
 
     while time < duration:
 
-        buf = bytearray(50)  
+        buf = bytearray(5000)  
         mv = memoryview(buf)
         idx = 0
 
@@ -45,8 +45,5 @@ def saveStream(serial, logger, filename='EX_Bus_stream.txt', duration=1000):
 
     f.close()
 
-    # sync file systems (might be needed?)
-    uos.sync()
-    
     message = 'EX Bus stream recorded for {} seconds.'.format(duration/1000.)
     logger.log('debug', message)
