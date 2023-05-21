@@ -36,11 +36,11 @@ logger = Logger(prestring='JETI MAIN')
 
 # Serial connection bewtween Jeti receiver and microcontroller
 # defaults: baudrate=125000, 8-N-1
-s = Serial(port=0)
+s = Serial(port=0, baudrate=125000, bits=8, parity=None, stop=1)
 serial = s.connect()
 
 # write 1 second of the serial stream to a text file for debugging purposes
-DEBUG = False
+DEBUG = True
 if DEBUG:
     saveStream(serial, logger, filename='EX_Bus_stream.txt', duration=1000)
 
@@ -61,12 +61,10 @@ exbus = ExBus(serial, sensors, ex)
 # function which is run on core 0
 def core0():
 
-    while True:
+    # debug
+    # exbus.dummy()
 
-        # debug
-        # exbus.dummy()
-
-        exbus.run_forever()
+    exbus.run_forever()
 
 # function which is run on core 1
 def core1():
@@ -90,8 +88,8 @@ def core1():
         print('EX Frame: {}'.format(ex_packet))
 
 # start the second thread on core 1
-logger.log('info', 'Starting second thread on core 1')
-second_thread = _thread.start_new_thread(core1, ())
+# logger.log('info', 'Starting second thread on core 1')
+# second_thread = _thread.start_new_thread(core1, ())
 
 # run the main loop on core 0
 logger.log('info', 'Starting main loop on core 0')
