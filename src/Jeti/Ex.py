@@ -197,14 +197,10 @@ class Ex:
 
         data = self.Data()
 
-        # packet length only known after data, text
+        # packet length only known after data, text and crc are added
         # packet types text=0, data=1, message=2
         type = 1
         header = self.Header(type, len(data))
-
-        # compile simple text protocol
-        message = 'Hallodrio'
-        text = self.SimpleText(message)
 
         # compose packet
         self.packet += header
@@ -216,7 +212,9 @@ class Ex:
         crc8 = CRC8.crc8(self.packet[2:])
         self.packet += crc8
 
-        self.packet += text
+        # compile simple text protocol
+        message = 'Hallodrio'
+        self.packet += self.SimpleText(message)
 
         # release lock
         self.release()
@@ -227,10 +225,6 @@ class Ex:
         '''EX packet header'''
 
         header = bytearray()
-
-        # combine productID and deviceID (2 bytes), LSB first, MSB last
-        productID = self.sensors.productID
-        deviceID = ustruct.pack('b', self.current_sensor.deviceID) + b'\x00'
 
         # message separator (1st byte)
         header += b'\x7E'
@@ -251,6 +245,9 @@ class Ex:
         header += ustruct.pack('b', type_length)
 
         # serial number (bytes 4-5 and 6-7)
+        # combine productID and deviceID (2 bytes), LSB first, MSB last
+        productID = self.sensors.productID
+        deviceID = ustruct.pack('b', self.current_sensor.deviceID) + b'\x00'
         header += productID
         header += deviceID
 
