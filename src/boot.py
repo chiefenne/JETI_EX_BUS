@@ -15,7 +15,14 @@ print('JETI BOOT - INFO: Operating system:', sys.version)
 print('JETI BOOT - INFO: Vendor:', sys.implementation._machine)
 
 
-# check if we are on a Pyboard (initially main development platform)
+# blink led 's' seconds with frequency 'hz'
+def blink(led, s, hz):
+    for i in range(s*hz):
+        led.toggle()
+        time.sleep(1/hz)
+
+# check if we are on a Pyboard
+# initially this was the development platform
 if 'pyboard' in sys.platform:
     import pyb
     blue = pyb.LED(4)
@@ -30,17 +37,11 @@ if 'rp2' in sys.platform:
     ledg.value(1)
     ledb.value(1)
 
-    # blink red led s seconds with hz Hz
-    def blink(led, s, hz):
-        for i in range(s*hz):
-            led.toggle()
-            time.sleep(1/hz)
-        
-        # mak sure red is off
-        ledr.value(1)
-
     # blink red led to show we are booting
     blink(ledr, 2, 10)
+     
+    # mak sure red is off
+    ledr.value(1)
 
     # switch on green led to show we are active
     ledg.value(0)
