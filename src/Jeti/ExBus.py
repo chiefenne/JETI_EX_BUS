@@ -130,9 +130,6 @@ class ExBus:
             if self.serial.any():
                 c = self.serial.read(1)
 
-            # read as much bytes as possible from the serial stream
-            # c = self.serial.read()
-
             if state == STATE_HEADER_1:
 
                 # check for EX bus header 1
@@ -204,7 +201,6 @@ class ExBus:
                         # check for channel data
                         if self.buffer[0:1] == b'\x3e' and \
                            self.buffer[4:5] == b'\x31':
-                            print('Channel data received')
                             # get the channel data
                             self.getChannelData()
 
@@ -214,7 +210,6 @@ class ExBus:
                              self.buffer[4:5] == b'\x3a':
                             
                             packet_id = self.buffer[3:4]
-                            print('Telemetry packet ID', packet_id)
 
                             # send telemetry data
                             self.sendTelemetry(packet_id)
@@ -223,7 +218,6 @@ class ExBus:
                         elif self.buffer[0:1] == b'\x3d' and \
                              self.buffer[1:2] == b'\x01' and \
                              self.buffer[4:5] == b'\x3b':
-                            print('Need to send JETIBOX')
                             # send JetiBox menu data
                             self.sendJetiBoxMenu()
 
@@ -254,6 +248,10 @@ class ExBus:
 
         '''
 
+        # check if EX packet (frame) is available
+        if not self.ex.packet:
+            return
+
         # update the telemetry data
         self.updateTelemetry()
 
@@ -281,13 +279,13 @@ class ExBus:
 
         # acquire lock to access the EX packet on stack
         # core 1 cannot acquire the lock if core 0 has it
-        lock.acquire()
+        self.lock()
 
         # EX packet
         ex_packet = self.ex.packet
 
         # release lock
-        lock.release()
+        self.release()
 
         # EX bus header
         self.telemetry = b'\x3B\x01'
