@@ -34,3 +34,8 @@ else:
 # close the serial connection
 s.disconnect()
 
+
+def bytes2hex(self, _bytes, separator='-'):
+    p_d = _bytes.decode()
+    hex_str = separator.join([p_d[x:x+2] for x in range(0, len(p_d), 2)])
+    return hex_str
