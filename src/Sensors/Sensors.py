@@ -22,18 +22,19 @@ class Sensors:
     def __init__(self, addresses, i2c):
         
         # telemetry identifiers
-        self.ID_VOLTAGE = 0
-        self.ID_ALTITUDE = 1
-        self.ID_CLIMB = 2
-        self.ID_PRESSURE = 3
-        self.ID_TEMP = 4
-        self.ID_FUEL = 5
-        self.ID_RPM = 6
-        self.ID_GPSLAT = 7
-        self.ID_GPSLON = 8
-        self.ID_DISTANCE = 9
-        self.ID_HEADING = 10
-        self.ID_SATELLITES = 11
+        self.ID_DEVICE = 0
+        self.ID_VOLTAGE = 1
+        self.ID_ALTITUDE = 2
+        self.ID_CLIMB = 3
+        self.ID_PRESSURE = 4
+        self.ID_TEMP = 5
+        self.ID_FUEL = 6
+        self.ID_RPM = 7
+        self.ID_GPSLAT = 8
+        self.ID_GPSLON = 9
+        self.ID_DISTANCE = 10
+        self.ID_HEADING = 11
+        self.ID_SATELLITES = 12
 
         # sensor meta data for the Jeti Ex telemetry
         self.meta = {
@@ -148,13 +149,13 @@ class Sensors:
 
         # arm the sensors
         if 0x76 in self.addresses:
-            bme280 = BME280_Sensor(address=0x76, i2c=self.i2c)
-            bme280.arm()
-            self.sensors.append(bme280)
+            sensor = BME280_Sensor(address=0x76, i2c=self.i2c)
+            sensor.arm()
+            self.sensors.append(sensor)
         if 0x77 in self.addresses:
-            ms5611 = MS5611_Sensor(address=0x77, i2c=self.i2c, elevation=0)
-            ms5611.arm()
-            self.sensors.append(ms5611)
+            sensor = MS5611_Sensor(address=0x77, i2c=self.i2c, elevation=0)
+            sensor.arm()
+            self.sensors.append(sensor)
 
 
         # number of sensors attached

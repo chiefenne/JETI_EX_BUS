@@ -249,7 +249,7 @@ class ExBus:
         '''
 
         # check if EX packet (frame) is available
-        if not self.ex.packet:
+        if not self.ex.ex_packet:
             return
 
         # update the telemetry data
