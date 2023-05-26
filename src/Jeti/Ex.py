@@ -78,9 +78,6 @@ class Ex:
         # get header: types 'text', 'data', 'message'
         header = self.Header('data', length)
 
-        # crc for telemetry (8-bit crc)
-        crc8 = CRC8.crc8(self.ex_packet[2:])
-
         # compile simple text protocol
         message = 'A simple text message'
         simple_text = self.SimpleText(message)
@@ -92,7 +89,14 @@ class Ex:
         self.ex_packet = bytearray()
         self.ex_packet += header
         self.ex_packet += data
+
+        # crc for telemetry (8-bit crc); checksum begins at 3rd byte
+        # here we use take the 2nd byte (length) into account
+        # because we do not use the separator byte (0x7E)
+        crc8 = CRC8.crc8(self.ex_packet[1:])
         self.ex_packet += crc8
+
+        # add simple text (34 bytes)
         self.ex_packet += simple_text
 
         # release lock
