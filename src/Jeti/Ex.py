@@ -267,6 +267,8 @@ class Ex:
             unit = self.sensors.meta['ID_PRESSURE']['unit']
             self.text += hexlify(unit.encode('utf-8'))
 
+        return self.text, len(self.text)
+
     def Message(self):
         '''
 
