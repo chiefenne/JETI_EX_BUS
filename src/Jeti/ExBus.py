@@ -219,7 +219,7 @@ class ExBus:
                             packet_id = self.buffer[3:4]
 
                             # send telemetry data
-                            self.sendTelemetry(packet_id)
+                            self.sendTelemetry(packet_id, verbose=False)
 
                         # check for JetiBox request
                         elif self.buffer[0:1] == b'\x3d' and \
@@ -227,15 +227,6 @@ class ExBus:
                              self.buffer[4:5] == b'\x3b':
                             # send JetiBox menu data
                             self.sendJetiBoxMenu()
-                        
-                        # check for a telemetry packet (just for debugging)
-                        elif self.buffer[0:1] == b'\x3b' and \
-                             self.buffer[1:2] == b'\x01':
-                            print('Telemetry packet')
-                            print('Packet ID', self.buffer[3:4])
-                            print('Data ID', self.buffer[5:6])
-                            print('Data', self.buffer[6:-2])
-                            print('CRC', self.buffer[-2:])
 
                     # reset state
                     state = STATE_HEADER_1
@@ -259,7 +250,7 @@ class ExBus:
                     ' Value: ' + str(int.from_bytes(self.channel[i], 'little') / 8000)
                                + ' ms')
     
-    def sendTelemetry(self, packet_ID):
+    def sendTelemetry(self, packet_ID, verbose=False):
         '''Send telemetry data back to the receiver (master).
 
         The packet ID is required to answer the request with the same ID.
@@ -269,70 +260,41 @@ class ExBus:
 
         '''
 
+        start = utime.ticks_us()
+
+        # acquire lock to access the EX packet on stack
+        # core 1 cannot acquire the lock if core 0 has it
+        self.lock()
+
         # check if EX packet (frame) is available
-        if not self.ex.ex_packet:
+        if not self.ex.exbus_packet:
+            self.release()
             return
 
-        # update the telemetry data
-        self.updateTelemetry()
+        # EX BUS packet
+        self.telemetry = self.ex.exbus_packet
+
+        # release lock
+        self.release()
 
         # packet ID (answer with same ID as by the request)
         # slice assignment is required to write a byte to the bytearray
         # it does an implicit conversion from byte to integer
         self.telemetry[3:4] = packet_ID
 
-        self.logger.log('info', 'Packet ID of telemetry request: {}'.format(hexlify(packet_ID)))
+        if verbose:
+            self.logger.log('info', 'Packet ID of telemetry request: {}'.format(hexlify(packet_ID)))
+            self.logger.log('info', 'Telemetry data: {}'.format(hexlify(self.telemetry)))   
 
         # write packet to the EX bus stream
-        # start = utime.ticks_us()
         bytes_written = self.serial.write(self.telemetry)
-        # end = utime.ticks_us()
-        # diff = utime.ticks_diff(end, start)
-        #print('Time for answer:', diff / 1000., 'ms')
+        
+        # print how long it took to send the packet       
+        end = utime.ticks_us()
+        diff = utime.ticks_diff(end, start)
+        print('Time for answer:', diff / 1000., 'ms')
 
         return bytes_written
-
-    def updateTelemetry(self):
-        '''Send telemetry data back to the receiver (master).
-        '''
-        self.telemetry = bytearray()
-
-        # acquire lock to access the EX packet on stack
-        # core 1 cannot acquire the lock if core 0 has it
-        self.lock()
-
-        # EX packet
-        ex_packet = self.ex.ex_packet
-
-        # release lock
-        self.release()
-
-        # EX bus header
-        self.telemetry += b'\x3B\x01'
-
-        # EX bus packet length in bytes including the header and CRC
-        self.telemetry += ustruct.pack('b', len(ex_packet) + 8)
-        
-        # put dummy id here
-        self.telemetry += b'\x00'
-
-        # telemetry identifier
-        self.telemetry+= b'\x3A'
-
-        # packet length in bytes of EX packet
-        self.telemetry += ustruct.pack('b', len(ex_packet))
-
-        # add EX packet
-        self.telemetry += ex_packet
-
-        # calculate the crc for the packet
-        crc = CRC16.crc16_ccitt(self.telemetry)
-
-        # compile final telemetry packet
-        self.telemetry += crc[2:]
-        self.telemetry += crc[:2]
-
-        return self.telemetry
 
     def sendJetiBoxMenu(self):
         pass

@@ -19,6 +19,7 @@ import utime
 import ustruct
 
 from Jeti import CRC8
+from Jeti import CRC16
 from Utils.Logger import Logger
 import Utils.lock as lock
 
@@ -32,8 +33,8 @@ class Ex:
         # list of sensors
         self.sensors = sensors
 
-        # initialize the EX packet
-        self.ex_packet = None
+        # initialize the EX BUS packet (needed for check in ExBus.py)
+        self.exbus_packet = None
 
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI EX')
@@ -67,7 +68,43 @@ class Ex:
         '''
         pass
 
-    def frame(self, sensor):
+    def exbus_frame(self, sensor):
+        '''Send telemetry data back to the receiver (master).
+        '''
+
+        # setup ex packet
+        self.ex_packet = self.ex_frame(sensor)
+
+        self.exbus_packet = bytearray()
+
+        # EX bus header
+        self.exbus_packet += b'\x3B\x01'
+
+        # EX bus packet length in bytes including the header and CRC
+        self.exbus_packet += ustruct.pack('b', len(self.ex_packet) + 8)
+        
+        # put dummy id here; will be replaced by packet id later
+        self.exbus_packet += b'\x00'
+
+        # telemetry identifier
+        self.exbus_packet += b'\x3A'
+
+        # packet length in bytes of EX packet
+        self.exbus_packet += ustruct.pack('b', len(self.ex_packet))
+
+        # add EX packet
+        self.exbus_packet += self.ex_packet
+
+        # calculate the crc for the packet
+        crc = CRC16.crc16_ccitt(self.exbus_packet)
+
+        # compile final telemetry packet
+        self.exbus_packet += crc[2:]
+        self.exbus_packet += crc[:2]
+
+        return self.exbus_packet
+
+    def ex_frame(self, sensor):
         '''Compile the EX telemetry packet (Header, data or text, etc.)
 
         Returns:
