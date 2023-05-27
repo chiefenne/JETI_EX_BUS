@@ -108,12 +108,12 @@ def core1():
         # ex.dummy()
 
         # compile data into a JETI EX frame
-        ex_packet = ex.frame(sensor)
+        exbus_packet = ex.exbus_frame(sensor)
 
         # debug
         i += 1
         if i % 100 == 0:
-            print('EX Frame: {}'.format(ex_packet))
+            print('EX Frame: {}'.format(exbus_packet))
 
     # inform the user that the second thread is stopped
     logger.log('info', 'Stopping second thread on core 1')
