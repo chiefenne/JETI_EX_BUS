@@ -72,7 +72,7 @@ class Ex:
         '''Prepare the EX BUS telemetry packet.'''
 
         # setup ex packet
-        self.ex_packet = self.ex_frame(sensor)
+        self.ex_packet = self.ex_frame(sensor, frametype='data')
 
         self.exbus_packet = bytearray()
 
@@ -103,15 +103,15 @@ class Ex:
 
         return self.exbus_packet
 
-    def ex_frame(self, sensor):
+    def ex_frame(self, sensor, frametype='data'):
         '''Compile the EX telemetry packet (Header, data or text, etc.).'''
         self.current_sensor = sensor
 
         # get sensor data
         data, length = self.Data()
 
-        # get header: types 'text', 'data', 'message'
-        header = self.Header('data', length)
+        # compile header (types are 'text', 'data', 'message')
+        header = self.Header(frametype, length)
 
         # compile simple text protocol
         message = 'A simple text message'
@@ -139,7 +139,7 @@ class Ex:
 
         return self.ex_packet
 
-    def Header(self, packet_type, length):
+    def Header(self, frametype, length):
         '''EX packet message header.'''
 
         header = bytearray()
@@ -154,7 +154,7 @@ class Ex:
 
         # 2 bits for packet type (0=text, 1=data, 2=message)
         # these are the two leftmost bits of 3rd byte; shift left by 6
-        telemetry_type = types[packet_type] << 6
+        telemetry_type = types[frametype] << 6
 
         # telemetry_length (+1 is for the crc8 byte)
         telemetry_length = length + 1
