@@ -6,7 +6,7 @@ import utime
 from binascii import hexlify
 
 
-def saveStream(serial, logger, filename='EX_Bus_stream.txt', duration=1000):
+def saveStream(serial, filename='EX_Bus_stream.txt', duration=1000):
     '''Write a part of the serial stream to a text file on the SD card 
     for debugging purposes.
 
@@ -35,8 +35,8 @@ def saveStream(serial, logger, filename='EX_Bus_stream.txt', duration=1000):
         while idx < len(buf):
             if serial.any() > 0:
                 bytes_read = serial.readinto(mv[idx:])
-                # print('Got {} bytes of data'.format(bytes_read),
-                #    hexlify(buf[idx:idx+bytes_read], b':'))
+                if b'\x3b\x01' in mv[idx:]:
+                    print('TELEMETRY ANSWER', hexlify(buf[idx:idx+bytes_read], b':'))
                 idx += bytes_read
 
         f.write(hexlify(buf, b':') + '\n')
@@ -44,6 +44,3 @@ def saveStream(serial, logger, filename='EX_Bus_stream.txt', duration=1000):
         time = utime.ticks_diff(utime.ticks_ms(), start)
 
     f.close()
-
-    message = 'EX Bus stream recorded for {} seconds.'.format(duration/1000.)
-    logger.log('debug', message)
