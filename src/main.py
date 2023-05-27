@@ -42,7 +42,10 @@ serial = s.connect()
 # write 1 second of the serial stream to a text file for debugging purposes
 DEBUG = True
 if DEBUG:
-    saveStream(serial, logger, filename='EX_Bus_stream.txt', duration=1000)
+    logger.log('debug', 'Starting to record EX Bus stream ...')
+    saveStream(serial, filename='EX_Bus_stream.txt', duration=3000)
+    logger.log('debug', 'EX Bus stream recorded')
+
 
 # setup the I2C bus (pins are board specific)
 #    TINY2040 board: GPIO6, GPIO7 at port 1 (id=1)
@@ -60,32 +63,63 @@ exbus = ExBus(serial, sensors, ex)
 
 # function which is run on core 0
 def core0():
+    global main_thread_running
 
     # debug
     # exbus.dummy()
 
-    exbus.run_forever()
+    try:
+        exbus.run_forever()
+    
+    except KeyboardInterrupt:
+        # Keyboard interrupt occurred
+        main_thread_running = False  # Set the flag to indicate that the main thread is not running
+
+        # inform the user
+        logger.log('info', 'Keyboard interrupt occurred')
+        logger.log('info', 'Stopping main thread on core 0')    
+
+        _thread.exit()
 
 # function which is run on core 1
 def core1():
+    global main_thread_running
 
     # make a generator out of the list of sensors
     cycle_sensors = cycler(sensors.get_sensors())
+
+    # counter
+    i = 0
     
-    while True:
+    while main_thread_running:
 
         # cycle infinitely through all sensors
         sensor = next(cycle_sensors)
 
+        # debug
+        verbose = False
+        if i % 100 == 0:
+            verbose = True
+
         # collect data from currently selected sensor
-        sensor.read()
+        sensor.read(verbose=verbose)
 
         # debug
         # ex.dummy()
 
         # compile data into a JETI EX frame
         ex_packet = ex.frame(sensor)
-        print('EX Frame: {}'.format(ex_packet))
+
+        # debug
+        i += 1
+        if i % 100 == 0:
+            print('EX Frame: {}'.format(ex_packet))
+
+    # inform the user that the second thread is stopped
+    logger.log('info', 'Stopping second thread on core 1')
+
+# Shared variable to indicate whether the main thread is still running
+main_thread_running = True
 
 # start the second thread on core 1
 # logger.log('info', 'Starting second thread on core 1')
