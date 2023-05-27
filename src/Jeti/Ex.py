@@ -32,6 +32,9 @@ class Ex:
         # list of sensors
         self.sensors = sensors
 
+        # initialize the EX packet
+        self.ex_packet = None
+
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI EX')
 
@@ -194,7 +197,7 @@ class Ex:
             # compile 9th byte of EX data specification (2x 4bit)
             # 1st 4bit (from left): sensor id, 2nd 4bit: data type
             id = self.sensors.ID_PRESSURE << 4
-            self.data_type = self.sensors.meta['ID_PRESSURE']['data_type']
+            data_type = self.sensors.meta['ID_PRESSURE']['data_type']
 
             # combine bits for id and data type
             # convert int to bytes (e.g. 20 --> b'\x14')
