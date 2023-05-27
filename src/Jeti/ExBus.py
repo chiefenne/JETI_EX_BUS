@@ -53,6 +53,7 @@ Date: 04-2021
 
 from ubinascii import hexlify, unhexlify
 import utime
+import ustruct
 
 from Jeti import CRC16
 from Utils.Logger import Logger
@@ -68,7 +69,6 @@ class ExBus:
         self.sensors = sensors
         self.ex = ex
 
-        self.telemetry = bytearray()
         self.get_new_sensor = False
 
         # setup a logger for the REPL
@@ -173,11 +173,18 @@ class ExBus:
                 if self.packet_length > 64:
                     # reset state
                     state = STATE_HEADER_1
+                    continue
 
                 # change state
                 state = STATE_END
 
             elif state == STATE_END:
+
+                if len(self.buffer) > 64:
+                    # reset state
+                    state = STATE_HEADER_1
+                    continue
+
                 # check for rest of EX bus packet
                 # ID, data identifier, data, CRC
                 self.buffer += bytearray(c)
@@ -190,7 +197,7 @@ class ExBus:
                     # check CRC
                     if self.checkCRC(self.buffer):
                         # packet is complete and CRC is correct
-                        print('Packet complete and CRC correct')
+                        # print('Packet complete and CRC correct')
     
                         # NOTE: accessing the bytearray needs slicing in order
                         #       to return a byte and not an integer
@@ -220,23 +227,37 @@ class ExBus:
                              self.buffer[4:5] == b'\x3b':
                             # send JetiBox menu data
                             self.sendJetiBoxMenu()
+                        
+                        # check for a telemetry packet (just for debugging)
+                        elif self.buffer[0:1] == b'\x3b' and \
+                             self.buffer[1:2] == b'\x01':
+                            print('Telemetry packet')
+                            print('Packet ID', self.buffer[3:4])
+                            print('Data ID', self.buffer[5:6])
+                            print('Data', self.buffer[6:-2])
+                            print('CRC', self.buffer[-2:])
 
                     # reset state
                     state = STATE_HEADER_1
+                    continue
 
-    def getChannelData(self):
+    def getChannelData(self, verbose=False):
         self.channel = dict()
         
         num_channels = int.from_bytes(self.buffer[5:6], 'little') // 2
-        self.logger.log('info', 'Number of channels: ' + str(num_channels))
+
+        if verbose:
+            self.logger.log('info', 'Number of channels: ' + str(num_channels))
 
         for i in range(num_channels):
             self.channel[i] = self.buffer[6 + i*2 : 7 + i*2] + \
                               self.buffer[7 + i*2 : 8 + i*2]
-            self.logger.log('info',
-                'Channel: ' + str(i+1) + 
-                ' Value: ' + str(int.from_bytes(self.channel[i], 'little') / 8000)
-                           + ' ms')
+            
+            if verbose:
+                self.logger.log('info',
+                    'Channel: ' + str(i+1) + 
+                    ' Value: ' + str(int.from_bytes(self.channel[i], 'little') / 8000)
+                               + ' ms')
     
     def sendTelemetry(self, packet_ID):
         '''Send telemetry data back to the receiver (master).
@@ -255,13 +276,12 @@ class ExBus:
         # update the telemetry data
         self.updateTelemetry()
 
-        # FIXME
-        # FIXME check how this works with data and 2x text from EX values???
-        # FIXME
         # packet ID (answer with same ID as by the request)
-        int_ID = int(str(packet_ID), 16)
-        bin_ID = '{:02x}'.format(int_ID)
-        self.telemetry[3] = (bin_ID)
+        # slice assignment is required to write a byte to the bytearray
+        # it does an implicit conversion from byte to integer
+        self.telemetry[3:4] = packet_ID
+
+        self.logger.log('info', 'Packet ID of telemetry request: {}'.format(hexlify(packet_ID)))
 
         # write packet to the EX bus stream
         # start = utime.ticks_us()
@@ -282,37 +302,35 @@ class ExBus:
         self.lock()
 
         # EX packet
-        ex_packet = self.ex.packet
+        ex_packet = self.ex.ex_packet
 
         # release lock
         self.release()
 
         # EX bus header
-        self.telemetry = b'\x3B\x01'
+        self.telemetry += b'\x3B\x01'
 
         # EX bus packet length in bytes including the header and CRC
-        exbus_packet_length = 8 + len(ex_packet)
-        self.telemetry.append('{:02x}'.format(exbus_packet_length))
+        self.telemetry += ustruct.pack('b', len(ex_packet) + 8)
         
         # put dummy id here
-        self.telemetry.append(b'\x00')
+        self.telemetry += b'\x00'
 
         # telemetry identifier
-        self.telemetry.append(b'3A')
+        self.telemetry+= b'\x3A'
 
         # packet length in bytes of EX packet
-        ex_packet_length = len(ex_packet)
-        self.telemetry.append('{:02x}'.format(ex_packet_length))
+        self.telemetry += ustruct.pack('b', len(ex_packet))
 
         # add EX packet
-        self.telemetry.append(ex_packet)
+        self.telemetry += ex_packet
 
         # calculate the crc for the packet
         crc = CRC16.crc16_ccitt(self.telemetry)
 
         # compile final telemetry packet
-        self.telemetry.append(crc[2:])
-        self.telemetry.append(crc[:2])
+        self.telemetry += crc[2:]
+        self.telemetry += crc[:2]
 
         return self.telemetry
 
