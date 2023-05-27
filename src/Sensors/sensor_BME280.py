@@ -37,7 +37,7 @@ class BME280_Sensor():
 
         return
     
-    def read(self):
+    def read(self, verbose=False):
         '''Read sensor data. Depending on the sensor the data is read
         through the respective driver method.
         '''
@@ -52,12 +52,14 @@ class BME280_Sensor():
         # fixme: dew point throws an error (maybe 'log')
         # self.dew_point = self.sensor.dew_point
 
-        message = 'Sensor {}: Pressure {:.1f} (hPa), Temperature {:.1f} (C), Humidity {:.1f} (%), Altitude {:.1f} (m)'.format(
-            self.name,
-            self.pressure,
-            self.temperature,
-            self.humidity,
-            self.altitude)
-        self.logger.log('info', message)
+        # log the data
+        if verbose:
+            message = 'Sensor {}: Pressure {:.1f} (hPa), Temperature {:.1f} (C), Humidity {:.1f} (%), Altitude {:.1f} (m)'.format(
+                self.name,
+                self.pressure,
+                self.temperature,
+                self.humidity,
+                self.altitude)
+            self.logger.log('info', message)
 
         return self.pressure, self.temperature, self.humidity
