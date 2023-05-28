@@ -68,6 +68,7 @@ class ExBus:
         self.serial = serial
         self.sensors = sensors
         self.ex = ex
+        self.toggle = False
 
         self.get_new_sensor = False
 
@@ -267,15 +268,15 @@ class ExBus:
         self.lock()
 
         # check if EX packet (frame) is available
-        if not self.ex.exbus_packet:
+        if self.ex.exbus_ready:
+            # EX BUS packet (send data and text alternately)
+            self.telemetry = self.ex.exbus_data if self.toggle else self.ex.exbus_text
+            self.toggle = not self.toggle
+            self.ex.exbus_ready = False
+            self.release()
+        else:
             self.release()
             return
-
-        # EX BUS packet
-        self.telemetry = self.ex.exbus_packet
-
-        # release lock
-        self.release()
 
         # packet ID (answer with same ID as by the request)
         # slice assignment is required to write a byte to the bytearray

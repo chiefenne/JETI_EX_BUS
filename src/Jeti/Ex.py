@@ -68,11 +68,13 @@ class Ex:
         '''
         pass
 
-    def exbus_frame(self, sensor):
-        '''Prepare the EX BUS telemetry packet.'''
+    def exbus_frame(self, sensor, frametype='data'):
+        '''Prepare the EX BUS telemetry packet.
+        It includes the EX packet and the EX BUS header and CRC.
+        '''
 
         # setup ex packet
-        self.ex_packet = self.ex_frame(sensor, frametype='data')
+        self.ex_packet = self.ex_frame(sensor, frametype=frametype)
 
         self.exbus_packet = bytearray()
 
@@ -97,7 +99,7 @@ class Ex:
         # calculate the crc for the packet
         crc = CRC16.crc16_ccitt(self.exbus_packet)
 
-        # compile final telemetry packet
+        # swap bytes (LSB and MSB)
         self.exbus_packet += crc[2:]
         self.exbus_packet += crc[:2]
 
