@@ -107,10 +107,18 @@ def core1():
         # debug
         # ex.dummy()
 
+        # acquire lock (exclusive access to the exbus_frame variable)
+        ex.lock()
+
         # compile data into a JETI EX frame
         ex.exbus_data = ex.exbus_frame(sensor, frametype='data')
         ex.exbus_text = ex.exbus_frame(sensor, frametype='text')
+        # indicate that the data is ready to be sent
+        # will be reset by the exbus thread after sending
         ex.exbus_ready = True
+
+        # release lock
+        ex.release()
 
         # debug
         i += 1

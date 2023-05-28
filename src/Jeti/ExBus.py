@@ -69,6 +69,7 @@ class ExBus:
         self.sensors = sensors
         self.ex = ex
         self.toggle = False
+        self.device_sent = False
 
         self.get_new_sensor = False
 
@@ -263,14 +264,23 @@ class ExBus:
 
         start = utime.ticks_us()
 
-        # acquire lock to access the EX packet on stack
+        # acquire lock to access the "ex" object" exclusively
         # core 1 cannot acquire the lock if core 0 has it
         self.lock()
 
         # check if EX packet (frame) is available
         if self.ex.exbus_ready:
             # EX BUS packet (send data and text alternately)
-            self.telemetry = self.ex.exbus_data if self.toggle else self.ex.exbus_text
+            if self.toggle:
+                if not self.device_sent:
+                    # send device name once
+                    self.telemetry = self.ex.device
+                    self.device_sent = True
+                else:
+                    self.telemetry = self.ex.exbus_text
+            else:
+                self.telemetry = self.ex.exbus_data
+
             self.toggle = not self.toggle
             self.ex.exbus_ready = False
             self.release()

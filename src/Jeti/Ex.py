@@ -34,7 +34,10 @@ class Ex:
         self.sensors = sensors
 
         # initialize the EX BUS packet (needed for check in ExBus.py)
-        self.exbus_packet = None
+        self.exbus_ready = None
+
+        # initialize the device name
+        self.DeviceName()
 
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI EX')
@@ -109,8 +112,15 @@ class Ex:
         '''Compile the EX telemetry packet (Header, data or text, etc.).'''
         self.current_sensor = sensor
 
-        # get sensor data
-        data, length = self.Data()
+        if frametype == 'data':
+            # get sensor data
+            data, length = self.Data()
+        elif frametype == 'text':
+            # get text data
+            data, length = self.Text()
+        elif frametype == 'device':
+            # get device name
+            data, length = self.Device()
 
         # compile header (types are 'text', 'data', 'message')
         header = self.Header(frametype, length)
@@ -118,9 +128,6 @@ class Ex:
         # compile simple text protocol
         message = 'A simple text message'
         simple_text = self.SimpleText(message)
-
-        # acquire lock (exclusive access to the ex_packet variable)
-        self.lock()
 
         # compile the complete EX packet
         self.ex_packet = bytearray()
@@ -135,9 +142,6 @@ class Ex:
 
         # add simple text (34 bytes)
         self.ex_packet += simple_text
-
-        # release lock
-        self.release()
 
         return self.ex_packet
 
@@ -255,6 +259,24 @@ class Ex:
             self.text += hexlify(unit.encode('utf-8'))
 
         return self.text, len(self.text)
+
+    def DeviceName(self):
+        '''Name of the device.'''
+        self.device = bytearray()
+        # The zero-valued identifier is reserved for the device name.
+        self.device += ustruct.pack('b', 0)
+        # device name
+        devicename = 'MHBvario'
+        # length of the device name
+        self.device += ustruct.pack('b', len(devicename))
+        # length of the unit's description (here no unit, thus 0)
+        self.device += ustruct.pack('b', 0)
+        # The device name is a string of up to ?? characters.
+        self.device += hexlify(devicename.encode('utf-8'))
+        # The unit's description (here no unit)
+        self.device += hexlify(''.encode('utf-8'))
+
+        return self.device, len(self.device)
 
     def Message(self):
         '''EX packet message.'''
