@@ -264,16 +264,22 @@ class ExBus:
         # core 1 cannot acquire the lock if core 0 has it
         self.lock()
 
-        # check if EX packet (frame) is available
-        if self.ex.exbus_ready:
+        # send device name once at the beginning
+        if not self.device_sent:
+            self.telemetry = self.ex.device
+            self.device_sent = True
+            self.release()
+
+            if verbose:
+                self.logger.log('info', 'Packet ID of telemetry request: {}'.format(hexlify(packet_ID)))
+                self.logger.log('info', 'Device name: {}'.format(self.ex.device))
+
+        # check if EX packet is available (set in main.py)
+        if self.ex.exbus_ready and self.device_sent:
+
             # EX BUS packet (send data and text alternately)
             if self.toggle:
-                if not self.device_sent:
-                    # send device name once
-                    self.telemetry = self.ex.device
-                    self.device_sent = True
-                else:
-                    self.telemetry = self.ex.exbus_text
+                self.telemetry = self.ex.exbus_text
             else:
                 self.telemetry = self.ex.exbus_data
 
@@ -289,12 +295,12 @@ class ExBus:
         # it does an implicit conversion from byte to integer
         self.telemetry[3:4] = packet_ID
 
+        # write packet to the EX bus stream
+        bytes_written = self.serial.write(self.telemetry)
+
         if verbose:
             self.logger.log('info', 'Packet ID of telemetry request: {}'.format(hexlify(packet_ID)))
             self.logger.log('info', 'Telemetry data: {}'.format(hexlify(self.telemetry)))   
-
-        # write packet to the EX bus stream
-        bytes_written = self.serial.write(self.telemetry)
         
         # print how long it took to send the packet       
         end = utime.ticks_us()
