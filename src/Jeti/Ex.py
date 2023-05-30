@@ -33,8 +33,10 @@ class Ex:
         # list of sensors
         self.sensors = sensors
 
-        # initialize the EX BUS packet (needed for check in ExBus.py)
-        self.exbus_ready = None
+        # initialize the EX BUS packet 
+        # needed for check in ExBus.py, set to 'True' in main.py
+        self.ex.exbus_data_ready = False
+        self.ex.exbus_text_ready = False
 
         # initialize the device name
         self.DeviceName()

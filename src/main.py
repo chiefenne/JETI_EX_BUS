@@ -107,17 +107,21 @@ def core1():
         # debug
         # ex.dummy()
 
-        # acquire lock (exclusive access to the exbus_frame variable)
+        # send device frame only once
         ex.lock()
+        ex.exbus_device = ex.exbus_frame(sensor, frametype='device')
+        ex.release()
 
-        # compile data into a JETI EX frame
+        # update data frame (new sensor data)
+        ex.lock()
         ex.exbus_data = ex.exbus_frame(sensor, frametype='data')
-        ex.exbus_text = ex.exbus_frame(sensor, frametype='text')
-        # indicate that the data is ready to be sent
-        # will be reset by the exbus thread after sending
-        ex.exbus_ready = True
+        ex.exbus_data_ready = True
+        ex.release()
 
-        # release lock
+        # send text frame (only if packet id changed)
+        ex.lock()
+        ex.exbus_text = ex.exbus_frame(sensor, frametype='text')
+        ex.exbus_text_ready = True
         ex.release()
 
         # debug

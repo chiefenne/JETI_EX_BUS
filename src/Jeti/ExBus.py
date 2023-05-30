@@ -266,7 +266,7 @@ class ExBus:
 
         # send device name once at the beginning
         if not self.device_sent:
-            self.telemetry = self.ex.device
+            self.telemetry = self.ex.exbus_device
             self.device_sent = True
             self.release()
 
@@ -275,16 +275,17 @@ class ExBus:
                 self.logger.log('info', 'Device name: {}'.format(self.ex.device))
 
         # check if EX packet is available (set in main.py)
-        if self.ex.exbus_ready and self.device_sent:
+        if self.device_sent:
 
             # EX BUS packet (send data and text alternately)
-            if self.toggle:
+            if self.toggle and self.ex.exbus_text_ready:
                 self.telemetry = self.ex.exbus_text
-            else:
+                self.ex.exbus_text_ready = False
+            elif not self.toggle and self.ex.exbus_data_ready:
                 self.telemetry = self.ex.exbus_data
+                self.ex.exbus_data_ready = False
 
             self.toggle = not self.toggle
-            self.ex.exbus_ready = False
             self.release()
         else:
             self.release()
