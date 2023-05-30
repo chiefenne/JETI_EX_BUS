@@ -1,32 +1,85 @@
 '''Decode a Jeti EX BUS packet'''
 
-import ustruct
+import struct
+from binascii import hexlify
 
 
-class DecodeExBusPacket:
+class ExBusPacket:
 
     def __init__(self, packet):
         self.packet = packet
+
+    # Packet Identifier
+        self.packet_header = {
+            b'\x3E': "Master Packet",
+            b'\x3D': "Master Packet",
+            b'\x3B': "Slave Packet"
+        }
+
+        # Data Identifier
+        self.data_identifiers = {
+            (b'\x3E', b'\x31'): "Channel Values",
+            (b'\x3D', b'\x3A'): "Telemetry request",
+            (b'\x3D', b'\x3B'): "JETIBOX request",
+            (b'\x3B', b'\x3A'): "EX Telemetry",
+            (b'\x3B', b'\x3B'): "JETIBOX menu"
+        }
 
     def decode(self):
         '''Decode a Jeti EX BUS packet'''
 
         # unpack the packet
-        data = us
+        self.header = hexlify(self.packet[0:1])
+        self.source = self.packet_header[bytes(self.packet[0:1])]
+        self.message_length = struct.unpack('b', self.packet[2:3])[0]
+        self.packet_id = struct.unpack('b', self.packet[3:4])[0]
+        self.data_identifier = bytes(self.packet[4:5])
+        self.type = self.data_identifiers[(bytes(self.packet[0:1]), self.data_identifier)]
+        self.length_data = struct.unpack('b', self.packet[5:6])[0]
+        self.data = self.packet[6:-2]
+
+        # reverse the CRC bytes as it comes with LSB first
+        self.crc = int.from_bytes(self.packet[-2:], 'little')
+
+    def getChannelData(self):
+
+        self.channel = dict()
+        for i in range(0, self.length_data, 2):
+            channel = self.data[i:i+1] + self.data[i+1:i+2]
+            self.channel[i/2] = int.from_bytes(channel, 'little') / 8000
 
     def print(self):
         '''Print the decoded packet'''
 
-        print('EX BUS Packet: {}'.format(self.packet))
+        print('')
+        print('EX BUS Packet:')
+        print('  Header (source): {}'.format(self.source))
+        print('  Message length: {}'.format(self.message_length))
+        print('  Packet ID: {}'.format(self.packet_id))
+        print('  Data identifier: {}'.format(self.type))
+        print('  Length of data blocks: {}'.format(self.length_data))
+
+        # check for chnnel data
+        if self.type == 'Channel Values':
+            self.getChannelData()
+            print('  Channel Values:')
+            for i in range(len(self.channel)):
+                print('    Channel {}: {}'.format(i+1, self.channel[i]))
+
+        print('  CRC: {}'.format(self.crc))
 
 
 if __name__ == '__main__':
 
-    # test data
-    packet = b
+    # Examples:
+    packets = [bytearray(b'\x3E\x03\x28\x06\x31\x20\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x4F\xE2'),
+               bytearray(b'\x3D\x01\x08\x06\x3A\x00\x98\x81'),
+               bytearray(b'\x3D\x01\x09\x88\x3B\x01\xF0\xA3\x24'),
+               bytearray(b'\x3B\x01\x20\x08\x3A\x18\x9F\x56\x00\xA4\x51\x55\xEE\x11\x30\x20\x21\x00\x40\x34\xA3\x28\x00\x41\x00\x00\x51\x18\x00\x09\x91\xD6'),
+               bytearray(b'\x3B\x01\x28\x88\x3B\x20\x43\x65\x6E\x74\x72\x61\x6C\x20\x42\x6F\x78\x20\x31\x30\x30\x3E\x20\x20\x20\x34\x2E\x38\x56\x20\x20\x31\x30\x34\x30\x6D\x41\x68\xEB\xDE')]
 
-    # decode the packet
-    decode = DecodeExBusPacket(packet)
-
-    # print the decoded packet
-    decode.print()
+    # decode the packets
+    for packet in packets:
+        exbus = ExBusPacket(packet)
+        exbus.decode()
+        exbus.print()
