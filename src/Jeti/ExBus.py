@@ -256,10 +256,6 @@ class ExBus:
         '''Send telemetry data back to the receiver (master).
 
         The packet ID is required to answer the request with the same ID.
-
-        The send cycle is limited between 75 and 150 ms. The lower value leeds
-        to lower latency. 
-
         '''
 
         start = utime.ticks_us()
