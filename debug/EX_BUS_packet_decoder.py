@@ -67,7 +67,29 @@ class ExBusPacket:
                 print('    Channel {}: {}'.format(i+1, self.channel[i]))
 
         print('  CRC: {}'.format(self.crc))
+        print('  CRC expected: {}'.format(self.crc16_ccitt(self.packet[:-2])))
 
+    def crc16_ccitt(self, data : bytearray):
+        '''Calculate the CRC16-CCITT value from data packet.
+        Args:
+            data (bytearray): Jeti EX bus packet
+        Returns:
+            int: CRC16-CCITT value
+
+        NOTE: removed offset (see link below) as we start from 1st byte
+
+        Credits: Mark Adler https://stackoverflow.com/a/67115933/2264936
+        '''
+        crc = 0
+        for i in range(0, len(data)):
+            crc ^= data[i]
+            for j in range(0,8):
+                if (crc & 1) > 0:
+                    crc = (crc >> 1) ^ 0x8408
+                else:
+                    crc = crc >> 1
+
+        return crc
 
 if __name__ == '__main__':
 
