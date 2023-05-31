@@ -46,7 +46,7 @@ s = Serial(port=0, baudrate=125000, bits=8, parity=None, stop=1)
 serial = s.connect()
 
 # write 1 second of the serial stream to a text file for debugging purposes
-DEBUG = True
+DEBUG = False
 if DEBUG:
     logger.log('debug', 'Starting to record EX Bus stream ...')
     saveStream(serial, filename='EX_Bus_stream.txt', duration=3000)
@@ -91,6 +91,12 @@ def core0():
 def core1():
     global main_thread_running
 
+    # send device frame only once
+    ex.lock.acquire()
+    ex.exbus_device = ex.exbus_frame(sensor, frametype='device')
+    ex.exbus_device_ready = True
+    ex.lock.release()
+
     # make a generator out of the list of sensors
     cycle_sensors = cycler(sensors.get_sensors())
 
@@ -112,12 +118,6 @@ def core1():
 
         # debug
         # ex.dummy()
-
-        # send device frame only once
-        ex.lock.acquire()
-        ex.exbus_device = ex.exbus_frame(sensor, frametype='device')
-        ex.exbus_device_ready = True
-        ex.lock.release()
 
         # update data frame (new sensor data)
         ex.lock.acquire()
