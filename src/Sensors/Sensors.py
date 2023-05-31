@@ -21,7 +21,10 @@ class Sensors:
 
     def __init__(self, addresses, i2c):
         
-        # telemetry identifiers
+
+        # FIXME: integrate identifiers into the meta data
+
+        # telemetry identifiers (16 per device)
         self.ID_DEVICE = 0
         self.ID_VOLTAGE = 1
         self.ID_ALTITUDE = 2
@@ -38,6 +41,13 @@ class Sensors:
 
         # sensor meta data for the Jeti Ex telemetry
         self.meta = {
+            'ID_DEVICE': {
+                'description': 'MHBVario',
+                'unit': '',
+                'data_type': 1, # int14_t
+                'bytes':0,
+                'precision': 0
+            },
             'ID_VOLTAGE': {
                 'description': 'Voltage',
                 'unit': 'V',
