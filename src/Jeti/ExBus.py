@@ -214,7 +214,7 @@ class ExBus:
                             packet_id = self.buffer[3:4]
 
                             # send telemetry data
-                            self.sendTelemetry(packet_id, verbose=True)
+                            self.sendTelemetry(packet_id, verbose=False)
 
                         # check for JetiBox request
                         elif self.buffer[0:1] == b'\x3d' and \
@@ -267,10 +267,10 @@ class ExBus:
                 self.logger.log('info', 'Packet ID of telemetry request: {}'.format(hexlify(packet_ID)))
                 self.logger.log('info', 'Device name: {}'.format(self.ex.device))
 
-        # check if EX packet is available (set in main.py)
+        # EX BUS packet (send data and text alternately)
         if self.device_sent:
 
-            # EX BUS packet (send data and text alternately)
+            # check if EX packet is available (set in main.py)
             if self.toggle and self.ex.exbus_text_ready:
                 self.telemetry = self.ex.exbus_text
                 self.ex.exbus_text_ready = False
