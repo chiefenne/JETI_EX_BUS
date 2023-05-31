@@ -34,6 +34,12 @@ from Utils.round_robin import cycler
 # setup a logger for the REPL
 logger = Logger(prestring='JETI MAIN')
 
+# lock object used to prevent other cores from accessing shared resources
+lock = _thread.allocate_lock()
+
+# shared variable to indicate whether the main thread is still running
+main_thread_running = True
+
 # Serial connection bewtween Jeti receiver and microcontroller
 # defaults: baudrate=125000, 8-N-1
 s = Serial(port=0, baudrate=125000, bits=8, parity=None, stop=1)
@@ -56,10 +62,10 @@ addresses = i2c.scan()
 sensors = Sensors(addresses, i2c.i2c)
 
 # setup the JETI EX protocol
-ex = Ex(sensors)
+ex = Ex(sensors, lock)
 
 # setup the JETI EX BUS protocol
-exbus = ExBus(serial, sensors, ex)
+exbus = ExBus(serial, sensors, ex, lock)
 
 # function which is run on core 0
 def core0():
@@ -108,21 +114,22 @@ def core1():
         # ex.dummy()
 
         # send device frame only once
-        ex.lock()
+        ex.lock.acquire()
         ex.exbus_device = ex.exbus_frame(sensor, frametype='device')
-        ex.release()
+        ex.exbus_device_ready = True
+        ex.lock.release()
 
         # update data frame (new sensor data)
-        ex.lock()
+        ex.lock.acquire()
         ex.exbus_data = ex.exbus_frame(sensor, frametype='data')
         ex.exbus_data_ready = True
-        ex.release()
+        ex.lock.release()
 
         # send text frame (only if packet id changed)
-        ex.lock()
+        ex.lock.acquire()
         ex.exbus_text = ex.exbus_frame(sensor, frametype='text')
         ex.exbus_text_ready = True
-        ex.release()
+        ex.lock.release()
 
         # debug
         i += 1
@@ -132,9 +139,6 @@ def core1():
 
     # inform the user that the second thread is stopped
     logger.log('info', 'Stopping second thread on core 1')
-
-# Shared variable to indicate whether the main thread is still running
-main_thread_running = True
 
 # start the second thread on core 1
 # logger.log('info', 'Starting second thread on core 1')

@@ -57,43 +57,36 @@ import ustruct
 
 from Jeti import CRC16
 from Utils.Logger import Logger
-import Utils.lock as lock
 
 
 class ExBus:
     '''Jeti EX-BUS protocol handler.
     '''
 
-    def __init__(self, serial, sensors, ex):
+    def __init__(self, serial, sensors, ex, lock):
         self.serial = serial
         self.sensors = sensors
         self.ex = ex
         self.toggle = False
         self.device_sent = False
+        
+        # lock object used to prevent other cores from accessing shared resources
+        self.lock = lock
 
         self.get_new_sensor = False
 
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI EXBUS')
 
-    def lock(self):
-        '''Lock the EX bus to prevent other threads from accessing it.
-        '''
-        lock.lock.acquire()
-
-    def release(self):
-        '''Release the EX bus to allow other threads to access it.
-        '''
-        lock.lock.release()
-    
     def dummy(self):
         '''Dummy function for checking lock.
         Stay 3 seconds in the lock.
         '''
         self.logger.log('info', 'core 0: EX BUS trying to acquire lock')
         start = utime.ticks_us()
-        self.lock()
-        self.release()
+        self.lock.acquire()
+        utime.sleep_ms(3000)
+        self.lock.release()
         end = utime.ticks_us()
         diff = utime.ticks_diff(end, start)
         self.logger.log('info', 'core 0: EX BUS lock released after {} us'.format(diff))
@@ -221,7 +214,7 @@ class ExBus:
                             packet_id = self.buffer[3:4]
 
                             # send telemetry data
-                            self.sendTelemetry(packet_id, verbose=False)
+                            self.sendTelemetry(packet_id, verbose=True)
 
                         # check for JetiBox request
                         elif self.buffer[0:1] == b'\x3d' and \
@@ -262,13 +255,13 @@ class ExBus:
 
         # acquire lock to access the "ex" object" exclusively
         # core 1 cannot acquire the lock if core 0 has it
-        self.lock()
+        self.lock.acquire()
 
         # send device name once at the beginning
-        if not self.device_sent:
+        if not self.device_sent and self.ex.exbus_device_ready:
             self.telemetry = self.ex.exbus_device
             self.device_sent = True
-            self.release()
+            self.lock.release()
 
             if verbose:
                 self.logger.log('info', 'Packet ID of telemetry request: {}'.format(hexlify(packet_ID)))
@@ -286,9 +279,9 @@ class ExBus:
                 self.ex.exbus_data_ready = False
 
             self.toggle = not self.toggle
-            self.release()
+            self.lock.release()
         else:
-            self.release()
+            self.lock.release()
             return
 
         # packet ID (answer with same ID as by the request)

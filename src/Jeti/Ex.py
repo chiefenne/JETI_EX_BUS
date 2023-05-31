@@ -21,22 +21,25 @@ import ustruct
 from Jeti import CRC8
 from Jeti import CRC16
 from Utils.Logger import Logger
-import Utils.lock as lock
 
 
 class Ex:
     '''Jeti EX protocol handler. 
     '''
 
-    def __init__(self, sensors):
+    def __init__(self, sensors, lock):
 
         # list of sensors
         self.sensors = sensors
 
+        # lock object used to prevent other cores from accessing shared resources
+        self.lock = lock
+
         # initialize the EX BUS packet 
         # needed for check in ExBus.py, set to 'True' in main.py
-        self.ex.exbus_data_ready = False
-        self.ex.exbus_text_ready = False
+        self.exbus_data_ready = False
+        self.exbus_text_ready = False
+        self.exbus_device_ready = False
 
         # initialize the device name
         self.DeviceName()
@@ -44,23 +47,14 @@ class Ex:
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI EX')
 
-    def lock(self):
-        '''Lock EX protocol for exclusive access'''
-
-        lock.lock.acquire()
-
-    def release(self):
-        '''Release EX protocol'''
-
-        lock.lock.release()
-
     def dummy(self):
         '''Dummy function for checking the lock.
         Stay locked for 5 seconds.'''
         self.logger.log('debug', 'core 1: EX, trying to acquire lock')
         start = utime.ticks_us()
-        self.lock()
-        self.release()
+        self.lock.acquire()
+        utime.sleep_ms(5000)
+        self.lock.release()
         end = utime.ticks_us()
         diff = utime.ticks_diff(end, start)
         self.logger.log('debug', 'core 1: EX, lock released after {} us'.format(diff))
@@ -122,7 +116,7 @@ class Ex:
             data, length = self.Text()
         elif frametype == 'device':
             # get device name
-            data, length = self.Device()
+            data, length = self.DeviceName()
 
         # compile header (types are 'text', 'data', 'message')
         header = self.Header(frametype, length)
@@ -152,7 +146,7 @@ class Ex:
 
         header = bytearray()
 
-        types = {'text': 0, 'data': 1, 'message': 2}
+        types = {'text': 0, 'data': 1, 'message': 2, 'device': 0}
 
         # message separator - not needed if EX frame is embedded in EX BUS frame
         # header += b'\x7E'
