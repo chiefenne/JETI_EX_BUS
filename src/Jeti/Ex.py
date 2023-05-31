@@ -41,9 +41,6 @@ class Ex:
         self.exbus_text_ready = False
         self.exbus_device_ready = False
 
-        # initialize the device name
-        self.DeviceName()
-
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI EX')
 
@@ -243,7 +240,6 @@ class Ex:
             # compile 10th byte of EX text specification (5bits + 3bits)
             len_description = len(self.sensors.meta['ID_PRESSURE']['description'])
             len_unit = len(self.sensors.meta['ID_PRESSURE']['unit'])
-
             self.text += ustruct.pack('b', len_description << 3 | len_unit)
 
             # compile 11th byte of EX text specification (x bytes)
@@ -258,19 +254,30 @@ class Ex:
 
     def DeviceName(self):
         '''Name of the device.'''
+        
+        # FIXME: this function will be integrated into the Text() function
+        # FIXME: this function will be integrated into the Text() function
+        # FIXME: this function will be integrated into the Text() function
+        
         self.device = bytearray()
-        # The zero-valued identifier is reserved for the device name.
-        self.device += ustruct.pack('b', 0)
-        # device name
-        devicename = 'MHBvario'
-        # length of the device name
-        self.device += ustruct.pack('b', len(devicename))
-        # length of the unit's description (here no unit, thus 0)
-        self.device += ustruct.pack('b', 0)
-        # The device name is a string of up to ?? characters.
-        self.device += hexlify(devicename.encode('utf-8'))
-        # The unit's description (here no unit)
-        self.device += hexlify(''.encode('utf-8'))
+        
+        # The zero-valued identifier is reserved for the device name
+        # compile 9th byte of EX text specification (1 byte)
+        id = self.sensors.ID_DEVICE
+        self.device += ustruct.pack('b', id)
+
+        # compile 10th byte of EX text specification (5bits + 3bits)
+        len_description = len(self.sensors.meta['ID_DEVICE']['description'])
+        len_unit = len(self.sensors.meta['ID_DEVICE']['unit'])
+        self.text += ustruct.pack('b', len_description << 3 | len_unit)
+
+        # compile 11th byte of EX text specification (x bytes)
+        description = self.sensors.meta['ID_DEVICE']['description']
+        self.text += hexlify(description.encode('utf-8'))
+
+        # compile 11+x byte of EX text specification (y bytes)
+        unit = self.sensors.meta['ID_PRESSURE']['unit']
+        self.text += hexlify(unit.encode('utf-8'))
 
         return self.device, len(self.device)
 
