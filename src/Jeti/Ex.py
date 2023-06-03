@@ -70,7 +70,7 @@ class Ex:
         '''
 
         # setup ex packet
-        self.ex_packet = self.ex_frame(sensor, frametype=frametype)
+        self.ex_frame(sensor, frametype=frametype)
 
         self.exbus_packet = bytearray()
 
@@ -99,7 +99,7 @@ class Ex:
         self.exbus_packet += crc[2:]
         self.exbus_packet += crc[:2]
 
-        return self.exbus_packet
+        return self.exbus_packet, self.ex_packet
 
     def ex_frame(self, sensor, frametype='data'):
         '''Compile the EX telemetry packet (Header, data or text, etc.).'''
@@ -118,23 +118,22 @@ class Ex:
         # compile header (types are 'text', 'data', 'message')
         header = self.Header(frametype, length)
 
-        # compile simple text protocol
-        message = 'A simple text message'
-        simple_text = self.SimpleText(message)
-
         # compile the complete EX packet
         self.ex_packet = bytearray()
         self.ex_packet += header
         self.ex_packet += data
 
         # crc for telemetry (8-bit crc); checksum begins at 3rd byte
-        # here we use take the 2nd byte (length) into account
+        # here we use the 2nd byte (length) 
         # because we do not use the separator byte (0x7E)
         crc8 = CRC8.crc8(self.ex_packet[1:])
         self.ex_packet += crc8
 
+        # compile simple text protocol
+        # message = 'A simple text message'
+        # simple_text = self.SimpleText(message)
         # add simple text (34 bytes)
-        self.ex_packet += simple_text
+        # self.ex_packet += simple_text
 
         return self.ex_packet
 
@@ -269,15 +268,15 @@ class Ex:
         # compile 10th byte of EX text specification (5bits + 3bits)
         len_description = len(self.sensors.meta['ID_DEVICE']['description'])
         len_unit = len(self.sensors.meta['ID_DEVICE']['unit'])
-        self.text += ustruct.pack('b', len_description << 3 | len_unit)
+        self.device += ustruct.pack('b', len_description << 3 | len_unit)
 
         # compile 11th byte of EX text specification (x bytes)
         description = self.sensors.meta['ID_DEVICE']['description']
-        self.text += hexlify(description.encode('utf-8'))
+        self.device += hexlify(description.encode())
 
         # compile 11+x byte of EX text specification (y bytes)
-        unit = self.sensors.meta['ID_PRESSURE']['unit']
-        self.text += hexlify(unit.encode('utf-8'))
+        unit = self.sensors.meta['ID_DEVICE']['unit']
+        self.device += hexlify(unit.encode())
 
         return self.device, len(self.device)
 

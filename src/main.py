@@ -91,15 +91,20 @@ def core0():
 def core1():
     global main_thread_running
 
-    # send device frame only once
-    ex.lock.acquire()
-    ex.exbus_device = ex.exbus_frame(sensor, frametype='device')
-    ex.exbus_device_ready = True
-    ex.lock.release()
-
     # make a generator out of the list of sensors
     cycle_sensors = cycler(sensors.get_sensors())
 
+    # get the first sensor
+    sensor = next(cycle_sensors)
+    
+    # send device frame only once
+    ex.lock.acquire()
+    ex.exbus_device, ex_device = ex.exbus_frame(sensor, frametype='device')
+    print('EX BUS device: {}, EX device {}'.format(ex.exbus_device))
+    print('EX device {}'.format(ex_device))
+    ex.exbus_device_ready = True
+    ex.lock.release()
+    
     # counter
     i = 0
     
@@ -121,21 +126,21 @@ def core1():
 
         # update data frame (new sensor data)
         ex.lock.acquire()
-        ex.exbus_data = ex.exbus_frame(sensor, frametype='data')
+        ex.exbus_data, ex_data = ex.exbus_frame(sensor, frametype='data')
         ex.exbus_data_ready = True
         ex.lock.release()
 
         # send text frame (only if packet id changed)
         ex.lock.acquire()
-        ex.exbus_text = ex.exbus_frame(sensor, frametype='text')
+        ex.exbus_text, ex_text = ex.exbus_frame(sensor, frametype='text')
         ex.exbus_text_ready = True
         ex.lock.release()
 
         # debug
         i += 1
         if i % 100 == 0:
-            print('EX BUS data: {}'.format(ex.exbus_data))
-            print('EX BUS text: {}'.format(ex.exbus_text))
+            print('EX BUS data: {}, EX data {}'.format(ex.exbus_data, ex_data))
+            print('EX BUS text: {}, EX text {}'.format(ex.exbus_text, ex_text))
 
     # inform the user that the second thread is stopped
     logger.log('info', 'Stopping second thread on core 1')

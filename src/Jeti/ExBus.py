@@ -257,19 +257,22 @@ class ExBus:
         # core 1 cannot acquire the lock if core 0 has it
         self.lock.acquire()
 
-        # send device name once at the beginning
-        if not self.device_sent and self.ex.exbus_device_ready:
-            self.telemetry = self.ex.exbus_device
-            self.device_sent = True
-            self.lock.release()
+        # FIXME: clean this up when moving device handling to text packet
+        # FIXME: clean this up when moving device handling to text packet
+        # FIXME: clean this up when moving device handling to text packet
 
-            if verbose:
-                self.logger.log('info', 'Packet ID of telemetry request: {}'.format(hexlify(packet_ID)))
-                self.logger.log('info', 'Device name: {}'.format(self.ex.device))
+        # send device name once at the beginning
+        if not self.device_sent:
+            if self.ex.exbus_device_ready:
+                self.telemetry = self.ex.exbus_device
+                self.device_sent = True
+            else:
+                return
+            if self.lock.locked():
+                self.lock.release()
 
         # EX BUS packet (send data and text alternately)
-        if self.device_sent:
-
+        else:
             # check if EX packet is available (set in main.py)
             if self.toggle and self.ex.exbus_text_ready:
                 self.telemetry = self.ex.exbus_text
@@ -279,10 +282,9 @@ class ExBus:
                 self.ex.exbus_data_ready = False
 
             self.toggle = not self.toggle
-            self.lock.release()
-        else:
-            self.lock.release()
-            return
+            
+            if self.lock.locked():
+                self.lock.release()
 
         # packet ID (answer with same ID as by the request)
         # slice assignment is required to write a byte to the bytearray
@@ -292,10 +294,6 @@ class ExBus:
         # write packet to the EX bus stream
         bytes_written = self.serial.write(self.telemetry)
 
-        if verbose:
-            self.logger.log('info', 'Packet ID of telemetry request: {}'.format(hexlify(packet_ID)))
-            self.logger.log('info', 'Telemetry data: {}'.format(hexlify(self.telemetry)))   
-        
         # print how long it took to send the packet       
         end = utime.ticks_us()
         diff = utime.ticks_diff(end, start)
