@@ -298,6 +298,9 @@ class ExBus:
         end = utime.ticks_us()
         diff = utime.ticks_diff(end, start)
         print('Time for answer:', diff / 1000., 'ms')
+        print('Bytes written:', bytes_written)
+        print('self.telemetry:', self.telemetry)
+        print('packet_ID:', packet_ID)
 
         return bytes_written
 
