@@ -27,7 +27,7 @@ def crc16_ccitt(data : bytearray):
             else:
                 crc = crc >> 1
 
-    return hex(crc)[2:]
+    return hex(crc)[2:], crc
 
 
 if __name__ == '__main__':
