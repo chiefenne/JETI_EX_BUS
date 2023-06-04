@@ -93,11 +93,10 @@ class Ex:
         self.exbus_packet += self.ex_packet
 
         # calculate the crc for the packet
-        crc = CRC16.crc16_ccitt(self.exbus_packet)
+        _, crc_int = CRC16.crc16_ccitt(self.exbus_packet)
 
-        # swap bytes (LSB and MSB)
-        self.exbus_packet += crc[2:]
-        self.exbus_packet += crc[:2]
+        # convert crc to bytes with little endian
+        self.exbus_packet += crc_int.to_bytes(2, 'little')
 
         return self.exbus_packet, self.ex_packet
 
@@ -272,11 +271,11 @@ class Ex:
 
         # compile 11th byte of EX text specification (x bytes)
         description = self.sensors.meta['ID_DEVICE']['description']
-        self.device += hexlify(description.encode())
+        self.device += bytearray(description.encode())
 
         # compile 11+x byte of EX text specification (y bytes)
         unit = self.sensors.meta['ID_DEVICE']['unit']
-        self.device += hexlify(unit.encode())
+        self.device += bytearray(unit.encode())
 
         return self.device, len(self.device)
 
