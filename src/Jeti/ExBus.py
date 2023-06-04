@@ -102,9 +102,6 @@ class ExBus:
           3) Channel data (current status of the transmitter)
         '''
 
-        # log the start of the main loop
-        self.logger.log('info', 'Starting EX Bus main loop')
-
         # define states of the EX bus protocol
         #
         # header 1 is expected
@@ -261,9 +258,13 @@ class ExBus:
         # FIXME: clean this up when moving device handling to text packet
         # FIXME: clean this up when moving device handling to text packet
 
+        print('Tryining to send telemetry data')
+        
         # send device name once at the beginning
         if not self.device_sent:
+            print('Waiting to send device name')
             if self.ex.exbus_device_ready:
+                print('Sending device name')
                 self.telemetry = self.ex.exbus_device
                 self.device_sent = True
             else:

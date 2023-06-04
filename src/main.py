@@ -101,7 +101,6 @@ def core1():
     ex.lock.acquire()
     ex.exbus_device, ex_device = ex.exbus_frame(sensor, frametype='device')
     print('EX BUS device: {}'.format(ex.exbus_device))
-    print('EX device {}'.format(ex_device))
     ex.exbus_device_ready = True
     ex.lock.release()
     
