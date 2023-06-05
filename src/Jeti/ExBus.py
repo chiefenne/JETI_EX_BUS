@@ -258,16 +258,14 @@ class ExBus:
         # FIXME: clean this up when moving device handling to text packet
         # FIXME: clean this up when moving device handling to text packet
 
-        print('Tryining to send telemetry data')
-        
         # send device name once at the beginning
         if not self.device_sent:
-            print('Waiting to send device name')
             if self.ex.exbus_device_ready:
-                print('Sending device name')
                 self.telemetry = self.ex.exbus_device
                 self.device_sent = True
             else:
+                if self.lock.locked():
+                    self.lock.release()
                 return
             if self.lock.locked():
                 self.lock.release()
@@ -300,8 +298,8 @@ class ExBus:
         diff = utime.ticks_diff(end, start)
         print('Time for answer:', diff / 1000., 'ms')
         print('Bytes written:', bytes_written)
-        print('self.telemetry:', self.telemetry)
-        print('packet_ID:', packet_ID)
+        # print('self.telemetry:', self.telemetry)
+        # print('packet_ID:', packet_ID)
 
         return bytes_written
 
@@ -321,7 +319,7 @@ class ExBus:
         '''
 
         # packet to check is message without last 2 bytes
-        crc = CRC16.crc16_ccitt(packet[:-2])
+        crc, _ = CRC16.crc16_ccitt(packet[:-2])
 
         # the last 2 bytes of the message makeup the crc value for the packet
         crc_check = hexlify(packet[-2:]).decode()
