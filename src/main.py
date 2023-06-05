@@ -100,9 +100,9 @@ def core1():
     # send device frame only once
     ex.lock.acquire()
     ex.exbus_device, ex_device = ex.exbus_frame(sensor, frametype='device')
-    print('EX BUS device: {}'.format(ex.exbus_device))
     ex.exbus_device_ready = True
     ex.lock.release()
+    print('EX BUS device: {}'.format(ex.exbus_device))
     
     # counter
     i = 0
