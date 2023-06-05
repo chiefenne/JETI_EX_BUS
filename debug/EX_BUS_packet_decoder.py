@@ -4,9 +4,9 @@ import struct
 from binascii import hexlify
 
 
-class ExBusPacket:
+class ExBusPacketDecoder:
 
-    def __init__(self, packet):
+    def __init__(self, packet=None):
         self.packet = packet
 
     # Packet Identifier
@@ -48,7 +48,7 @@ class ExBusPacket:
             channel = self.data[i:i+1] + self.data[i+1:i+2]
             self.channel[i/2] = int.from_bytes(channel, 'little') / 8000
 
-    def print(self):
+    def _print(self):
         '''Print the decoded packet'''
 
         print('')
@@ -93,8 +93,6 @@ class ExBusPacket:
 
 if __name__ == '__main__':
 
-    import sys
-
     # example packets from the JETI documentation
     packets = [bytearray(b'\x3E\x03\x28\x06\x31\x20\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x4F\xE2'),
                bytearray(b'\x3D\x01\x08\x06\x3A\x00\x98\x81'),
@@ -105,7 +103,8 @@ if __name__ == '__main__':
                bytearray(b';\x01\x1b\x00:\x13\x0f\x0b\x00\xa4\x01\x00\x00\x00@MHBVarioB9?o')]
 
     # decode the packets
+    decoder = ExBusPacketDecoder()
     for packet in packets:
-        exbus = ExBusPacket(packet)
-        exbus.decode()
-        exbus.print()
+        decoder.packet = packet
+        decoder.decode()
+        decoder._print()
