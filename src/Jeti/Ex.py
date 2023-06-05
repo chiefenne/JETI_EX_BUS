@@ -271,11 +271,13 @@ class Ex:
 
         # compile 11th byte of EX text specification (x bytes)
         description = self.sensors.meta['ID_DEVICE']['description']
-        self.device += bytearray(description.encode())
+        for c in description:
+            self.device += bytes([ord(c)])
 
         # compile 11+x byte of EX text specification (y bytes)
         unit = self.sensors.meta['ID_DEVICE']['unit']
-        self.device += bytearray(unit.encode())
+        for c in unit:
+            self.device += bytes([ord(c)])
 
         return self.device, len(self.device)
 
@@ -304,7 +306,8 @@ class Ex:
         self.simple_text += b'\xFE'
 
         # add the text to the packet
-        self.simple_text += hexlify(text.encode('utf-8'))
+        for c in text:
+            self.simple_text += bytes([ord(c)])
 
         # separator of message (end)
         self.simple_text += b'FF'
