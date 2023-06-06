@@ -8,7 +8,6 @@ Furter it connects via I2C to the sensors which are attached to the board.
 After that it starts an endless loop to handle all data streams between the devices.
 
 
-
 Author: Dipl.-Ing. A. Ennemoser
 Date: 04-2021
 

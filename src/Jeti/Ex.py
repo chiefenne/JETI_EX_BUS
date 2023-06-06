@@ -9,6 +9,10 @@ The EX protocol is used in two ways:
 
 In both cases it carries the telemetry data (data, text, message, alarms).
 
+
+Author: Dipl.-Ing. A. Ennemoser
+Date: 04-2021
+
 '''
 
 # modules starting with 'u' are Python standard libraries which
