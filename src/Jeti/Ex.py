@@ -177,29 +177,23 @@ class Ex:
 
         self.data = bytearray()
 
+        # FIXME: will be refactored to automatically loop through all sensors
+        # FIXME: will be refactored to automatically loop through all sensors
+        # FIXME: will be refactored to automatically loop through all sensors
 
         if self.current_sensor._type == 'pressure':
 
             # compile 9th byte of EX data specification (2x 4bit)
-            # 1st 4bit (from left): sensor id, 2nd 4bit: data type
             id = self.sensors.ID_PRESSURE << 4
             data_type = self.sensors.meta['ID_PRESSURE']['data_type']
 
             # combine bits for id and data type
-            # convert int to bytes (e.g. 20 --> b'\x14')
             self.data += ustruct.pack('b', id | data_type)
 
-            # data of 1st telemetry value
-            nbytes = self.sensors.meta['ID_PRESSURE']['bytes']
-            precision = self.sensors.meta['ID_PRESSURE']['precision']
-            value = self.current_sensor.pressure
-            sign = 0 if value >= 0x0 else 1
-            scaled_value = int(value * 10**precision)
-
-            # convert value to EX format
-            val = sign << (nbytes*8 - 1) | precision << (nbytes*8 - 3) | scaled_value
-
-            # append data to packet as bytes
+            # data of 1st telemetry value, converted to EX format
+            val = self.EncodeValue(self.current_sensor.pressure,
+                                   self.sensors.meta['ID_PRESSURE']['data_type'],
+                                   self.sensors.meta['ID_PRESSURE']['precision'])
             self.data += ustruct.pack('b', val)
 
             # compile 11th+x byte of EX data specification (2x 4bit)
@@ -207,20 +201,12 @@ class Ex:
             data_type = self.sensors.meta['ID_TEMP']['data_type']
 
             # combine bits for id and data type
-            # convert int to bytes (e.g. 20 --> b'\x14')
             self.data += ustruct.pack('b', id | data_type)
                                          
-            # data of 2nd telemetry value
-            nbytes = self.sensors.meta['ID_TEMP']['bytes']
-            precision = self.sensors.meta['ID_TEMP']['bytes']
-            value = self.current_sensor.temperature
-            sign = 0 if value >= 0x0 else 1
-            scaled_value = int(value * 10**precision)
-
-            # convert value to EX format
-            val = sign << (nbytes*8 - 1) | precision << (nbytes*8 - 3) | scaled_value
-
-            # append data to packet as bytes
+            # data of 2nd telemetry value, converted to EX format
+            val = self.EncodeValue(self.current_sensor.temperature,
+                                   self.sensors.meta['ID_TEMP']['data_type'],
+                                   self.sensors.meta['ID_TEMP']['precision'])
             self.data += ustruct.pack('b', val)
 
         return self.data, len(self.data)
@@ -240,13 +226,13 @@ class Ex:
             len_unit = len(self.sensors.meta['ID_PRESSURE']['unit'])
             self.text += ustruct.pack('b', len_description << 3 | len_unit)
 
-            # compile 11th byte of EX text specification (x bytes)
+            # compile 11th+x bytes of EX text specification
             description = self.sensors.meta['ID_PRESSURE']['description']
-            self.text += hexlify(description.encode('utf-8'))
+            self.text += [bytes([ord(c)]) for c in description]
 
-            # compile 11+x byte of EX text specification (y bytes)
+            # compile 11+x+y bytes of EX text specification (y bytes)
             unit = self.sensors.meta['ID_PRESSURE']['unit']
-            self.text += hexlify(unit.encode('utf-8'))
+            self.text += [bytes([ord(c)]) for c in unit]
 
         return self.text, len(self.text)
 
@@ -271,13 +257,11 @@ class Ex:
 
         # compile 11th byte of EX text specification (x bytes)
         description = self.sensors.meta['ID_DEVICE']['description']
-        for c in description:
-            self.device += bytes([ord(c)])
+        self.text += [bytes([ord(c)]) for c in description]
 
         # compile 11+x byte of EX text specification (y bytes)
         unit = self.sensors.meta['ID_DEVICE']['unit']
-        for c in unit:
-            self.device += bytes([ord(c)])
+        self.text += [bytes([ord(c)]) for c in unit]
 
         return self.device, len(self.device)
 
@@ -313,3 +297,50 @@ class Ex:
         self.simple_text += b'FF'
 
         return self.simple_text
+
+    def EncodeValue(self, value, dataType, precision):
+        '''Encode telemetry value.'''
+
+        value_enc = bytearray()
+
+        # scale value based on precision
+        value = int(value * 10**precision)
+
+        if dataType ==  0: # TYPE_6b
+            value_enc += (value & 0x1F) | (0x80 if value < 0 else 0x00)
+            value_enc |= precision
+        
+        elif dataType == 1: # TYPE_14b
+            value_enc += value & 0xFF
+            value_enc_h = ((value >> 8) & 0x1F) | (0x80 if value < 0 else 0x00)
+            value_enc_h |= precision
+            value_enc += value_enc_h
+
+        elif dataType == 4: # TYPE_22b
+            value_enc += value & 0xFF
+            value_enc_m = (value >> 8) & 0xFF
+            value_enc_h = ((value >> 16) & 0x1F) | (0x80 if value < 0 else 0x00)
+            value_enc_h |= precision
+            value_enc += value_enc_m
+            value_enc += value_enc_h
+
+        elif dataType == 5: # time and date
+            value_enc += value & 0xFF
+            value_enc += (value >> 8) & 0xFF
+            value_enc += ((value >> 16) & 0xFF) | (0x80 if value < 0 else 0x00)
+
+        elif dataType == 8: # TYPE_30b
+            value_enc += value & 0xFF
+            value_enc += (value >> 8) & 0xFF
+            value_enc += (value >> 16) & 0xFF
+            value_enc_h = ((value >> 24) & 0x1F) | (0x80 if value < 0 else 0x00)
+            value_enc_h |= precision
+            value_enc += value_enc_h
+
+        elif dataType == 9: # GPS coordinates
+            value_enc += value & 0xFF
+            value_enc += (value >> 8) & 0xFF
+            value_enc += (value >> 16) & 0xFF
+            value_enc += (value >> 24) & 0xFF
+
+        return value_enc
