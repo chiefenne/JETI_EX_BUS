@@ -91,6 +91,7 @@ class ExBusPacketDecoder:
 
         return crc
 
+
 if __name__ == '__main__':
 
     # example packets from the JETI documentation
