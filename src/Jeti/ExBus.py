@@ -69,6 +69,7 @@ class ExBus:
         self.ex = ex
         self.toggle = False
         self.device_sent = False
+        self.counter = 0
         
         # lock object used to prevent other cores from accessing shared resources
         self.lock = lock
@@ -262,11 +263,13 @@ class ExBus:
         if not self.device_sent:
             if self.ex.exbus_device_ready:
                 self.telemetry = self.ex.exbus_device
-                self.device_sent = True
+                if self.counter > 10:
+                    self.device_sent = True
             else:
                 if self.lock.locked():
                     self.lock.release()
                 return
+            
             if self.lock.locked():
                 self.lock.release()
 
@@ -296,10 +299,21 @@ class ExBus:
         # print how long it took to send the packet       
         end = utime.ticks_us()
         diff = utime.ticks_diff(end, start)
+
+        if not self.device_sent:
+            print('Sent DEVICE info:', self.device_sent)
+        
+        if self.toggle:
+            print('Sent TEXT packet')
+        else:
+            print('Sent DATA packet')
+
+        self.counter += 1
+        print('self.counter:', self.counter)
+        print('Packet ID:', packet_ID)
+        print('self.telemetry:', self.telemetry)
         print('Time for answer:', diff / 1000., 'ms')
         print('Bytes written:', bytes_written)
-        # print('self.telemetry:', self.telemetry)
-        # print('packet_ID:', packet_ID)
 
         return bytes_written
 
