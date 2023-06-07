@@ -302,11 +302,11 @@ class ExBus:
 
         if not self.device_sent:
             print('Sent DEVICE info:', self.device_sent)
-        
-        if self.toggle:
-            print('Sent TEXT packet')
         else:
-            print('Sent DATA packet')
+            if self.toggle:
+                print('Sent TEXT packet')
+            else:
+                print('Sent DATA packet')
 
         self.counter += 1
         print('self.counter:', self.counter)

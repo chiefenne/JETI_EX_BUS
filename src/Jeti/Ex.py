@@ -198,7 +198,7 @@ class Ex:
             val = self.EncodeValue(self.current_sensor.pressure,
                                    self.sensors.meta['ID_PRESSURE']['data_type'],
                                    self.sensors.meta['ID_PRESSURE']['precision'])
-            self.data += ustruct.pack('b', val)
+            self.data += val
 
             # compile 11th+x byte of EX data specification (2x 4bit)
             id = self.sensors.ID_TEMP << 4
@@ -211,7 +211,7 @@ class Ex:
             val = self.EncodeValue(self.current_sensor.temperature,
                                    self.sensors.meta['ID_TEMP']['data_type'],
                                    self.sensors.meta['ID_TEMP']['precision'])
-            self.data += ustruct.pack('b', val)
+            self.data += val
 
         return self.data, len(self.data)
 
@@ -232,11 +232,13 @@ class Ex:
 
             # compile 11th+x bytes of EX text specification
             description = self.sensors.meta['ID_PRESSURE']['description']
-            self.text += [bytes([ord(c)]) for c in description]
+            for c in description:
+                self.text += bytes([ord(c)])
 
             # compile 11+x+y bytes of EX text specification (y bytes)
             unit = self.sensors.meta['ID_PRESSURE']['unit']
-            self.text += [bytes([ord(c)]) for c in unit]
+            for c in unit:
+                self.text += bytes([ord(c)])
 
         return self.text, len(self.text)
 
@@ -261,11 +263,13 @@ class Ex:
 
         # compile 11th byte of EX text specification (x bytes)
         description = self.sensors.meta['ID_DEVICE']['description']
-        self.text += [bytes([ord(c)]) for c in description]
+        for c in description:
+            self.device += bytes([ord(c)])
 
         # compile 11+x byte of EX text specification (y bytes)
         unit = self.sensors.meta['ID_DEVICE']['unit']
-        self.text += [bytes([ord(c)]) for c in unit]
+        for c in unit:
+            self.device += bytes([ord(c)])
 
         return self.device, len(self.device)
 
@@ -305,46 +309,47 @@ class Ex:
     def EncodeValue(self, value, dataType, precision):
         '''Encode telemetry value.'''
 
-        value_enc = bytearray()
+        value_enc = list()
 
         # scale value based on precision
         value = int(value * 10**precision)
 
         if dataType ==  0: # TYPE_6b
-            value_enc += (value & 0x1F) | (0x80 if value < 0 else 0x00)
-            value_enc |= precision
-        
+            value_enc.append((value & 0x1F) | (0x80 if value < 0 else 0x00))
+            value_enc[0] |= precision
+
         elif dataType == 1: # TYPE_14b
-            value_enc += value & 0xFF
-            value_enc_h = ((value >> 8) & 0x1F) | (0x80 if value < 0 else 0x00)
-            value_enc_h |= precision
-            value_enc += value_enc_h
+            value_enc.append(value & 0xFF)
+            value_enc.append(((value >> 8) & 0x1F) | (0x80 if value < 0 else 0x00))
+            value_enc[1] |= precision
 
         elif dataType == 4: # TYPE_22b
-            value_enc += value & 0xFF
-            value_enc_m = (value >> 8) & 0xFF
-            value_enc_h = ((value >> 16) & 0x1F) | (0x80 if value < 0 else 0x00)
-            value_enc_h |= precision
-            value_enc += value_enc_m
-            value_enc += value_enc_h
+            value_enc.append(value & 0xFF)
+            value_enc.append((value >> 8) & 0xFF)
+            value_enc.append(((value >> 16) & 0x1F) | (0x80 if value < 0 else 0x00))
+            value_enc[2] |= precision
 
         elif dataType == 5: # time and date
-            value_enc += value & 0xFF
-            value_enc += (value >> 8) & 0xFF
-            value_enc += ((value >> 16) & 0xFF) | (0x80 if value < 0 else 0x00)
+            value_enc.append(value & 0xFF)
+            value_enc.append((value >> 8) & 0xFF)
+            value_enc.append(((value >> 16) & 0xFF) | (0x80 if value < 0 else 0x00))
 
         elif dataType == 8: # TYPE_30b
-            value_enc += value & 0xFF
-            value_enc += (value >> 8) & 0xFF
-            value_enc += (value >> 16) & 0xFF
-            value_enc_h = ((value >> 24) & 0x1F) | (0x80 if value < 0 else 0x00)
-            value_enc_h |= precision
-            value_enc += value_enc_h
+            value_enc.append(value & 0xFF)
+            value_enc.append((value >> 8) & 0xFF)
+            value_enc.append((value >> 16) & 0xFF)
+            value_enc.append(((value >> 24) & 0x1F) | (0x80 if value < 0 else 0x00))
+            value_enc[3] |= precision
 
         elif dataType == 9: # GPS coordinates
-            value_enc += value & 0xFF
-            value_enc += (value >> 8) & 0xFF
-            value_enc += (value >> 16) & 0xFF
-            value_enc += (value >> 24) & 0xFF
+            value_enc.append(value & 0xFF)
+            value_enc.append((value >> 8) & 0xFF)
+            value_enc.append((value >> 16) & 0xFF)
+            value_enc.append((value >> 24) & 0xFF)
 
-        return value_enc
+        # convert list of integers to bytes in a bytearray
+        value_encoded = bytearray()
+        for v in value_enc:
+            value_encoded += ustruct.pack('b', v)
+
+        return value_encoded
