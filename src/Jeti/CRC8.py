@@ -43,16 +43,22 @@ if __name__ == '__main__':
     # Run a test on the Jeti EX telemetry examples
     # Counting of checksum value begins at the third byte of the message (length of data)
 
-    # data telemetry example (without separators 0x7E, 0x9F and crc value 0xF4)
+    # data telemetry example (without separators 0x7E, 0x9F and crc)
     packet = [0x4C, 0xA1, 0xA8, 0x5D, 0x55, 0x00, 0x11, 0xE8,
                   0x23, 0x21, 0x1B, 0x00]
+    crc = crc8(packet)
 
+    print('Jeti CRC8 value:', crc)
+    print('Expected result:', 'F4')
+    
+    # same example as above but as bytearray
+    packet = bytearray(b'\x4C\xA1\xA8\x5D\x55\x00\x11\xE8\x23\x21\x1B\x00')
     crc = crc8(packet)
 
     print('Jeti CRC8 value:', crc)
     print('Expected result:', 'F4')
 
-    # text telemetry example
+    # text telemetry example (without separators 0x7E, 0x9F and crc)
     packet = [0x0F, 0xA1, 0xA8, 0x5D, 0x55, 0x00, 0x02,
                   0x2A, 0x54, 0x65, 0x6D, 0x70, 0x2E, 0xB0, 0x43]
 
