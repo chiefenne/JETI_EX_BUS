@@ -79,7 +79,9 @@ class ExPacketDecoder:
 if __name__ == '__main__':
 
     # example packets from the JETI documentation
-    ex_packets = [bytearray(b'\x0f\x0b\x00\xa4\x01\x00\x00\x00@MHBVarioB9')]
+    # without separators 0x7E, 0x9F
+    # crc is 'F4' and is not used above in the crc8 function, only for comparison
+    ex_packets = [bytearray(b'\x4C\xA1\xA8\x5D\x55\x00\x11\xE8\x23\x21\x1B\x00\xF4')]
 
     # decode the packets
     ex_decoder = ExPacketDecoder()
