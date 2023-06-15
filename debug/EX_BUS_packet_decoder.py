@@ -3,11 +3,16 @@
 import struct
 from binascii import hexlify
 
+from EX_packet_decoder import ExPacketDecoder
+
 
 class ExBusPacketDecoder:
 
     def __init__(self, packet=None):
         self.packet = packet
+ 
+        # EX decoder instance
+        self.ex_decoder = ExPacketDecoder()
 
     # Packet Identifier
         self.packet_header = {
@@ -28,6 +33,8 @@ class ExBusPacketDecoder:
     def decode(self):
         '''Decode a Jeti EX BUS packet'''
 
+        ex_types = {0: 'TEXT', 1: 'DATA', 2: 'MESSAGE'}
+
         # unpack the packet
         self.header = hexlify(self.packet[0:1])
         self.source = self.packet_header[bytes(self.packet[0:1])]
@@ -36,6 +43,13 @@ class ExBusPacketDecoder:
         self.data_identifier = bytes(self.packet[4:5])
         self.type = self.data_identifiers[(bytes(self.packet[0:1]), self.data_identifier)]
         self.length_data = struct.unpack('b', self.packet[5:6])[0]
+        self.ex_type = None
+        if self.type == 'EX Telemetry':
+            self.ex_id_len = struct.unpack('b', self.packet[7:8])[0]
+            self.ex_type = ex_types[self.ex_id_len >> 6]
+            self.ex_length = self.ex_id_len & 0b00111111
+            self.ex_decoder.ex_packet = self.packet[7:-2]
+            self.ex_decoder.decode()
         self.data = self.packet[6:-2]
 
         # reverse the CRC bytes as it comes with LSB first
@@ -58,16 +72,19 @@ class ExBusPacketDecoder:
         print('  Packet ID: {}'.format(self.packet_id))
         print('  Data identifier: {}'.format(self.type))
         print('  Length of data blocks: {}'.format(self.length_data))
+        if self.ex_type:
+            print('  EX type: {}'.format(self.ex_type))
+            print('  EX length: {}'.format(self.ex_length))
 
-        # check for chnnel data
+        # check for channel data
         if self.type == 'Channel Values':
             self.getChannelData()
             print('  Channel Values:')
             for i in range(len(self.channel)):
                 print('    Channel {}: {}'.format(i+1, self.channel[i]))
 
-        print('  CRC: {}'.format(self.crc))
-        print('  CRC expected: {}'.format(self.crc16_ccitt(self.packet[:-2])))
+        print('  CRC16: {}'.format(self.crc))
+        print('  CRC16 expected: {}'.format(self.crc16_ccitt(self.packet[:-2])))
 
     def crc16_ccitt(self, data : bytearray):
         '''Calculate the CRC16-CCITT value from data packet.
@@ -95,17 +112,23 @@ class ExBusPacketDecoder:
 if __name__ == '__main__':
 
     # example packets from the JETI documentation
+    '''
     packets = [bytearray(b'\x3E\x03\x28\x06\x31\x20\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x82\x1F\x4F\xE2'),
                bytearray(b'\x3D\x01\x08\x06\x3A\x00\x98\x81'),
                bytearray(b'\x3D\x01\x09\x88\x3B\x01\xF0\xA3\x24'),
-               bytearray(b'\x3B\x01\x20\x08\x3A\x18\x9F\x56\x00\xA4\x51\x55\xEE\x11\x30\x20\x21\x00\x40\x34\xA3\x28\x00\x41\x00\x00\x51\x18\x00\x09\x91\xD6'),
-               bytearray(b'\x3B\x01\x28\x88\x3B\x20\x43\x65\x6E\x74\x72\x61\x6C\x20\x42\x6F\x78\x20\x31\x30\x30\x3E\x20\x20\x20\x34\x2E\x38\x56\x20\x20\x31\x30\x34\x30\x6D\x41\x68\xEB\xDE'),
-               bytearray(b'\x3B\x01\x23\x00\x3A\x1b\x0f\x13\x00\xa4\x01\x00\x00\x00\x3A\x4d\x48\x42\x56\x61\x72\x69\x6f\x5E\xa6\x3b'),
-               bytearray(b';\x01\x1b\x00:\x13\x0f\x0b\x00\xa4\x01\x00\x00\x00@MHBVarioB9?o')]
+    '''
+    packets = [bytearray(b';\x01\x1b\x19:\x13\x0f\x11\x00\xa4\x01\x00\x00\x00@MHBVario8D\xf6:'),
+               bytearray(b';\x01\x1b\x19:\x13\x0f\x4C\xA1\xA8\x5D\x55\x00\x11\xE8\x23\x21\x1B\x00\xF4\xf6:')]
 
     # decode the packets
-    decoder = ExBusPacketDecoder()
+    exbus_decoder = ExBusPacketDecoder()
     for packet in packets:
-        decoder.packet = packet
-        decoder.decode()
-        decoder._print()
+        exbus_decoder.packet = packet
+        exbus_decoder.decode()
+        exbus_decoder._print()
+        if exbus_decoder.ex_type:
+            print('  exbus_decoder.packet: {}'.format(packet))
+            print('  exbus_decoder.packet: {}'.format(hexlify(packet, ':')))
+            print('  ex_decoder.packet: {}'.format(exbus_decoder.ex_decoder.ex_packet))
+            print('  ex_decoder.packet: {}'.format(hexlify(exbus_decoder.ex_decoder.ex_packet, ':')))
+            exbus_decoder.ex_decoder._print()
