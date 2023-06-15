@@ -300,20 +300,22 @@ class ExBus:
         end = utime.ticks_us()
         diff = utime.ticks_diff(end, start)
 
-        if not self.device_sent:
-            print('Sent DEVICE info:', self.device_sent)
-        else:
-            if self.toggle:
-                print('Sent TEXT packet')
-            else:
-                print('Sent DATA packet')
-
+        # print some debug information
         self.counter += 1
-        print('self.counter:', self.counter)
-        print('Packet ID:', packet_ID)
-        print('self.telemetry:', self.telemetry)
-        print('Time for answer:', diff / 1000., 'ms')
-        print('Bytes written:', bytes_written)
+
+        self.logger.log('debug', 'self.counter: {}'.format(self.counter))
+        self.logger.log('debug', 'Packet ID: {}'.format(packet_ID))
+        self.logger.log('debug', 'Time for answer: {} ms'.format(diff / 1000.))
+        self.logger.log('debug', 'Bytes written: {}'.format(bytes_written))
+        if not self.device_sent:
+            self.logger.log('debug', 'Device send: {}'.format(self.device_sent))
+            self.logger.log('debug', 'DEVICE info: {}'.format(self.telemetry))
+        else:
+            self.logger.log('debug', 'Device send: {}'.format(self.device_sent))
+            if self.toggle:
+                self.logger.log('debug', 'Data packet: {}'.format(self.telemetry))
+            else:
+                self.logger.log('debug', 'Text packet: {}'.format(self.telemetry))
 
         return bytes_written
 
