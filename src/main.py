@@ -77,13 +77,19 @@ def core0():
         exbus.run_forever()
     
     except KeyboardInterrupt:
-        # Keyboard interrupt occurred
-        main_thread_running = False  # Set the flag to indicate that the main thread is not running
+        # Set the flag to indicate that the main thread is not running
+        main_thread_running = False
 
         # inform the user
         logger.log('info', 'Keyboard interrupt occurred')
         logger.log('info', 'Stopping main thread on core 0')    
 
+        _thread.exit()
+    
+    except Exception as e:
+        # Set the flag to indicate that the main thread is not running
+        main_thread_running = False
+        print("An error occurred:", str(e))
         _thread.exit()
 
 # function which is run on core 1
@@ -122,6 +128,10 @@ def core1():
         # debug
         # ex.dummy()
 
+        # FIXME: sync data and text frames
+        # FIXME: sync data and text frames
+        # FIXME: sync data and text frames
+
         # update data frame (new sensor data)
         ex.lock.acquire()
         ex.exbus_data, ex_data = ex.exbus_frame(sensor, frametype='data')
@@ -134,7 +144,6 @@ def core1():
         ex.exbus_text_ready = True
         ex.lock.release()
 
-        # debug
         i += 1
         if i % 100 == 0:
             print('EX BUS data: {}, EX data {}'.format(ex.exbus_data, ex_data))
