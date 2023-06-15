@@ -76,6 +76,7 @@ class Ex:
         # setup ex packet
         self.ex_frame(sensor, frametype=frametype)
 
+        # initiliaze the EX BUS packet
         self.exbus_packet = bytearray()
 
         # EX bus header
@@ -90,7 +91,7 @@ class Ex:
         # telemetry identifier
         self.exbus_packet += b'\x3A'
 
-        # packet length in bytes of EX packet
+        # complete EX packet length (including 0xF and crc8 bytes)
         self.exbus_packet += ustruct.pack('b', len(self.ex_packet))
 
         # add EX packet
@@ -145,7 +146,7 @@ class Ex:
 
         header = bytearray()
 
-        types = {'text': 0, 'data': 1, 'message': 2, 'device': 0}
+        ex_types = {'text': 0, 'data': 1, 'message': 2, 'device': 0}
 
         # message separator - not needed if EX frame is embedded in EX BUS frame
         # header += b'\x7E'
@@ -155,10 +156,12 @@ class Ex:
 
         # 2 bits for packet type (0=text, 1=data, 2=message)
         # these are the two leftmost bits of 3rd byte; shift left by 6
-        telemetry_type = types[frametype] << 6
+        telemetry_type = ex_types[frametype] << 6
 
-        # telemetry_length (+1 is for the crc8 byte)
-        telemetry_length = length + 1
+        # telemetry_length (+4 for serial number,
+        #                   +1 is for reserved 8th byte)
+        #                   +1 is for crc8 byte)
+        telemetry_length = length + 4 + 1 + 1
 
         # combine 2+6 bits (3rd byte)
         type_length = telemetry_type | telemetry_length
