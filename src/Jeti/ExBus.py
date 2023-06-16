@@ -293,6 +293,13 @@ class ExBus:
         # it does an implicit conversion from byte to integer
         self.telemetry[3:4] = packet_ID
 
+        # calculate the crc for the packet (as the packet is complete now)
+        # checksum for EX BUS starts at the 1st byte of the packet
+        crc16_hex, crc16_int = CRC16.crc16_ccitt(self.telemetry)
+
+        # convert crc to bytes with little endian
+        self.telemetry += crc16_int.to_bytes(2, 'little')
+
         # write packet to the EX bus stream
         bytes_written = self.serial.write(self.telemetry)
 
@@ -303,15 +310,14 @@ class ExBus:
         # print some debug information
         self.counter += 1
 
-        self.logger.log('debug', 'self.counter: {}'.format(self.counter))
-        self.logger.log('debug', 'Packet ID: {}'.format(packet_ID))
-        self.logger.log('debug', 'Time for answer: {} ms'.format(diff / 1000.))
-        self.logger.log('debug', 'Bytes written: {}'.format(bytes_written))
+        # self.logger.log('debug', 'self.counter: {}'.format(self.counter))
+        # self.logger.log('debug', 'Packet ID: {}'.format(packet_ID))
+        # self.logger.log('debug', 'Time for answer: {} ms'.format(diff / 1000.))
+        # self.logger.log('debug', 'Bytes written: {}'.format(bytes_written))
+        # self.logger.log('debug', 'CRC16 check: {}'.format(self.checkCRC(self.telemetry)))
         if not self.device_sent:
-            self.logger.log('debug', 'Device send: {}'.format(self.device_sent))
             self.logger.log('debug', 'DEVICE info: {}'.format(self.telemetry))
         else:
-            self.logger.log('debug', 'Device send: {}'.format(self.device_sent))
             if self.toggle:
                 self.logger.log('debug', 'Data packet: {}'.format(self.telemetry))
             else:
