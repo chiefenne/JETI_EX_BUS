@@ -26,6 +26,9 @@ def update_crc(crc_element, crc_seed):
         # Python ternery operation --> a if condition else b
         crc_u = POLY ^ (crc_u << 1) if (crc_u & 0x80) else (crc_u << 1)
 
+        # mask crc_u to 8 bits
+        crc_u &= 0xFF
+
     return crc_u
 
 def crc8(packet):
@@ -35,7 +38,7 @@ def crc8(packet):
     for i in range(0, len(packet)):
         crc_up = update_crc(packet[i], crc_up)
    
-    return hex(crc_up)[-2:].upper()
+    return hex(crc_up)[-2:], crc_up
 
 
 if __name__ == '__main__':
