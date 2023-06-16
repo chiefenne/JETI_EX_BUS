@@ -20,6 +20,7 @@ import uos as os
 import _thread
 from machine import Pin
 
+
 from Jeti.Serial_UART import Serial
 from Jeti.ExBus import ExBus
 from Jeti.Ex import Ex
@@ -32,6 +33,10 @@ from Utils.round_robin import cycler
 
 # setup a logger for the REPL
 logger = Logger(prestring='JETI MAIN')
+
+# setup the led
+if 'rp2' in sys.platform:
+    ledg = Pin(19, Pin.OUT)
 
 # lock object used to prevent other cores from accessing shared resources
 lock = _thread.allocate_lock()
@@ -74,6 +79,7 @@ def core0():
     # exbus.dummy()
 
     try:
+        ledg.value(0)
         exbus.run_forever()
     
     except KeyboardInterrupt:
@@ -84,12 +90,19 @@ def core0():
         logger.log('info', 'Keyboard interrupt occurred')
         logger.log('info', 'Stopping main thread on core 0')    
 
+        # switch off the green led
+        ledg.value(1)
+
         _thread.exit()
     
     except Exception as e:
         # Set the flag to indicate that the main thread is not running
         main_thread_running = False
-        print("An error occurred:", str(e))
+        logger.log('error', 'An error occurred: {}'.format(e))
+
+        # switch off the green led
+        ledg.value(1)
+
         _thread.exit()
 
 # function which is run on core 1
@@ -151,6 +164,10 @@ def core1():
 
     # inform the user that the second thread is stopped
     logger.log('info', 'Stopping second thread on core 1')
+ 
+    # switch off the green led
+    ledg.value(1)
+
 
 # start the second thread on core 1
 # logger.log('info', 'Starting second thread on core 1')
