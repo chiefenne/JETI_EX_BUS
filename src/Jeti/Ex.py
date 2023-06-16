@@ -83,7 +83,7 @@ class Ex:
         self.exbus_packet += b'\x3B\x01'
 
         # EX bus packet length in bytes including the header and CRC
-        self.exbus_packet += ustruct.pack('b', len(self.ex_packet) + 8)
+        self.exbus_packet += ustruct.pack('B', len(self.ex_packet) + 8)
         
         # put dummy id here; will be replaced by packet id later
         self.exbus_packet += b'\x00'
@@ -92,16 +92,14 @@ class Ex:
         self.exbus_packet += b'\x3A'
 
         # complete EX packet length (including 0xF and crc8 bytes)
-        self.exbus_packet += ustruct.pack('b', len(self.ex_packet))
+        self.exbus_packet += ustruct.pack('B', len(self.ex_packet))
 
         # add EX packet
         self.exbus_packet += self.ex_packet
 
-        # calculate the crc for the packet
-        _, crc_int = CRC16.crc16_ccitt(self.exbus_packet)
-
-        # convert crc to bytes with little endian
-        self.exbus_packet += crc_int.to_bytes(2, 'little')
+        # checksum added in ExBus.py as it needs to include the packet id
+        # checksum added in ExBus.py as it needs to include the packet id
+        # checksum added in ExBus.py as it needs to include the packet id
 
         return self.exbus_packet, self.ex_packet
 
@@ -127,11 +125,15 @@ class Ex:
         self.ex_packet += header
         self.ex_packet += data
 
-        # crc for telemetry (8-bit crc); checksum begins at 3rd byte
-        # here we use the 2nd byte (length) 
-        # because we do not use the separator byte (0x7E)
-        crc8 = CRC8.crc8(self.ex_packet[1:])
-        self.ex_packet += crc8
+        # crc for telemetry (8-bit crc)
+        # counting begins at the length byte of a message (skipping the header)
+        crc8, crc8_int = CRC8.crc8(self.ex_packet[1:])
+
+        # add crc8 to the packet ('B' is unsigned byte 8-bit)
+        self.ex_packet += ustruct.pack('B', crc8_int)
+
+        # self.logger.log('debug', 'self.ex_packet: {}'.format(self.ex_packet))
+        # self.logger.log('debug', 'crc8: {}'.format(ustruct.pack('B', crc8_int)))
 
         # compile simple text protocol
         # message = 'A simple text message'
@@ -165,12 +167,12 @@ class Ex:
 
         # combine 2+6 bits (3rd byte)
         type_length = telemetry_type | telemetry_length
-        header += ustruct.pack('b', type_length)
+        header += ustruct.pack('B', type_length)
 
         # serial number (bytes 4-5 and 6-7)
         # combine productID and deviceID (2 bytes), LSB first, MSB last
         productID = self.sensors.productID
-        deviceID = ustruct.pack('b', self.current_sensor.deviceID) + b'\x00'
+        deviceID = ustruct.pack('B', self.current_sensor.deviceID) + b'\x00'
         header += productID
         header += deviceID
 
@@ -195,7 +197,7 @@ class Ex:
             data_type = self.sensors.meta['ID_PRESSURE']['data_type']
 
             # combine bits for id and data type
-            self.data += ustruct.pack('b', id | data_type)
+            self.data += ustruct.pack('B', id | data_type)
 
             # data of 1st telemetry value, converted to EX format
             val = self.EncodeValue(self.current_sensor.pressure,
@@ -208,7 +210,7 @@ class Ex:
             data_type = self.sensors.meta['ID_TEMP']['data_type']
 
             # combine bits for id and data type
-            self.data += ustruct.pack('b', id | data_type)
+            self.data += ustruct.pack('B', id | data_type)
                                          
             # data of 2nd telemetry value, converted to EX format
             val = self.EncodeValue(self.current_sensor.temperature,
@@ -226,12 +228,12 @@ class Ex:
             self.text = bytearray()
             # compile 9th byte of EX text specification (1 byte)
             id = self.sensors.ID_PRESSURE
-            self.text += ustruct.pack('b', id)
+            self.text += ustruct.pack('B', id)
 
             # compile 10th byte of EX text specification (5bits + 3bits)
             len_description = len(self.sensors.meta['ID_PRESSURE']['description'])
             len_unit = len(self.sensors.meta['ID_PRESSURE']['unit'])
-            self.text += ustruct.pack('b', len_description << 3 | len_unit)
+            self.text += ustruct.pack('B', len_description << 3 | len_unit)
 
             # compile 11th+x bytes of EX text specification
             description = self.sensors.meta['ID_PRESSURE']['description']
@@ -257,12 +259,12 @@ class Ex:
         # The zero-valued identifier is reserved for the device name
         # compile 9th byte of EX text specification (1 byte)
         id = self.sensors.ID_DEVICE
-        self.device += ustruct.pack('b', id)
+        self.device += ustruct.pack('B', id)
 
         # compile 10th byte of EX text specification (5bits + 3bits)
         len_description = len(self.sensors.meta['ID_DEVICE']['description'])
         len_unit = len(self.sensors.meta['ID_DEVICE']['unit'])
-        self.device += ustruct.pack('b', len_description << 3 | len_unit)
+        self.device += ustruct.pack('B', len_description << 3 | len_unit)
 
         # compile 11th byte of EX text specification (x bytes)
         description = self.sensors.meta['ID_DEVICE']['description']
@@ -353,6 +355,6 @@ class Ex:
         # convert list of integers to bytes in a bytearray
         value_encoded = bytearray()
         for v in value_enc:
-            value_encoded += ustruct.pack('b', v)
+            value_encoded += ustruct.pack('B', v)
 
         return value_encoded
