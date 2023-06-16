@@ -14,10 +14,10 @@ Trick for text coloring as its not implemented yet in Github flavored markdown
 ```
 -->
 ```diff
-- WORK IN PROGRESS, NOT YET READY FOR USE.
-+ THE CORE PART OF THE BUS STRUCTURE EXISTS (still with errors)
-+ Channel information can already be read correctly
-- Telemetry still missing
++ SENDING TELEMETRY WORKS
++ CORE PART OF THE BUS STRUCTURE EXISTS
++ CHANNEL INFORMATION CAN BE READ
+- NEED TO IMPLEMENT VARIO, ETC.
 ```
 
 
