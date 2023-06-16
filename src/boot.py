@@ -46,7 +46,10 @@ if 'rp2' in sys.platform:
     # switch on green led to show we are active
     ledg.value(0)
 
-
-
 # main script to run after this one
 # if not specified "main.py" will be executed
+
+# here we import the main script; this runs all the code in main.py
+# this is useful when no code is on the board yet and mpremote is used
+# to upload the code to the board; for small projects only
+# import main
