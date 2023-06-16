@@ -43,7 +43,7 @@ if __name__ == '__main__':
               0x82, 0x1F, 0x82, 0x1F, 0x82, 0x1F, 0x82, 0x1F, 0x82, 0x1F, 0x82,
               0x1F, 0x82, 0x1F, 0x82, 0x1F]
 
-    crc = crc16_ccitt(packet)
+    crc, _ = crc16_ccitt(packet)
 
     print('')
     print('Example receiver (master) sends channel data:')
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     # example receiver (master) sends telemetry request (EX_Bus_protokol_v121_EN.pdf, page 6)
     packet = [0x3D, 0x01, 0x08, 0x06, 0x3A, 0x00]
 
-    crc = crc16_ccitt(packet)
+    crc, _ = crc16_ccitt(packet)
 
     print('')
     print('Example receiver (master) sends telemetry request:')
@@ -67,7 +67,7 @@ if __name__ == '__main__':
               0x55, 0xEE, 0x11, 0x30, 0x20, 0x21, 0x00, 0x40, 0x34, 0xA3, 0x28,
               0x00, 0x41, 0x00, 0x00, 0x51, 0x18, 0x00, 0x09]
 
-    crc = crc16_ccitt(packet)
+    crc, _ = crc16_ccitt(packet)
 
     print('')
     print('Example sensor (slave) sends telemetry data:')
@@ -81,7 +81,7 @@ if __name__ == '__main__':
               0x20, 0x20, 0x20, 0x34, 0x2E, 0x38, 0x56, 0x20, 0x20, 0x31, 0x30,
               0x34, 0x30, 0x6D, 0x41, 0x68]
 
-    crc = crc16_ccitt(packet)
+    crc, _ = crc16_ccitt(packet)
 
     print('')
     print('Example sensor (slave) sends Jetibox menu:')
