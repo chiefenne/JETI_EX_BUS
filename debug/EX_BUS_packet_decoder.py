@@ -83,8 +83,8 @@ class ExBusPacketDecoder:
             for i in range(len(self.channel)):
                 print('    Channel {}: {}'.format(i+1, self.channel[i]))
 
-        print('  CRC16: {}'.format(self.crc))
-        print('  CRC16 expected: {}'.format(self.crc16_ccitt(self.packet[:-2])))
+        print('  CRC16: {}'.format(self.crc16_ccitt(self.packet[:-2])))
+        print('  CRC16 expected: {}'.format(hex(self.crc).upper()[2:]))
 
     def crc16_ccitt(self, data : bytearray):
         '''Calculate the CRC16-CCITT value from data packet.
@@ -106,7 +106,8 @@ class ExBusPacketDecoder:
                 else:
                     crc = crc >> 1
 
-        return crc
+        # return crc
+        return hex(crc).upper()[2:]
 
 
 if __name__ == '__main__':
@@ -117,8 +118,9 @@ if __name__ == '__main__':
                bytearray(b'\x3D\x01\x08\x06\x3A\x00\x98\x81'),
                bytearray(b'\x3D\x01\x09\x88\x3B\x01\xF0\xA3\x24'),
     '''
-    packets = [bytearray(b';\x01\x1b\x19:\x13\x0f\x11\x00\xa4\x01\x00\x00\x00@MHBVario8D\xf6:'),
-               bytearray(b';\x01\x1b\x19:\x13\x0f\x4C\xA1\xA8\x5D\x55\x00\x11\xE8\x23\x21\x1B\x00\xF4\xf6:')]
+    packets = [bytearray(b';\x01\x1a\x18:\x12\x0f\x10\x00\xa4\x01\x00\x00\x00@MHBVario\x8f\xe0\xc6'),
+               bytearray(b';\x01\x1a\x00:\x12\x0f\x10\x00\xa4\x01\x00\x00\x00@MHBVario\x8f\xe0\xc6'),
+               bytearray(b'\x3D\x01\x08\x06\x3A\x00\x98\x81')]
 
     # decode the packets
     exbus_decoder = ExBusPacketDecoder()
@@ -128,7 +130,5 @@ if __name__ == '__main__':
         exbus_decoder._print()
         if exbus_decoder.ex_type:
             print('  exbus_decoder.packet: {}'.format(packet))
-            print('  exbus_decoder.packet: {}'.format(hexlify(packet, ':')))
             print('  ex_decoder.packet: {}'.format(exbus_decoder.ex_decoder.ex_packet))
-            print('  ex_decoder.packet: {}'.format(hexlify(exbus_decoder.ex_decoder.ex_packet, ':')))
             exbus_decoder.ex_decoder._print()
