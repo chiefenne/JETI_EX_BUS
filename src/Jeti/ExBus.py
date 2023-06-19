@@ -67,8 +67,9 @@ class ExBus:
         self.serial = serial
         self.sensors = sensors
         self.ex = ex
-        self.toggle = False
         self.device_sent = False
+        self.old_packetID = b'\x00' # dummy value for initialization
+        self.frame_count = 0
         self.counter = 0
         
         # lock object used to prevent other cores from accessing shared resources
@@ -209,10 +210,10 @@ class ExBus:
                              self.buffer[1:2] == b'\x01' and \
                              self.buffer[4:5] == b'\x3a':
                             
-                            packet_id = self.buffer[3:4]
+                            packetID = self.buffer[3:4]
 
                             # send telemetry data
-                            self.sendTelemetry(packet_id, verbose=False)
+                            self.sendTelemetry(packetID, verbose=False)
 
                         # check for JetiBox request
                         elif self.buffer[0:1] == b'\x3d' and \
@@ -243,7 +244,7 @@ class ExBus:
                     ' Value: ' + str(int.from_bytes(self.channel[i], 'little') / 8000)
                                + ' ms')
     
-    def sendTelemetry(self, packet_ID, verbose=False):
+    def sendTelemetry(self, packetID, verbose=False):
         '''Send telemetry data back to the receiver (master).
 
         The packet ID is required to answer the request with the same ID.
@@ -251,51 +252,64 @@ class ExBus:
 
         start = utime.ticks_us()
 
+        # frame counter
+        if packetID == self.old_packetID:
+            self.frame_count += 1
+        else:
+            self.frame_count = 0
+
         # acquire lock to access the "ex" object" exclusively
         # core 1 cannot acquire the lock if core 0 has it
         self.lock.acquire()
-
-        # FIXME: clean this up when moving device handling to text packet
-        # FIXME: clean this up when moving device handling to text packet
-        # FIXME: clean this up when moving device handling to text packet
 
         # send device name once at the beginning
         if not self.device_sent:
             if self.ex.exbus_device_ready:
                 self.telemetry = self.ex.exbus_device
-                if self.counter > 10:
-                    self.device_sent = True
+                self.device_sent = True
             else:
                 if self.lock.locked():
                     self.lock.release()
-                return
+                return 0 # no bytes sent
             
             if self.lock.locked():
                 self.lock.release()
 
         # EX BUS packet (send data and text alternately)
+        # check if packet is available (set in main.py)
         else:
-            # check if EX packet is available (set in main.py)
-            if self.toggle and self.ex.exbus_text_ready:
-                self.telemetry = self.ex.exbus_text
-                self.ex.exbus_text_ready = False
-            elif not self.toggle and self.ex.exbus_data_ready:
+            if self.ex.exbus_text1_ready and \
+                self.frame_count <= 8 and \
+                self.frame_count % 2 == 0:
+
+                # description and unit for first telemetry value
+                self.telemetry = self.ex.exbus_text1
+                self.ex.exbus_text1_ready = False
+
+            elif self.ex.exbus_text2_ready and \
+                self.frame_count <= 8 and \
+                self.frame_count % 2 == 1:
+
+                # description and unit for second telemetry value
+                self.telemetry = self.ex.exbus_text2
+                self.ex.exbus_text2_ready = False
+
+            elif self.ex.exbus_data_ready:
+
                 self.telemetry = self.ex.exbus_data
                 self.ex.exbus_data_ready = False
 
-            self.toggle = not self.toggle
-            
             if self.lock.locked():
                 self.lock.release()
 
         # packet ID (answer with same ID as by the request)
         # slice assignment is required to write a byte to the bytearray
         # it does an implicit conversion from byte to integer
-        self.telemetry[3:4] = packet_ID
+        self.telemetry[3:4] = packetID
 
         # calculate the crc for the packet (as the packet is complete now)
         # checksum for EX BUS starts at the 1st byte of the packet
-        crc16_hex, crc16_int = CRC16.crc16_ccitt(self.telemetry)
+        _, crc16_int = CRC16.crc16_ccitt(self.telemetry)
 
         # convert crc to bytes with little endian
         self.telemetry += crc16_int.to_bytes(2, 'little')
@@ -311,17 +325,19 @@ class ExBus:
         self.counter += 1
 
         # self.logger.log('debug', 'self.counter: {}'.format(self.counter))
-        # self.logger.log('debug', 'Packet ID: {}'.format(packet_ID))
-        # self.logger.log('debug', 'Time for answer: {} ms'.format(diff / 1000.))
+        self.logger.log('debug', 'Packet ID: {}'.format(packetID))
+        self.logger.log('debug', 'Time for answer: {} ms'.format(diff / 1000.))
+        self.logger.log('debug', 'Frame counter: {}'.format(self.frame_count))
         # self.logger.log('debug', 'Bytes written: {}'.format(bytes_written))
-        # self.logger.log('debug', 'CRC16 check: {}'.format(self.checkCRC(self.telemetry)))
+        self.logger.log('debug', 'CRC16 check: {}'.format(self.checkCRC(self.telemetry)))
         if not self.device_sent:
             self.logger.log('debug', 'DEVICE info: {}'.format(self.telemetry))
         else:
-            if self.toggle:
-                self.logger.log('debug', 'Data packet: {}'.format(self.telemetry))
-            else:
-                self.logger.log('debug', 'Text packet: {}'.format(self.telemetry))
+            self.logger.log('debug', 'DATA packet: {}'.format(self.telemetry))
+            self.logger.log('debug', 'TEXT packet: {}'.format(self.telemetry))
+
+        # save the packet ID to check if the next packet is the same request
+        self.old_packetID = packetID
 
         return bytes_written
 

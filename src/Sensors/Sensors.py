@@ -5,8 +5,8 @@ is used to make up a vario.
 
 '''
 
-from Sensors.sensor_BME280 import BME280_Sensor
-from Sensors.sensor_MS5611 import MS5611_Sensor
+import json
+
 from Utils.Logger import Logger
 
 
@@ -20,126 +20,27 @@ class Sensors:
     '''
 
     def __init__(self, addresses, i2c):
-        
 
-        # FIXME: integrate identifiers into the meta data
+        # sensor data (ordered by I2C address)
+        with open('Sensors/sensors.json') as f:
+            self.sensor_data = json.load(f)
 
-        # telemetry identifiers (16 per device)
-        self.ID_DEVICE = 0
-        self.ID_VOLTAGE = 1
-        self.ID_ALTITUDE = 2
-        self.ID_CLIMB = 3
-        self.ID_PRESSURE = 4
-        self.ID_TEMP = 5
-        self.ID_FUEL = 6
-        self.ID_RPM = 7
-        self.ID_GPSLAT = 8
-        self.ID_GPSLON = 9
-        self.ID_DISTANCE = 10
-        self.ID_HEADING = 11
-        self.ID_SATELLITES = 12
-
-        # sensor meta data for the Jeti Ex telemetry
-        self.meta = {
-            'ID_DEVICE': {
-                'description': 'MHBVario',
-                'unit': '',
-                'data_type': 1, # int14_t
-                'bytes':0,
-                'precision': 0
-            },
-            'ID_VOLTAGE': {
-                'description': 'Voltage',
-                'unit': 'V',
-                'data_type': 1, # int14_t
-                'bytes':2,
-                'precision': 1
-            },
-            'ID_ALTITUDE': {
-                'description': 'Altitude',
-                'unit': 'm',
-                'data_type': 1, # int14_t
-                'bytes':2,
-                'precision': 0
-            },
-            'ID_CLIMB': {
-                'description': 'Climb',
-                'unit': 'm/s',
-                'data_type': 1, # int14_t
-                'bytes':2,
-                'precision': 2
-            },
-            'ID_PRESSURE': {
-                'description': 'Pressure',
-                'unit': 'hPa',
-                'data_type': 4, # int22_t
-                'bytes':3,
-                'precision': 1
-            },
-            'ID_TEMP': {
-                'description': 'Temperature',
-                'unit': 'C',
-                'data_type': 1, # int14_t
-                'bytes':2,
-                'precision': 1
-            },
-            'ID_CAPACITY': {
-                'description': 'Capacity',
-                'unit': '%',
-                'data_type': 1, # int14_t
-                'bytes':2,
-                'precision': 0
-            },
-            'ID_RPM': {
-                'description': 'RPM',
-                'unit': '1/min',
-                'data_type': 1, # int14_t
-                'bytes':2,
-                'precision': 1
-            },
-            'ID_GPSLAT': {
-                'description': 'Latitude',
-                'unit': ' ',
-                'data_type': 9, # GPS
-                'bytes':2,
-                'precision': 0
-            },
-            'ID_GPSLON': {
-                'description': 'Longitude',
-                'unit': ' ',
-                'data_type': 9, # GPS
-                'bytes':4,
-                'precision': 0
-            },
-            'ID_DISTANCE': {
-                'description': 'Distance',
-                'unit': 'm',
-                'data_type': 1, # int14_t
-                'bytes':2,
-                'precision': 0
-            },
-            'ID_HEADING': {
-                'description': 'Heading',
-                'unit': '-',
-                'data_type': 1, # int14_t
-                'bytes':2,
-                'precision': 0
-            },
-            'ID_SATELLITES': {
-                'description': 'Satellites',
-                'unit': '_',
-                'data_type': 1, # int14_t
-                'bytes':2,
-                'precision': 0
-            }
-        }
+        # telemetry meta data
+        with open('Sensors/telemetry.json') as f:
+            self.meta = json.load(f)
 
         self.sensors = list()
         self.addresses = addresses
         self.i2c = i2c
 
         # upper part of the serial number (same for all sensors)
+        # LSB first, MSB last
         self.productID = b'\x00' + b'\xa4'
+
+        # lower part of the serial number (unique for each sensor)
+        # i.e., the microcontroller is here the sensor
+        # LSB first, MSB last
+        self.deviceID = b'\x00' + b'\x01'
 
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI SENSOR')
@@ -150,24 +51,28 @@ class Sensors:
         return
 
     def arm(self):
-        '''Arm the sensors
-        '''
+        '''Arm the sensors.'''
 
-        # FIXME: this is a hack to get the sensors working
-        # FIXME: this is a hack to get the sensors working
-        # FIXME: this is a hack to get the sensors working
+        for address in self.addresses:
 
-        # arm the sensors
-        if 0x76 in self.addresses:
-            sensor = BME280_Sensor(address=0x76, i2c=self.i2c)
-            sensor.arm()
+            # convert int address to hex (returns a string)
+            addr = hex(address)
+
+            # import the module for the I2C sensor dynamically
+            sensor_defs = __import__('Sensors/' + self.sensor_data[addr]['module'])
+            sensor_class = getattr(sensor_defs, self.sensor_data[addr]['class'])
+            sensor = sensor_class(address=address, i2c=self.i2c)
+
+            sensor.address = address
+            sensor.i2c = self.i2c
+            sensor.name = self.sensor_data[addr]['name']
+            sensor.manufacturer = self.sensor_data[addr]['manufacturer']
+            sensor.description = self.sensor_data[addr]['description']
+            sensor.category = self.sensor_data[addr]['category']
+            sensor.subcategory = self.sensor_data[addr]['subcategory']
+
             self.sensors.append(sensor)
-        if 0x77 in self.addresses:
-            sensor = MS5611_Sensor(address=0x77, i2c=self.i2c, elevation=0)
-            sensor.arm()
-            self.sensors.append(sensor)
-
-
+ 
         # number of sensors attached
         message = 'Number of sensors attached: {}'.format(len(self.sensors))
         self.logger.log('info', message)

@@ -42,7 +42,8 @@ class Ex:
         # initialize the EX BUS packet 
         # needed for check in ExBus.py, set to 'True' in main.py
         self.exbus_data_ready = False
-        self.exbus_text_ready = False
+        self.exbus_text1_ready = False
+        self.exbus_text2_ready = False
         self.exbus_device_ready = False
 
         # setup a logger for the REPL
@@ -68,13 +69,21 @@ class Ex:
         '''
         pass
 
-    def exbus_frame(self, sensor, frametype='data'):
+    def exbus_frame(self, sensor, frametype='data',
+                                  data_1=None,
+                                  data_2=None,
+                                  text=None):
         '''Prepare the EX BUS telemetry packet.
-        It includes the EX packet and the EX BUS header and CRC.
+        It includes the EX packet and the EX BUS header.
+        CRC16 is added later in ExBus.py as it needs to include the packet id.
         '''
+        self.current_sensor = sensor
 
         # setup ex packet
-        self.ex_frame(sensor, frametype=frametype)
+        self.ex_frame(sensor, frametype=frametype,
+                              data_1=data_1,
+                              data_2=data_2,
+                              text=text)
 
         # initiliaze the EX BUS packet
         self.exbus_packet = bytearray()
@@ -97,25 +106,22 @@ class Ex:
         # add EX packet
         self.exbus_packet += self.ex_packet
 
-        # checksum added in ExBus.py as it needs to include the packet id
-        # checksum added in ExBus.py as it needs to include the packet id
-        # checksum added in ExBus.py as it needs to include the packet id
+        # checksum added later in ExBus.py as it needs to include the packet id
 
         return self.exbus_packet, self.ex_packet
 
-    def ex_frame(self, sensor, frametype='data'):
+    def ex_frame(self, sensor, frametype=None,
+                               data_1=None,
+                               data_2=None,
+                               text=None):
         '''Compile the EX telemetry packet (Header, data or text, etc.).'''
-        self.current_sensor = sensor
 
         if frametype == 'data':
             # get sensor data
-            data, length = self.Data()
+            data, length = self.Data(data_1=data_1, data_2=data_2)
         elif frametype == 'text':
             # get text data
-            data, length = self.Text()
-        elif frametype == 'device':
-            # get device name
-            data, length = self.DeviceName()
+            data, length = self.Text(text=text)
 
         # compile header (types are 'text', 'data', 'message')
         header = self.Header(frametype, length)
@@ -170,113 +176,80 @@ class Ex:
         header += ustruct.pack('B', type_length)
 
         # serial number (bytes 4-5 and 6-7)
-        # combine productID and deviceID (2 bytes), LSB first, MSB last
-        productID = self.sensors.productID
-        deviceID = ustruct.pack('B', self.current_sensor.deviceID) + b'\x00'
-        header += productID
-        header += deviceID
+        header += self.sensors.productID
+        header += self.sensors.deviceID
 
         # reserved (8th byte)
         header += b'\x00'
 
         return header
 
-    def Data(self):
-        '''EX packet data.'''
+    def Data(self, data_1=None, data_2=None):
+        '''EX data packet. This transfers two sensor values.'''
 
         self.data = bytearray()
 
-        # FIXME: will be refactored to automatically loop through all sensors
-        # FIXME: will be refactored to automatically loop through all sensors
-        # FIXME: will be refactored to automatically loop through all sensors
+        print('data_1: {}'.format(data_1))
+        print('data_2: {}'.format(data_2))
 
-        if self.current_sensor._type == 'pressure':
+        # compile 9th byte of EX data specification (2x 4bit)
+        id1 = self.sensors.meta[data_1]['id'] << 4
+        data_type = self.sensors.meta[data_1]['data_type']
+        # combine bits for id and data type
+        self.data += ustruct.pack('B', id1 | data_type)
 
-            # compile 9th byte of EX data specification (2x 4bit)
-            id = self.sensors.ID_PRESSURE << 4
-            data_type = self.sensors.meta['ID_PRESSURE']['data_type']
+        # FIXME: data are hardcoded for testing purposes
+        # FIXME: data are hardcoded for testing purposes
+        # FIXME: data are hardcoded for testing purposes
 
-            # combine bits for id and data type
-            self.data += ustruct.pack('B', id | data_type)
+        # data of 1st telemetry value, converted to EX format
+        val = self.EncodeValue(self.current_sensor.altitude,
+                               self.sensors.meta[data_1]['data_type'],
+                               self.sensors.meta[data_1]['precision'])
+        self.data += val
 
-            # data of 1st telemetry value, converted to EX format
-            val = self.EncodeValue(self.current_sensor.pressure,
-                                   self.sensors.meta['ID_PRESSURE']['data_type'],
-                                   self.sensors.meta['ID_PRESSURE']['precision'])
-            self.data += val
+        # compile 11th+x byte of EX data specification (2x 4bit)
+        id2 = self.sensors.meta[data_2]['id'] << 4
+        data_type = self.sensors.meta[data_2]['data_type']
 
-            # compile 11th+x byte of EX data specification (2x 4bit)
-            id = self.sensors.ID_TEMP << 4
-            data_type = self.sensors.meta['ID_TEMP']['data_type']
-
-            # combine bits for id and data type
-            self.data += ustruct.pack('B', id | data_type)
+        # combine bits for id and data type
+        self.data += ustruct.pack('B', id2 | data_type)
                                          
-            # data of 2nd telemetry value, converted to EX format
-            val = self.EncodeValue(self.current_sensor.temperature,
-                                   self.sensors.meta['ID_TEMP']['data_type'],
-                                   self.sensors.meta['ID_TEMP']['precision'])
-            self.data += val
+        # data of 2nd telemetry value, converted to EX format
+        val = self.EncodeValue(self.current_sensor.temperature,
+                               self.sensors.meta[data_2]['data_type'],
+                               self.sensors.meta[data_2]['precision'])
+        self.data += val
 
         return self.data, len(self.data)
 
-    def Text(self):
-        '''EX packet text.'''
+    def Text(self, frametype='text', text=None):
+        '''EX text packet. This transfers the sensor description and unit for
+        one sensor value. Two text packets are needed to transfer the
+        description and unit for one data packet (as it sends two values).
+        '''
 
-        if self.current_sensor._type == 'pressure':
-
-            self.text = bytearray()
-            # compile 9th byte of EX text specification (1 byte)
-            id = self.sensors.ID_PRESSURE
-            self.text += ustruct.pack('B', id)
-
-            # compile 10th byte of EX text specification (5bits + 3bits)
-            len_description = len(self.sensors.meta['ID_PRESSURE']['description'])
-            len_unit = len(self.sensors.meta['ID_PRESSURE']['unit'])
-            self.text += ustruct.pack('B', len_description << 3 | len_unit)
-
-            # compile 11th+x bytes of EX text specification
-            description = self.sensors.meta['ID_PRESSURE']['description']
-            for c in description:
-                self.text += bytes([ord(c)])
-
-            # compile 11+x+y bytes of EX text specification (y bytes)
-            unit = self.sensors.meta['ID_PRESSURE']['unit']
-            for c in unit:
-                self.text += bytes([ord(c)])
-
-        return self.text, len(self.text)
-
-    def DeviceName(self):
-        '''Name of the device.'''
-        
-        # FIXME: this function will be integrated into the Text() function
-        # FIXME: this function will be integrated into the Text() function
-        # FIXME: this function will be integrated into the Text() function
-        
-        self.device = bytearray()
-        
-        # The zero-valued identifier is reserved for the device name
+        self.text = bytearray()
         # compile 9th byte of EX text specification (1 byte)
-        id = self.sensors.ID_DEVICE
-        self.device += ustruct.pack('B', id)
+        id = self.sensors.meta[text]['id']
+        self.text += ustruct.pack('B', id)
 
         # compile 10th byte of EX text specification (5bits + 3bits)
-        len_description = len(self.sensors.meta['ID_DEVICE']['description'])
-        len_unit = len(self.sensors.meta['ID_DEVICE']['unit'])
-        self.device += ustruct.pack('B', len_description << 3 | len_unit)
+        len_description = len(self.sensors.meta[text]['description'])
+        len_unit = len(self.sensors.meta[text]['unit'])
+        self.text += ustruct.pack('B', len_description << 3 | len_unit)
 
-        # compile 11th byte of EX text specification (x bytes)
-        description = self.sensors.meta['ID_DEVICE']['description']
+        # compile 11th+x bytes of EX text specification
+        description = self.sensors.meta[text]['description']
         for c in description:
-            self.device += bytes([ord(c)])
+            self.text += bytes([ord(c)])
 
-        # compile 11+x byte of EX text specification (y bytes)
-        unit = self.sensors.meta['ID_DEVICE']['unit']
+        # compile 11+x+y bytes of EX text specification (y bytes)
+        unit = self.sensors.meta[text]['unit']
         for c in unit:
-            self.device += bytes([ord(c)])
+            self.text += bytes([ord(c)])
 
-        return self.device, len(self.device)
+        return self.text, len(self.text)
 
     def Message(self):
         '''EX packet message.'''
@@ -314,47 +287,26 @@ class Ex:
     def EncodeValue(self, value, dataType, precision):
         '''Encode telemetry value.'''
 
-        value_enc = list()
+        # number of bytes needed to encode the value
+        bytes_for_datatype = {0: 1, 1: 2, 4: 3, 5: 3, 8: 4, 9: 4}
 
-        # scale value based on precision
-        value = int(value * 10**precision)
+        # get the bit for the sign
+        sign = 0x01 if value < 0 else 0x00
 
-        if dataType ==  0: # TYPE_6b
-            value_enc.append((value & 0x1F) | (0x80 if value < 0 else 0x00))
-            value_enc[0] |= precision
+        # number of bytes needed to encode the value
+        num_bytes = bytes_for_datatype[dataType]
 
-        elif dataType == 1: # TYPE_14b
-            value_enc.append(value & 0xFF)
-            value_enc.append(((value >> 8) & 0x1F) | (0x80 if value < 0 else 0x00))
-            value_enc[1] |= precision
+        # scale value based on precision and round it
+        value_scaled = int(abs(value) * 10**precision + 0.5)
 
-        elif dataType == 4: # TYPE_22b
-            value_enc.append(value & 0xFF)
-            value_enc.append((value >> 8) & 0xFF)
-            value_enc.append(((value >> 16) & 0x1F) | (0x80 if value < 0 else 0x00))
-            value_enc[2] |= precision
+        # combine sign, precision and scaled value
+        value_ex = ((sign << (num_bytes * 8 - 1)) |
+                   (precision << (num_bytes * 8 - 3)) |
+                    value_scaled)
 
-        elif dataType == 5: # time and date
-            value_enc.append(value & 0xFF)
-            value_enc.append((value >> 8) & 0xFF)
-            value_enc.append(((value >> 16) & 0xFF) | (0x80 if value < 0 else 0x00))
+        self.logger.log('debug', 'Encoding value: {}, dataType: {}, precision: {}, num_bytes {}'.format(value, dataType, precision, num_bytes))
+        self.logger.log('debug', 'Value scaled: {}'.format(value_scaled))
 
-        elif dataType == 8: # TYPE_30b
-            value_enc.append(value & 0xFF)
-            value_enc.append((value >> 8) & 0xFF)
-            value_enc.append((value >> 16) & 0xFF)
-            value_enc.append(((value >> 24) & 0x1F) | (0x80 if value < 0 else 0x00))
-            value_enc[3] |= precision
-
-        elif dataType == 9: # GPS coordinates
-            value_enc.append(value & 0xFF)
-            value_enc.append((value >> 8) & 0xFF)
-            value_enc.append((value >> 16) & 0xFF)
-            value_enc.append((value >> 24) & 0xFF)
-
-        # convert list of integers to bytes in a bytearray
-        value_encoded = bytearray()
-        for v in value_enc:
-            value_encoded += ustruct.pack('B', v)
-
-        return value_encoded
+        # return the encoded value as bytes in little endian format
+        return ustruct.pack('<H', value_ex)
+        # return ustruct.pack('<I', value_ex)

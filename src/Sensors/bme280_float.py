@@ -241,7 +241,7 @@ class BME280:
             self.__sealevel = value
 
     @property
-    def altitude(self):
+    def altitude_bme280(self):
         '''
         Altitude in m.
         '''
@@ -254,7 +254,7 @@ class BME280:
         return p
 
     @property
-    def dew_point(self):
+    def dew_point_bme280(self):
         """
         Compute the dew point temperature for the current Temperature
         and Humidity measured pair
@@ -272,3 +272,17 @@ class BME280:
 
         return ("{:.2f}C".format(t), "{:.2f}hPa".format(p/100),
                 "{:.2f}%".format(h))
+    
+    def read_jeti(self):
+        '''Read sensor data'''
+
+        t, p, h = self.read_compensated_data()
+        
+        # compile all available sensor data
+        self.pressure = p/100.0
+        self.temperature = t
+        self.humidity = h
+        self.altitude = self.altitude_bme280
+        self.dew_point = self.dew_point_bme280
+
+        return self.pressure, self.temperature, self.humidity, self.altitude, self.dew_point

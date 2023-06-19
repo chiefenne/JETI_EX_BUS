@@ -15,7 +15,9 @@ class Logger:
     def log(self, msg_type, message):
         # define different debug levels for print statements to the REPL
         header = {'info': self.prestring + ' - INFO: ',
-                'debug': self.prestring + ' - DEBUG: '}
+                'debug': self.prestring + ' - DEBUG: ',
+                'warning': self.prestring + ' - WARNING: ',
+                'error': self.prestring + ' - ERROR: '}
         
         print(header[msg_type] + message)
 

@@ -115,12 +115,12 @@ def core1():
     # get the first sensor
     sensor = next(cycle_sensors)
     
-    # send device frame only once
-    ex.lock.acquire()
-    ex.exbus_device, ex_device = ex.exbus_frame(sensor, frametype='device')
-    ex.exbus_device_ready = True
-    ex.lock.release()
-    print('EX BUS device: {}'.format(ex.exbus_device))
+    # send device frame only at the beginning
+    if not ex.exbus_device_ready:
+        ex.lock.acquire()
+        ex.exbus_device, _ = ex.exbus_frame(sensor, frametype='text', text='DEVICE')
+        ex.exbus_device_ready = True
+        ex.lock.release()
     
     # counter
     i = 0
@@ -136,31 +136,34 @@ def core1():
             verbose = True
 
         # collect data from currently selected sensor
-        sensor.read(verbose=verbose)
+        # the "read_jeti" method has to be implemented sensor specific
+        # e.g., see Sensors/bme280_float.py
+        sensor.read_jeti()
 
-        # debug
-        # ex.dummy()
-
-        # FIXME: sync data and text frames
-        # FIXME: sync data and text frames
-        # FIXME: sync data and text frames
+        ex.lock.acquire()
 
         # update data frame (new sensor data)
-        ex.lock.acquire()
-        ex.exbus_data, ex_data = ex.exbus_frame(sensor, frametype='data')
-        ex.exbus_data_ready = True
-        ex.lock.release()
+        # 2 values per data frame, 1 value per text frame (so 2 text frames per data frame)
+        # FIXME: data are hardcoded for testing purposes
+        # FIXME: data are hardcoded for testing purposes
+        # FIXME: data are hardcoded for testing purposes
+        telemetry_1 = 'ALTITUDE'
+        telemetry_2 = 'TEMPERATURE'
+        ex.exbus_data, ex_data = ex.exbus_frame(sensor, frametype='data', data_1=telemetry_1, data_2=telemetry_2)
+        ex.exbus_text1, ex_text1 = ex.exbus_frame(sensor, frametype='text', text=telemetry_1)
+        ex.exbus_text2, ex_text2 = ex.exbus_frame(sensor, frametype='text', text=telemetry_2)
 
-        # send text frame (only if packet id changed)
-        ex.lock.acquire()
-        ex.exbus_text, ex_text = ex.exbus_frame(sensor, frametype='text')
-        ex.exbus_text_ready = True
+        ex.exbus_data_ready = True
+        ex.exbus_text1_ready = True
+        ex.exbus_text2_ready = True
+
         ex.lock.release()
 
         i += 1
-        if i % 100 == 0:
+        if i % 20 == 0:
             print('EX BUS data: {}, EX data {}'.format(ex.exbus_data, ex_data))
-            print('EX BUS text: {}, EX text {}'.format(ex.exbus_text, ex_text))
+            print('EX BUS text: {}, EX text 1 {}'.format(ex.exbus_text1, ex_text1))
+            print('EX BUS text: {}, EX text 2 {}'.format(ex.exbus_text2, ex_text2))
 
     # inform the user that the second thread is stopped
     logger.log('info', 'Stopping second thread on core 1')

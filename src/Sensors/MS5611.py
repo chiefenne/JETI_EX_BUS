@@ -179,3 +179,15 @@ class MS5611:
     def convert2In(self, pressure):
         return pressure * 0.0295301
 
+    def read_jeti(self):
+        '''Read sensor data. Depending on the sensor the data is read
+        through the respective driver method.
+        '''
+
+        self.read()
+
+        self.pressure = self.sensor.pressure
+        self.pressureAdj = self.sensor.pressureAdj
+        self.temperature = self.sensor.tempC
+
+        return self.pressure, self.temperature

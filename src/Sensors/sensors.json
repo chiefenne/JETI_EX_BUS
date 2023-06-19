@@ -1,0 +1,20 @@
+{
+    "0x76": {
+        "name": "BME280",
+        "manufacturer": "BOSCH",
+        "description": "Combined humidity and pressure sensor",
+        "module": "bme280_float",
+        "class": "BME280",
+        "category": "PRESSURE",
+        "subcategory": "TEMP"
+    },
+    "0x77": {
+        "name": "MS5611",
+        "manufacturer": "AMSYS",
+        "description": "High resolution precision barometer",
+        "module": "MS5611",
+        "class": "MS5611",
+        "category": "PRESSURE",
+        "subcategory": "TEMP"
+    }
+}

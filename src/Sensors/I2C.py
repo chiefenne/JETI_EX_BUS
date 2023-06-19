@@ -45,6 +45,7 @@ class I2C_bus:
 
         # the return value per I2C device is its hex address
         # scan all I2C addresses between 0x08 and 0x77 inclusive
+        # the corresponding sensor needs to be added in the file Sensors.py
         self.addresses = self.i2c.scan()
 
         message = 'Addresses available on I2C: {}'.format([hex(a) for a in self.addresses])

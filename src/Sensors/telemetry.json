@@ -1,0 +1,93 @@
+{
+    "DEVICE": {
+        "id": 0,
+        "description": "MHBVario",
+        "unit": "",
+        "data_type": 1,
+        "precision": 0
+    },
+    "VOLTAGE": {
+        "id": 1,
+        "description": "Voltage",
+        "unit": "V",
+        "data_type": 1,
+        "precision": 1
+    },
+    "ALTITUDE": {
+        "id": 2,
+        "description": "Altitude",
+        "unit": "m",
+        "data_type": 1,
+        "precision": 2
+    },
+    "CLIMB": {
+        "id": 3,
+        "description": "Climb",
+        "unit": "m/s",
+        "data_type": 1,
+        "precision": 2
+    },
+    "PRESSURE": {    
+        "id": 4,
+        "description": "Pressure",
+        "unit": "hPa",
+        "data_type": 4,
+        "precision": 1
+    },
+    "TEMPERATURE": {
+        "id": 5,
+        "description": "Temperature",
+        "unit": "C",
+        "data_type": 1,
+        "precision": 1
+    },
+    "CAPACITY": {
+        "id": 6,
+        "description": "Capacity",
+        "unit": "%",
+        "data_type": 1,
+        "precision": 0
+    },
+    "RPM": {
+        "id": 7,
+        "description": "RPM",
+        "unit": "1/min",
+        "data_type": 1,
+        "precision": 1
+    },
+    "GPSLAT": {
+        "id": 8,
+        "description": "Latitude",
+        "unit": " ",
+        "data_type": 9,
+        "precision": 0
+    },
+    "GPSLON": {
+        "id": 9,
+        "description": "Longitude",
+        "unit": " ",
+        "data_type": 9,
+        "precision": 0
+    },
+    "DISTANCE": {
+        "id": 10,
+        "description": "Distance",
+        "unit": "m",
+        "data_type": 1,
+        "precision": 0
+    },
+    "HEADING": {
+        "id": 11,
+        "description": "Heading",
+        "unit": "-",
+        "data_type": 1,
+        "precision": 0
+    },
+    "SATELLITES": {
+        "id": 12,
+        "description": "Satellites",
+        "unit": "_",
+        "data_type": 1,
+        "precision": 0
+    }
+}
