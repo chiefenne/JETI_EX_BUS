@@ -189,9 +189,6 @@ class Ex:
 
         self.data = bytearray()
 
-        print('data_1: {}'.format(data_1))
-        print('data_2: {}'.format(data_2))
-
         # compile 9th byte of EX data specification (2x 4bit)
         id1 = self.sensors.meta[data_1]['id'] << 4
         data_type = self.sensors.meta[data_1]['data_type']
@@ -287,6 +284,9 @@ class Ex:
     def EncodeValue(self, value, dataType, precision):
         '''Encode telemetry value.'''
 
+        # format for pack
+        fmt = {0: 'b', 1: 'h', 4: 'i', 5: 'I', 8: 'l', 9: 'L'}
+
         # number of bytes needed to encode the value
         bytes_for_datatype = {0: 1, 1: 2, 4: 3, 5: 3, 8: 4, 9: 4}
 
@@ -308,5 +308,4 @@ class Ex:
         self.logger.log('debug', 'Value scaled: {}'.format(value_scaled))
 
         # return the encoded value as bytes in little endian format
-        return ustruct.pack('<H', value_ex)
-        # return ustruct.pack('<I', value_ex)
+        return ustruct.pack(fmt[num_bytes], value_ex)
