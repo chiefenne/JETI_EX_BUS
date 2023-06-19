@@ -333,8 +333,10 @@ class ExBus:
         if not self.device_sent:
             self.logger.log('debug', 'DEVICE info: {}'.format(self.telemetry))
         else:
-            self.logger.log('debug', 'DATA packet: {}'.format(self.telemetry))
-            self.logger.log('debug', 'TEXT packet: {}'.format(self.telemetry))
+            if self.frame_count <= 8:
+                self.logger.log('debug', 'TEXT packet: {}'.format(self.telemetry))
+            else:
+                self.logger.log('debug', 'DATA packet: {}'.format(self.telemetry))
 
         # save the packet ID to check if the next packet is the same request
         self.old_packetID = packetID
