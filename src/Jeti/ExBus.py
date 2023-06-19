@@ -325,18 +325,18 @@ class ExBus:
         self.counter += 1
 
         # self.logger.log('debug', 'self.counter: {}'.format(self.counter))
-        self.logger.log('debug', 'Packet ID: {}'.format(packetID))
+        # self.logger.log('debug', 'Packet ID: {}'.format(packetID))
         self.logger.log('debug', 'Time for answer: {} ms'.format(diff / 1000.))
         self.logger.log('debug', 'Frame counter: {}'.format(self.frame_count))
         # self.logger.log('debug', 'Bytes written: {}'.format(bytes_written))
         self.logger.log('debug', 'CRC16 check: {}'.format(self.checkCRC(self.telemetry)))
-        if not self.device_sent:
-            self.logger.log('debug', 'DEVICE info: {}'.format(self.telemetry))
-        else:
-            if self.frame_count <= 8:
-                self.logger.log('debug', 'TEXT packet: {}'.format(self.telemetry))
-            else:
-                self.logger.log('debug', 'DATA packet: {}'.format(self.telemetry))
+        # if not self.device_sent:
+        #     self.logger.log('debug', 'DEVICE info: {}'.format(self.telemetry))
+        # else:
+        #     if self.frame_count <= 8:
+        #         self.logger.log('debug', 'TEXT packet: {}'.format(self.telemetry))
+        #     else:
+        #         self.logger.log('debug', 'DATA packet: {}'.format(self.telemetry))
 
         # save the packet ID to check if the next packet is the same request
         self.old_packetID = packetID

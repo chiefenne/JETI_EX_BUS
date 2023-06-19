@@ -6,9 +6,8 @@ from binascii import hexlify
 def EncodeValue(value, dataType, precision):
     '''Encode telemetry value.'''
 
-    value_enc = list()
-
-    print('Test value: {}, dataType: {}, precision: {}'.format(value, dataType, precision))
+    # format for pack
+    fmt = {0: '<B', 1: '<H', 4: '<I', 5: '<I', 8: '<L', 9: '<L'}
 
     # number of bytes needed to encode the value
     bytes_for_datatype = {0: 1, 1: 2, 4: 3, 5: 3, 8: 4, 9: 4}
@@ -28,15 +27,14 @@ def EncodeValue(value, dataType, precision):
                 value_scaled)
 
     # return the encoded value as bytes in little endian format
-    return struct.pack('<H', value_ex), value_ex, sign, precision, value_scaled, num_bytes
-
+    return struct.pack(fmt[dataType], value_ex), value_ex, sign, precision, value_scaled, num_bytes
 
 if __name__ == '__main__':
 
     # test values
-    value = 321.7629
+    value = 322.9334
     dataType = 1
-    precision = 1
+    precision = 2
     expected = hexlify(b'\xE8\x23')
 
     # Encode the value
@@ -49,4 +47,5 @@ if __name__ == '__main__':
     print('precision: {}'.format(precision))
     print('num_bytes: {}'.format(num_bytes))
     print('encoded_value: {}'.format(encoded_value))
+    print('Encoded hex: {}'.format(hexlify(encoded_value)))
     print('Expected: {}'.format(expected))

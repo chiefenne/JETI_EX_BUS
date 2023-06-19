@@ -285,7 +285,7 @@ class Ex:
         '''Encode telemetry value.'''
 
         # format for pack
-        fmt = {0: 'b', 1: 'h', 4: 'i', 5: 'I', 8: 'l', 9: 'L'}
+        fmt = {0: '<B', 1: '<H', 4: '<I', 5: '<I', 8: '<L', 9: '<L'}
 
         # number of bytes needed to encode the value
         bytes_for_datatype = {0: 1, 1: 2, 4: 3, 5: 3, 8: 4, 9: 4}
@@ -304,8 +304,9 @@ class Ex:
                    (precision << (num_bytes * 8 - 3)) |
                     value_scaled)
 
-        self.logger.log('debug', 'Encoding value: {}, dataType: {}, precision: {}, num_bytes {}'.format(value, dataType, precision, num_bytes))
-        self.logger.log('debug', 'Value scaled: {}'.format(value_scaled))
+        # self.logger.log('debug', 'Encoding value: {}, dataType: {}, precision: {}, num_bytes {}'.format(value, dataType, precision, num_bytes))
+        # self.logger.log('debug', 'fmt[dataType]: {}, value_ex: {}'.format(fmt[dataType], value_ex))
+        # self.logger.log('debug', 'ustruct.pack(fmt[dataType]) {}'.format(ustruct.pack(fmt[dataType], value_ex)))
 
         # return the encoded value as bytes in little endian format
-        return ustruct.pack(fmt[num_bytes], value_ex)
+        return ustruct.pack(fmt[dataType], value_ex)

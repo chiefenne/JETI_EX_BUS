@@ -18,7 +18,7 @@
         "description": "Altitude",
         "unit": "m",
         "data_type": 1,
-        "precision": 2
+        "precision": 1
     },
     "CLIMB": {
         "id": 3,
