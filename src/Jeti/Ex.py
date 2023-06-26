@@ -19,7 +19,7 @@ Date: 04-2021
 # are stripped down in MicroPython to be efficient on microcontrollers
 from ubinascii import hexlify, unhexlify
 import ujson
-import utime
+import utime as time
 import ustruct
 
 from Jeti import CRC8
@@ -39,12 +39,18 @@ class Ex:
         # lock object used to prevent other cores from accessing shared resources
         self.lock = lock
 
+        # remember several values for the EX BUS
+        self.start_altitude_saved = False
+        self.start_altitude = 0
+        self.last_altitude = 0
+        self.last_climbrate = 0
+        self.last_time = 0
+
         # initialize the EX BUS packet 
         # needed for check in ExBus.py, set to 'True' in main.py
         self.exbus_data_ready = False
         self.exbus_text1_ready = False
         self.exbus_text2_ready = False
-        self.exbus_device_ready = False
 
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI EX')
@@ -53,12 +59,12 @@ class Ex:
         '''Dummy function for checking the lock.
         Stay locked for 5 seconds.'''
         self.logger.log('debug', 'core 1: EX, trying to acquire lock')
-        start = utime.ticks_us()
+        start = time.ticks_us()
         self.lock.acquire()
-        utime.sleep_ms(5000)
+        time.sleep_ms(5000)
         self.lock.release()
-        end = utime.ticks_us()
-        diff = utime.ticks_diff(end, start)
+        end = time.ticks_us()
+        diff = time.ticks_diff(end, start)
         self.logger.log('debug', 'core 1: EX, lock released after {} us'.format(diff))
 
     def Message(self):
@@ -77,6 +83,8 @@ class Ex:
         It includes the EX packet and the EX BUS header.
         CRC16 is added later in ExBus.py as it needs to include the packet id.
         '''
+
+        # get the sensor object
         self.current_sensor = sensor
 
         # setup ex packet
@@ -189,21 +197,29 @@ class Ex:
 
         self.data = bytearray()
 
+        # FIXME: telemetry data are hardcoded for now
+        # FIXME: telemetry data are hardcoded for now
+        # FIXME: telemetry data are hardcoded for now
+
+        # vario calculation
+        current_time = time.ticks_ms()
+        dt = time.ticks_diff(current_time, self.last_time) # use ticks_diff to produce correct result
+        self.last_time = current_time
+        altitude = self.current_sensor.altitude
+        climbrate = (altitude - self.last_altitude) * (1000.0 / (dt + 1.e-9))
+        smoothing = 0.85
+        climbrate = climbrate + smoothing * (self.last_climbrate - climbrate)
+
         # compile 9th byte of EX data specification (2x 4bit)
         id1 = self.sensors.meta[data_1]['id'] << 4
         data_type = self.sensors.meta[data_1]['data_type']
         # combine bits for id and data type
         self.data += ustruct.pack('B', id1 | data_type)
 
-        # FIXME: data are hardcoded for testing purposes
-        # FIXME: data are hardcoded for testing purposes
-        # FIXME: data are hardcoded for testing purposes
-
         # data of 1st telemetry value, converted to EX format
-        val = self.EncodeValue(self.current_sensor.altitude,
-                               self.sensors.meta[data_1]['data_type'],
-                               self.sensors.meta[data_1]['precision'])
-        self.data += val
+        self.data += self.EncodeValue(climbrate,
+                                      self.sensors.meta[data_1]['data_type'],
+                                      self.sensors.meta[data_1]['precision'])
 
         # compile 11th+x byte of EX data specification (2x 4bit)
         id2 = self.sensors.meta[data_2]['id'] << 4
@@ -211,12 +227,20 @@ class Ex:
 
         # combine bits for id and data type
         self.data += ustruct.pack('B', id2 | data_type)
-                                         
+        
         # data of 2nd telemetry value, converted to EX format
-        val = self.EncodeValue(self.current_sensor.temperature,
-                               self.sensors.meta[data_2]['data_type'],
-                               self.sensors.meta[data_2]['precision'])
-        self.data += val
+        self.data += self.EncodeValue(altitude - self.start_altitude,
+                                      self.sensors.meta[data_2]['data_type'],
+                                      self.sensors.meta[data_2]['precision'])
+
+        # store start altitude
+        if not self.start_altitude_saved:
+            self.start_altitude = altitude
+            self.start_altitude_saved = True
+
+        # store data for next iteration
+        self.last_altitude = altitude
+        self.last_climbrate = climbrate
 
         return self.data, len(self.data)
 
@@ -284,20 +308,29 @@ class Ex:
     def EncodeValue(self, value, dataType, precision):
         '''Encode telemetry value.'''
 
+        # FIXME: check if all formats are working
+        # FIXME: check if all formats are working
+        # FIXME: check if all formats are working
+
         # format for pack
         fmt = {0: '<B', 1: '<H', 4: '<I', 5: '<I', 8: '<L', 9: '<L'}
 
         # number of bytes needed to encode the value
         bytes_for_datatype = {0: 1, 1: 2, 4: 3, 5: 3, 8: 4, 9: 4}
 
-        # get the bit for the sign
-        sign = 0x01 if value < 0 else 0x00
-
         # number of bytes needed to encode the value
         num_bytes = bytes_for_datatype[dataType]
 
         # scale value based on precision and round it
-        value_scaled = int(abs(value) * 10**precision + 0.5)
+        # vaules are signed, the sign is transferred in the 1st byte additionally
+        value_scaled = int(value * 10**precision + 0.5)
+
+        # get the bit for the sign
+        sign = 0x01 if value < 0 else 0x00
+
+        # cosmetics: make sure that zero is positive on the display
+        if value_scaled == 0:
+            sign = 0x00
 
         # combine sign, precision and scaled value
         value_ex = ((sign << (num_bytes * 8 - 1)) |
@@ -310,3 +343,17 @@ class Ex:
 
         # return the encoded value as bytes in little endian format
         return ustruct.pack(fmt[dataType], value_ex)
+
+    def lowpass_iir_filter(input_signal, cutoff_frequency, sample_rate):
+        '''Lowpass infinite impulse response filter (IIR).'''
+
+        output_signal = [0] * len(input_signal)
+        alpha = (2 * 3.14159 * cutoff_frequency) / sample_rate
+        a = 1 - alpha
+
+        output_signal[0] = input_signal[0]
+
+        for i in range(1, len(input_signal)):
+            output_signal[i] = alpha * input_signal[i] + a * output_signal[i - 1]
+
+        return output_signal
