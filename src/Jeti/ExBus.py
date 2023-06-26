@@ -67,7 +67,6 @@ class ExBus:
         self.serial = serial
         self.sensors = sensors
         self.ex = ex
-        self.device_sent = False
         self.old_packetID = b'\x00' # dummy value for initialization
         self.frame_count = 0
         self.counter = 0
@@ -262,45 +261,42 @@ class ExBus:
         # core 1 cannot acquire the lock if core 0 has it
         self.lock.acquire()
 
-        # send device name once at the beginning
-        if not self.device_sent:
-            if self.ex.exbus_device_ready:
-                self.telemetry = self.ex.exbus_device
-                self.device_sent = True
-            else:
-                if self.lock.locked():
-                    self.lock.release()
-                return 0 # no bytes sent
-            
-            if self.lock.locked():
-                self.lock.release()
-
         # EX BUS packet (send data and text alternately)
         # check if packet is available (set in main.py)
+        if self.ex.exbus_device_ready:
+            print('EXBUS device')
+        
+            # description of the device
+            self.telemetry = self.ex.exbus_device
+            self.ex.exbus_device_ready = False
+
+        elif self.ex.exbus_text1_ready and \
+            self.frame_count <= 6:
+        
+            # description and unit for first telemetry value
+            self.telemetry = self.ex.exbus_text1
+            self.ex.exbus_text1_ready = False
+
+        elif self.ex.exbus_text2_ready and \
+            self.frame_count <= 6:
+
+            # description and unit for second telemetry value
+            self.telemetry = self.ex.exbus_text2
+            self.ex.exbus_text2_ready = False
+
+        elif self.ex.exbus_data_ready:
+
+            # send two telemetry values
+            self.telemetry = self.ex.exbus_data
+            self.ex.exbus_data_ready = False
         else:
-            if self.ex.exbus_text1_ready and \
-                self.frame_count <= 8 and \
-                self.frame_count % 2 == 0:
-
-                # description and unit for first telemetry value
-                self.telemetry = self.ex.exbus_text1
-                self.ex.exbus_text1_ready = False
-
-            elif self.ex.exbus_text2_ready and \
-                self.frame_count <= 8 and \
-                self.frame_count % 2 == 1:
-
-                # description and unit for second telemetry value
-                self.telemetry = self.ex.exbus_text2
-                self.ex.exbus_text2_ready = False
-
-            elif self.ex.exbus_data_ready:
-
-                self.telemetry = self.ex.exbus_data
-                self.ex.exbus_data_ready = False
-
             if self.lock.locked():
                 self.lock.release()
+            return 0 # no data available
+
+        if self.lock.locked():
+            self.lock.release()
+
 
         # packet ID (answer with same ID as by the request)
         # slice assignment is required to write a byte to the bytearray
@@ -309,16 +305,26 @@ class ExBus:
 
         # calculate the crc for the packet (as the packet is complete now)
         # checksum for EX BUS starts at the 1st byte of the packet
-        _, crc16_int = CRC16.crc16_ccitt(self.telemetry)
+        crc16_int = 0
+        for value in self.telemetry:
+            crc16_int ^= value
+            for _ in range(8):
+                if crc16_int & 1:
+                    crc16_int = (crc16_int >> 1) ^ 0x8408
+                else:
+                    crc16_int >>= 1
+
+        self.crc16 = crc16_int.to_bytes(2, 'little')
 
         # convert crc to bytes with little endian
-        self.telemetry += crc16_int.to_bytes(2, 'little')
+        self.telemetry += self.crc16
 
         # write packet to the EX bus stream
         bytes_written = self.serial.write(self.telemetry)
 
-        # print how long it took to send the packet       
         end = utime.ticks_us()
+
+        # print how long it took to send the packet       
         diff = utime.ticks_diff(end, start)
 
         # print some debug information
@@ -326,19 +332,14 @@ class ExBus:
 
         # self.logger.log('debug', 'self.counter: {}'.format(self.counter))
         # self.logger.log('debug', 'Packet ID: {}'.format(packetID))
+        # self.logger.log('debug', 'Bytes written: {}'.format(bytes_written))
         self.logger.log('debug', 'Time for answer: {} ms'.format(diff / 1000.))
         self.logger.log('debug', 'Frame counter: {}'.format(self.frame_count))
-        # self.logger.log('debug', 'Bytes written: {}'.format(bytes_written))
-        self.logger.log('debug', 'CRC16 check: {}'.format(self.checkCRC(self.telemetry)))
-        # if not self.device_sent:
-        #     self.logger.log('debug', 'DEVICE info: {}'.format(self.telemetry))
-        # else:
-        #     if self.frame_count <= 8:
-        #         self.logger.log('debug', 'TEXT packet: {}'.format(self.telemetry))
-        #     else:
-        #         self.logger.log('debug', 'DATA packet: {}'.format(self.telemetry))
+        # self.logger.log('debug', 'CRC16 check: {}'.format(self.checkCRC(self.telemetry)))
+        if not self.checkCRC(self.telemetry):
+            self.logger.log('debug', 'CRC16 WRONG, self.telemetry: {}'.format(self.telemetry))
 
-        # save the packet ID to check if the next packet is the same request
+        # save packet ID for next packet (to check if it is a new packet)
         self.old_packetID = packetID
 
         return bytes_written
