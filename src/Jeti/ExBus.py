@@ -54,6 +54,7 @@ Date: 04-2021
 from ubinascii import hexlify, unhexlify
 import utime
 import ustruct
+import micropython
 
 from Jeti import CRC16
 from Utils.Logger import Logger
@@ -305,14 +306,19 @@ class ExBus:
 
         # calculate the crc for the packet (as the packet is complete now)
         # checksum for EX BUS starts at the 1st byte of the packet
-        crc16_int = 0
-        for value in self.telemetry:
-            crc16_int ^= value
-            for _ in range(8):
-                if crc16_int & 1:
-                    crc16_int = (crc16_int >> 1) ^ 0x8408
-                else:
-                    crc16_int >>= 1
+        @micropython.viper
+        def crc16(frame:ptr8, length:int) -> int:
+            crc16_int = 0
+            for i in range(length):
+                crc16_int ^= frame[i]
+                for _ in range(8):
+                    if crc16_int & 1:
+                        crc16_int = (crc16_int >> 1) ^ 0x8408
+                    else:
+                        crc16_int >>= 1
+            return crc16_int
+    
+        crc16_int = crc16(self.telemetry, len(self.telemetry))
 
         self.crc16 = crc16_int.to_bytes(2, 'little')
 
