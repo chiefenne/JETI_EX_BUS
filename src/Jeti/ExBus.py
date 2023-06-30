@@ -268,27 +268,27 @@ class ExBus:
             print('EXBUS device')
         
             # description of the device
-            self.telemetry = self.ex.exbus_device
+            telemetry = self.ex.exbus_device
             self.ex.exbus_device_ready = False
 
         elif self.ex.exbus_text1_ready and \
             self.frame_count <= 6:
         
             # description and unit for first telemetry value
-            self.telemetry = self.ex.exbus_text1
+            telemetry = self.ex.exbus_text1
             self.ex.exbus_text1_ready = False
 
         elif self.ex.exbus_text2_ready and \
             self.frame_count <= 6:
 
             # description and unit for second telemetry value
-            self.telemetry = self.ex.exbus_text2
+            telemetry = self.ex.exbus_text2
             self.ex.exbus_text2_ready = False
 
         elif self.ex.exbus_data_ready:
 
             # send two telemetry values
-            self.telemetry = self.ex.exbus_data
+            telemetry = self.ex.exbus_data
             self.ex.exbus_data_ready = False
         else:
             if self.lock.locked():
@@ -302,7 +302,7 @@ class ExBus:
         # packet ID (answer with same ID as by the request)
         # slice assignment is required to write a byte to the bytearray
         # it does an implicit conversion from byte to integer
-        self.telemetry[3:4] = packetID
+        telemetry[3:4] = packetID
 
         # calculate the crc for the packet (as the packet is complete now)
         # checksum for EX BUS starts at the 1st byte of the packet
@@ -318,15 +318,15 @@ class ExBus:
                         crc16_int >>= 1
             return crc16_int
     
-        crc16_int = crc16(self.telemetry, len(self.telemetry))
+        crc16_int = crc16(telemetry, len(telemetry))
 
         self.crc16 = crc16_int.to_bytes(2, 'little')
 
         # convert crc to bytes with little endian
-        self.telemetry += self.crc16
+        telemetry += self.crc16
 
         # write packet to the EX bus stream
-        bytes_written = self.serial.write(self.telemetry)
+        bytes_written = self.serial.write(telemetry)
 
         end = utime.ticks_us()
 
@@ -341,9 +341,9 @@ class ExBus:
         # self.logger.log('debug', 'Bytes written: {}'.format(bytes_written))
         self.logger.log('debug', 'Time for answer: {} ms'.format(diff / 1000.))
         self.logger.log('debug', 'Frame counter: {}'.format(self.frame_count))
-        # self.logger.log('debug', 'CRC16 check: {}'.format(self.checkCRC(self.telemetry)))
-        if not self.checkCRC(self.telemetry):
-            self.logger.log('debug', 'CRC16 WRONG, self.telemetry: {}'.format(self.telemetry))
+        # self.logger.log('debug', 'CRC16 check: {}'.format(self.checkCRC(telemetry)))
+        if not self.checkCRC(telemetry):
+            self.logger.log('debug', 'CRC16 WRONG, telemetry: {}'.format(telemetry))
 
         # save packet ID for next packet (to check if it is a new packet)
         self.old_packetID = packetID
