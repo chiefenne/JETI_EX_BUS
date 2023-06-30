@@ -34,7 +34,7 @@ class I2C_bus:
         self.logger.log('info', 'Settings: {}'.format(self.i2c))
         self.logger.log('info', 'I2C setup done')
        
-    def scan(self):
+    def scan(self, demo=False):
         '''Scan the I2C bus for devices.
 
         Returns
@@ -47,6 +47,9 @@ class I2C_bus:
         # scan all I2C addresses between 0x08 and 0x77 inclusive
         # the corresponding sensor needs to be added in the file Sensors.py
         self.addresses = self.i2c.scan()
+
+        if demo:
+            self.addresses = [0x99]
 
         message = 'Addresses available on I2C: {}'.format([hex(a) for a in self.addresses])
         self.logger.log('info', message)

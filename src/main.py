@@ -56,11 +56,11 @@ if DEBUG:
     saveStream(serial, filename='EX_Bus_stream.txt', duration=3000)
     logger.log('debug', 'EX Bus stream recorded')
 
-
 # setup the I2C bus (pins are board specific)
 #    TINY2040 board: GPIO6, GPIO7 at port 1 (id=1)
 i2c = I2C_bus(1, scl=Pin(7), sda=Pin(6), freq=400000)
-addresses = i2c.scan()
+demo = os.file_exists('demo.txt')
+addresses = i2c.scan(demo=demo)
 
 # check for sensors attached to the microcontroller
 sensors = Sensors(addresses, i2c.i2c)
