@@ -16,5 +16,14 @@
         "class": "MS5611",
         "category": "PRESSURE",
         "subcategory": "TEMP"
+    },
+    "0x99": {
+        "name": "DEMO",
+        "manufacturer": "chiefenne",
+        "description": "High resolution precision barometer",
+        "module": "demo_sensor",
+        "class": "DemoSensor",
+        "category": "PRESSURE",
+        "subcategory": "TEMP"
     }
 }
