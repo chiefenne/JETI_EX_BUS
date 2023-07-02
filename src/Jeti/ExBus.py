@@ -55,6 +55,7 @@ from ubinascii import hexlify, unhexlify
 import utime
 import ustruct
 import micropython
+from micropython import const
 
 from Jeti import CRC16
 from Utils.Logger import Logger
@@ -70,7 +71,6 @@ class ExBus:
         self.ex = ex
         self.old_packetID = b'\x00' # dummy value for initialization
         self.frame_count = 0
-        self.counter = 0
         
         # lock object used to prevent other cores from accessing shared resources
         self.lock = lock
@@ -107,13 +107,13 @@ class ExBus:
         # define states of the EX bus protocol
         #
         # header 1 is expected
-        STATE_HEADER_1 = 0
+        STATE_HEADER_1 = const(0)
         # header 2 is expected
-        STATE_HEADER_2 = 1
+        STATE_HEADER_2 = const(1)
         # length of the packet
-        STATE_LENGTH = 2
+        STATE_LENGTH = const(2)
         # packet end
-        STATE_END = 3
+        STATE_END = const(3)
 
         # initialize the state
         state = STATE_HEADER_1
@@ -130,10 +130,10 @@ class ExBus:
                 if c in [b'\x3e',  b'\x3d']:
 
                     # initialize the buffer
-                    self.buffer = bytearray()
+                    buffer = bytearray()
 
                     # add the first byte to the buffer
-                    self.buffer += bytearray(c)
+                    buffer += bytearray(c)
                     
                     # change state
                     state = STATE_HEADER_2
@@ -142,7 +142,7 @@ class ExBus:
                 # check for EX bus header 2
                 if c in [b'\x01', b'\x03']:
                 
-                    self.buffer += bytearray(c)
+                    buffer += bytearray(c)
 
                     # change state
                     state = STATE_LENGTH
@@ -153,18 +153,18 @@ class ExBus:
 
             elif state == STATE_LENGTH:
                 # check for EX bus packet length
-                self.buffer += bytearray(c)
+                buffer += bytearray(c)
 
                 # packet length (including header and CRC)
-                self.packet_length = self.buffer[2]
-                # print('Packet length', self.packet_length)
+                packet_length = buffer[2]
+                # print('Packet length', packet_length)
 
                 # check if packet length is valid
                 # 6 bytes header + max. 24*2 bytes data + 2 bytes CRC
                 # FIXME:
-                # FIXME: check if above is correct
+                # FIXME: check if above is correct (check also in STATE_END)
                 # FIXME:
-                if self.packet_length > 64:
+                if packet_length > 64:
                     # reset state
                     state = STATE_HEADER_1
                     continue
@@ -174,51 +174,51 @@ class ExBus:
 
             elif state == STATE_END:
 
-                if len(self.buffer) > 64:
+                if len(buffer) > 64:
                     # reset state
                     state = STATE_HEADER_1
                     continue
 
                 # check for rest of EX bus packet
                 # ID, data identifier, data, CRC
-                self.buffer += bytearray(c)
+                buffer += bytearray(c)
                 
                 # check if packet is complete
-                if len(self.buffer) == self.packet_length:
+                if len(buffer) == packet_length:
                     
-                    # print('self.buffer', self.buffer)
+                    # print('buffer', buffer)
                     
                     # check CRC
-                    if self.checkCRC(self.buffer):
+                    if self.checkCRC(buffer):
                         # packet is complete and CRC is correct
                         # print('Packet complete and CRC correct')
     
                         # NOTE: accessing the bytearray needs slicing in order
                         #       to return a byte and not an integer
-                        #       self.buffer[0] returns an integer
-                        #       self.buffer[0:1] returns a byte
+                        #       buffer[0] returns an integer
+                        #       buffer[0:1] returns a byte
                         #       this way no conversion is needed
 
                         # check for channel data
-                        if self.buffer[0:1] == b'\x3e' and \
-                           self.buffer[4:5] == b'\x31':
+                        if buffer[0:1] == b'\x3e' and \
+                           buffer[4:5] == b'\x31':
                             # get the channel data
-                            self.getChannelData()
+                            self.getChannelData(buffer)
 
                         # check for telemetry request
-                        elif self.buffer[0:1] == b'\x3d' and \
-                             self.buffer[1:2] == b'\x01' and \
-                             self.buffer[4:5] == b'\x3a':
+                        elif buffer[0:1] == b'\x3d' and \
+                             buffer[1:2] == b'\x01' and \
+                             buffer[4:5] == b'\x3a':
                             
-                            packetID = self.buffer[3:4]
+                            packetID = buffer[3:4]
 
                             # send telemetry data
-                            self.sendTelemetry(packetID, verbose=False)
+                            self.sendTelemetry(packetID)
 
                         # check for JetiBox request
-                        elif self.buffer[0:1] == b'\x3d' and \
-                             self.buffer[1:2] == b'\x01' and \
-                             self.buffer[4:5] == b'\x3b':
+                        elif buffer[0:1] == b'\x3d' and \
+                             buffer[1:2] == b'\x01' and \
+                             buffer[4:5] == b'\x3b':
                             # send JetiBox menu data
                             self.sendJetiBoxMenu()
 
@@ -226,17 +226,17 @@ class ExBus:
                     state = STATE_HEADER_1
                     continue
 
-    def getChannelData(self, verbose=False):
+    def getChannelData(self, buffer, verbose=False):
         self.channel = dict()
         
-        num_channels = int.from_bytes(self.buffer[5:6], 'little') // 2
+        num_channels = int.from_bytes(buffer[5:6], 'little') // 2
 
         if verbose:
             self.logger.log('info', 'Number of channels: ' + str(num_channels))
 
         for i in range(num_channels):
-            self.channel[i] = self.buffer[6 + i*2 : 7 + i*2] + \
-                              self.buffer[7 + i*2 : 8 + i*2]
+            self.channel[i] = buffer[6 + i*2 : 7 + i*2] + \
+                              buffer[7 + i*2 : 8 + i*2]
             
             if verbose:
                 self.logger.log('info',
@@ -306,24 +306,12 @@ class ExBus:
 
         # calculate the crc for the packet (as the packet is complete now)
         # checksum for EX BUS starts at the 1st byte of the packet
-        @micropython.viper
-        def crc16(frame:ptr8, length:int) -> int:
-            crc16_int = 0
-            for i in range(length):
-                crc16_int ^= frame[i]
-                for _ in range(8):
-                    if crc16_int & 1:
-                        crc16_int = (crc16_int >> 1) ^ 0x8408
-                    else:
-                        crc16_int >>= 1
-            return crc16_int
-    
-        crc16_int = crc16(telemetry, len(telemetry))
-
-        self.crc16 = crc16_int.to_bytes(2, 'little')
+        
+        # use viper emitter code for crc calculation
+        crc16_int = self.crc16_viper(telemetry, len(telemetry))
 
         # convert crc to bytes with little endian
-        telemetry += self.crc16
+        telemetry += crc16_int.to_bytes(2, 'little')
 
         # write packet to the EX bus stream
         bytes_written = self.serial.write(telemetry)
@@ -333,10 +321,6 @@ class ExBus:
         # print how long it took to send the packet       
         diff = utime.ticks_diff(end, start)
 
-        # print some debug information
-        self.counter += 1
-
-        # self.logger.log('debug', 'self.counter: {}'.format(self.counter))
         # self.logger.log('debug', 'Packet ID: {}'.format(packetID))
         # self.logger.log('debug', 'Bytes written: {}'.format(bytes_written))
         self.logger.log('debug', 'Time for answer: {} ms'.format(diff / 1000.))
@@ -352,6 +336,20 @@ class ExBus:
 
     def sendJetiBoxMenu(self):
         pass
+
+    @micropython.viper
+    def crc16_viper(self, frame:ptr8, length:int) -> int:
+        '''CRC calculation with micropython viper code emitter. This is
+        faster than the normal python code but slower than the assembler'''
+        crc16_int = 0
+        for i in range(length):
+            crc16_int ^= frame[i]
+            for _ in range(8):
+                if crc16_int & 1:
+                    crc16_int = (crc16_int >> 1) ^ 0x8408
+                else:
+                    crc16_int >>= 1
+        return crc16_int
 
     def checkCRC(self, packet):
         '''Do a CRC check using CRC16-CCITT
