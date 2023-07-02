@@ -306,7 +306,17 @@ class Ex:
         return self.simple_text
 
     def EncodeValue(self, value, dataType, precision):
-        '''Encode telemetry value.'''
+        '''Encode telemetry value.
+        
+        Data type | Description |  Note
+        ----------|-------------|---------------------------------------
+            0     |   int6_t    |  Data type  6b (-31 ,31)
+            1     |   int14_t   |  Data type 14b (-8191 ,8191)
+            4     |   int22_t   |  Data type 22b (-2097151 ,2097151)
+            5     |   int22_t   |  Data type 22b (-2097151 ,2097151)
+            8     |   int30_t   |  Data type 30b (-536870911 ,536870911)
+            9     |   int30_t   |  Data type 30b (-536870911 ,536870911)
+        '''
 
         # FIXME: check if all formats are working
         # FIXME: check if all formats are working
@@ -321,24 +331,24 @@ class Ex:
         # number of bytes needed to encode the value
         num_bytes = bytes_for_datatype[dataType]
 
-        # scale value based on precision and round it
-        # vaules are signed, the sign is transferred in the 1st byte additionally
-        value_scaled = int(value * 10**precision + 0.5)
-
         # get the bit for the sign
         sign = 0x01 if value < 0 else 0x00
+        mult = -1 if value < 0 else 1
 
-        # cosmetics: make sure that zero is positive on the display
-        if value_scaled == 0:
-            sign = 0x00
+        # scale value based on precision and round it
+        value_scaled = abs(int(value * 10**precision + mult * 0.5))
 
         # combine sign, precision and scaled value
-        value_ex = ((sign << (num_bytes * 8 - 1)) |
-                   (precision << (num_bytes * 8 - 3)) |
+        value_ex = (sign << (num_bytes * 8 - 1) |
+                    precision << (num_bytes * 8 - 3) |
                     value_scaled)
 
-        # self.logger.log('debug', 'Encoding value: {}, dataType: {}, precision: {}, num_bytes {}'.format(value, dataType, precision, num_bytes))
-        # self.logger.log('debug', 'fmt[dataType]: {}, value_ex: {}'.format(fmt[dataType], value_ex))
+        # self.logger.log('debug', 'Encoding value: {}, dataType: {}, sign: {}, precision: {}, num_bytes {}'.format(value, dataType, sign, precision, num_bytes))
+        # self.logger.log('debug', 'fmt[dataType]: {}, value_scaled: {}, value_ex {}'.format(fmt[dataType], value_scaled, value_ex))
+        # self.logger.log('debug', 'bin(sign) {}'.format(bin(sign)))
+        # self.logger.log('debug', 'bin(precision) {}'.format(bin(precision)))
+        # self.logger.log('debug', 'bin(value_scaled) {}'.format(bin(value_scaled)))
+        # self.logger.log('debug', 'bin(value_ex) {}'.format(bin(value_ex)))
         # self.logger.log('debug', 'ustruct.pack(fmt[dataType]) {}'.format(ustruct.pack(fmt[dataType], value_ex)))
 
         # return the encoded value as bytes in little endian format
