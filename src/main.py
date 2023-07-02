@@ -49,7 +49,7 @@ main_thread_running = True
 s = Serial(port=0, baudrate=125000, bits=8, parity=None, stop=1)
 serial = s.connect()
 
-# write 1 second of the serial stream to a text file for debugging purposes
+# write 3 seconds of the serial stream to a text file for debugging purposes
 DEBUG = False
 if DEBUG:
     logger.log('debug', 'Starting to record EX Bus stream ...')
@@ -59,7 +59,12 @@ if DEBUG:
 # setup the I2C bus (pins are board specific)
 #    TINY2040 board: GPIO6, GPIO7 at port 1 (id=1)
 i2c = I2C_bus(1, scl=Pin(7), sda=Pin(6), freq=400000)
-demo = os.file_exists('demo.txt')
+
+# offer a demo sensor if no sensor is attached to the microcontroller
+# works if a file named 'demo.txt' is present
+demo = 'demo.txt' in os.listdir()
+
+# scan the I2C bus for sensors
 addresses = i2c.scan(demo=demo)
 
 # check for sensors attached to the microcontroller
@@ -104,6 +109,9 @@ def core0():
     #     ledg.value(1)
     # 
     #     _thread.exit()
+
+    # exit if the main thread is not running anymore
+    _thread.exit()
 
 # function which is run on core 1
 def core1():
