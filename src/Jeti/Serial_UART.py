@@ -8,6 +8,9 @@ Author: Dipl.-Ing. A. Ennemoser
 Date: 05-2023
 
 '''
+
+import usys as sys
+
 from machine import UART
 from Utils.Logger import Logger
 
@@ -41,12 +44,22 @@ class Serial:
                          parity=self.parity,
                          stop=self.stop,
                          timeout=self.timeout)
+        
+        # check if the connection was successful
+        # self.check_connection()
     
-        self.logger.log('info', 'Serial connection established')
-        self.logger.log('info', 'Settings: {}'.format(self.uart))
-
         return self.uart
-
+    
+    def check_connection(self):
+        
+        if not self.uart.read():
+            self.logger.log('error', 'Serial connection failed')
+            self.logger.log('error', 'Connect a receiver to the UART port')
+            sys.exit()
+        else:
+            self.logger.log('info', 'Serial connection established')
+            self.logger.log('info', 'EX Bus protocol running at {}'.format(self.uart))
+    
     def disconnect(self):
         '''Close the UART (serial) connection.
 
@@ -56,4 +69,4 @@ class Serial:
         self.uart.deinit()
         self.logger.log('info', 'Serial connection closed')
 
-
+        return
