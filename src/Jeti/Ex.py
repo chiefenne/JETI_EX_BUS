@@ -323,7 +323,8 @@ class Ex:
         # FIXME: check if all formats are working
 
         # format for pack
-        fmt = {0: '<B', 1: '<H', 4: '<I', 5: '<I', 8: '<L', 9: '<L'}
+        # fmt = {0: '<B', 1: '<H', 4: '<I', 5: '<I', 8: '<L', 9: '<L'} # unsigned
+        fmt = {0: '<b', 1: '<h', 4: '<i', 5: '<i', 8: '<l', 9: '<l'} # signed
 
         # number of bytes needed to encode the value
         bytes_for_datatype = {0: 1, 1: 2, 4: 3, 5: 3, 8: 4, 9: 4}
@@ -336,12 +337,30 @@ class Ex:
         mult = -1 if value < 0 else 1
 
         # scale value based on precision and round it
-        value_scaled = abs(int(value * 10**precision + mult * 0.5))
+        value_scaled = int(value * 10**precision + mult * 0.5)
 
         # combine sign, precision and scaled value
-        value_ex = (sign << (num_bytes * 8 - 1) |
-                    precision << (num_bytes * 8 - 3) |
-                    value_scaled)
+        # value_ex = (sign << (num_bytes*8 - 1) |
+        #             precision << (num_bytes*8 - 3) |
+        #             value_scaled)
+        value_ex = (sign << num_bytes * 8 - 1 |
+                    precision << num_bytes * 8 - 3 |
+                    value_scaled & 0xFF |
+                    (value_scaled >> 8 & 0x1F) << 8)
+
+        '''
+        if precision == 1:
+            prec = 0x20
+        elif precision == 2:
+            prec = 0x40
+        lo = value & 0xFF
+        hi1 = (value >> 8) & 0x1F
+        hi2 = ((value >> 8) & 0x1F) | (0x80 if value < 0 else 0x00)
+        hi3 = hi2 | prec
+        lo_pack = struct.pack(fmt, lo)
+        hi_pack = struct.pack(fmt, hi3)
+        '''
+
 
         # self.logger.log('debug', 'Encoding value: {}, dataType: {}, sign: {}, precision: {}, num_bytes {}'.format(value, dataType, sign, precision, num_bytes))
         # self.logger.log('debug', 'fmt[dataType]: {}, value_scaled: {}, value_ex {}'.format(fmt[dataType], value_scaled, value_ex))
