@@ -19,6 +19,7 @@ Date: 04-2021
 # are stripped down in MicroPython to be efficient on microcontrollers
 import utime as time
 import ustruct
+from micropython import const
 
 from Jeti import CRC8
 from Jeti import CRC16
