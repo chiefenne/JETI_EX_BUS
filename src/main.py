@@ -49,18 +49,23 @@ main_thread_running = True
 s = Serial(port=0, baudrate=125000, bits=8, parity=None, stop=1)
 serial = s.connect()
 
-# write 1 second of the serial stream to a text file for debugging purposes
+# write 3 seconds of the serial stream to a text file for debugging purposes
 DEBUG = False
 if DEBUG:
     logger.log('debug', 'Starting to record EX Bus stream ...')
     saveStream(serial, filename='EX_Bus_stream.txt', duration=3000)
     logger.log('debug', 'EX Bus stream recorded')
 
-
 # setup the I2C bus (pins are board specific)
 #    TINY2040 board: GPIO6, GPIO7 at port 1 (id=1)
 i2c = I2C_bus(1, scl=Pin(7), sda=Pin(6), freq=400000)
-addresses = i2c.scan()
+
+# offer a demo sensor if no sensor is attached to the microcontroller
+# works if a file named 'demo.txt' is present
+demo = 'demo.txt' in os.listdir()
+
+# scan the I2C bus for sensors
+addresses = i2c.scan(demo=demo)
 
 # check for sensors attached to the microcontroller
 sensors = Sensors(addresses, i2c.i2c)
@@ -95,15 +100,18 @@ def core0():
 
         _thread.exit()
     
-    except Exception as e:
-        # Set the flag to indicate that the main thread is not running
-        main_thread_running = False
-        logger.log('error', 'An error occurred: {}'.format(e))
+    # except Exception as e:
+    #     # Set the flag to indicate that the main thread is not running
+    #     main_thread_running = False
+    #     logger.log('error', '{}'.format(e))
+    # 
+    #     # switch off the green led
+    #     ledg.value(1)
+    # 
+    #     _thread.exit()
 
-        # switch off the green led
-        ledg.value(1)
-
-        _thread.exit()
+    # exit if the main thread is not running anymore
+    _thread.exit()
 
 # function which is run on core 1
 def core1():
@@ -114,26 +122,18 @@ def core1():
 
     # get the first sensor
     sensor = next(cycle_sensors)
-    
-    # send device frame only at the beginning
-    if not ex.exbus_device_ready:
-        ex.lock.acquire()
-        ex.exbus_device, _ = ex.exbus_frame(sensor, frametype='text', text='DEVICE')
-        ex.exbus_device_ready = True
-        ex.lock.release()
-    
-    # counter
-    i = 0
+
+    #
+    device_sent = False
+    ex.exbus_device_ready = False
+    ex.exbus_data_ready = False
+    ex.exbus_text1_ready = False
+    ex.exbus_text2_ready = False
     
     while main_thread_running:
 
         # cycle infinitely through all sensors
         sensor = next(cycle_sensors)
-
-        # debug
-        verbose = False
-        if i % 100 == 0:
-            verbose = True
 
         # collect data from currently selected sensor
         # the "read_jeti" method has to be implemented sensor specific
@@ -147,23 +147,25 @@ def core1():
         # FIXME: data are hardcoded for testing purposes
         # FIXME: data are hardcoded for testing purposes
         # FIXME: data are hardcoded for testing purposes
-        telemetry_1 = 'ALTITUDE'
-        telemetry_2 = 'TEMPERATURE'
-        ex.exbus_data, ex_data = ex.exbus_frame(sensor, frametype='data', data_1=telemetry_1, data_2=telemetry_2)
-        ex.exbus_text1, ex_text1 = ex.exbus_frame(sensor, frametype='text', text=telemetry_1)
-        ex.exbus_text2, ex_text2 = ex.exbus_frame(sensor, frametype='text', text=telemetry_2)
+        telemetry_1 = 'CLIMB'
+        telemetry_2 = 'REL_ALTITUDE'
 
-        ex.exbus_data_ready = True
-        ex.exbus_text1_ready = True
-        ex.exbus_text2_ready = True
+        if device_sent:
+            ex.exbus_data, _ = ex.exbus_frame(sensor, frametype='data', data_1=telemetry_1, data_2=telemetry_2)
+            ex.exbus_text1, _ = ex.exbus_frame(sensor, frametype='text', text=telemetry_1)
+            ex.exbus_text2, _ = ex.exbus_frame(sensor, frametype='text', text=telemetry_2)
+
+            ex.exbus_data_ready = True
+            ex.exbus_text1_ready = True
+            ex.exbus_text2_ready = True
+        else:
+            # send the device name first
+            ex.exbus_device, _ = ex.exbus_frame(sensor, frametype='text', text='DEVICE')
+            ex.exbus_device_ready = True
+            device_sent = True
+            logger.log('info', 'DEVICE information prepared')
 
         ex.lock.release()
-
-        i += 1
-        if i % 20 == 0:
-            print('EX BUS data: {}, EX data {}'.format(ex.exbus_data, ex_data))
-            print('EX BUS text: {}, EX text 1 {}'.format(ex.exbus_text1, ex_text1))
-            print('EX BUS text: {}, EX text 2 {}'.format(ex.exbus_text2, ex_text2))
 
     # inform the user that the second thread is stopped
     logger.log('info', 'Stopping second thread on core 1')

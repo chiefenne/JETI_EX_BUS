@@ -283,6 +283,6 @@ class BME280:
         self.temperature = t
         self.humidity = h
         self.altitude = self.altitude_bme280
-        self.dew_point = self.dew_point_bme280
+        # self.dew_point = self.dew_point_bme280
 
-        return self.pressure, self.temperature, self.humidity, self.altitude, self.dew_point
+        return self.pressure, self.temperature, self.humidity, self.altitude

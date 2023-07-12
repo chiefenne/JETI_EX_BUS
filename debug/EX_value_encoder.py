@@ -32,9 +32,9 @@ def EncodeValue(value, dataType, precision):
 if __name__ == '__main__':
 
     # test values
-    value = 322.9334
+    value = 0.3249817
     dataType = 1
-    precision = 2
+    precision = 1
     expected = hexlify(b'\xE8\x23')
 
     # Encode the value

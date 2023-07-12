@@ -1,7 +1,7 @@
 {
     "DEVICE": {
         "id": 0,
-        "description": "MHBVario",
+        "description": "MHB",
         "unit": "",
         "data_type": 1,
         "precision": 0
@@ -20,71 +20,78 @@
         "data_type": 1,
         "precision": 1
     },
-    "CLIMB": {
+    "REL_ALTITUDE": {
         "id": 3,
-        "description": "Climb",
+        "description": "Hoehe",
+        "unit": "m",
+        "data_type": 1,
+        "precision": 1
+    },
+    "CLIMB": {
+        "id": 4,
+        "description": "Variometer",
         "unit": "m/s",
         "data_type": 1,
-        "precision": 2
+        "precision": 1
     },
     "PRESSURE": {    
-        "id": 4,
+        "id": 5,
         "description": "Pressure",
         "unit": "hPa",
         "data_type": 4,
         "precision": 1
     },
     "TEMPERATURE": {
-        "id": 5,
+        "id": 6,
         "description": "Temperature",
         "unit": "C",
         "data_type": 1,
         "precision": 1
     },
     "CAPACITY": {
-        "id": 6,
+        "id": 7,
         "description": "Capacity",
         "unit": "%",
         "data_type": 1,
         "precision": 0
     },
     "RPM": {
-        "id": 7,
+        "id": 8,
         "description": "RPM",
         "unit": "1/min",
         "data_type": 1,
         "precision": 1
     },
     "GPSLAT": {
-        "id": 8,
+        "id": 9,
         "description": "Latitude",
         "unit": " ",
         "data_type": 9,
         "precision": 0
     },
     "GPSLON": {
-        "id": 9,
+        "id": 10,
         "description": "Longitude",
         "unit": " ",
         "data_type": 9,
         "precision": 0
     },
     "DISTANCE": {
-        "id": 10,
+        "id": 11,
         "description": "Distance",
         "unit": "m",
         "data_type": 1,
         "precision": 0
     },
     "HEADING": {
-        "id": 11,
+        "id": 12,
         "description": "Heading",
         "unit": "-",
         "data_type": 1,
         "precision": 0
     },
     "SATELLITES": {
-        "id": 12,
+        "id": 13,
         "description": "Satellites",
         "unit": "_",
         "data_type": 1,
