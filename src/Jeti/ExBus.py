@@ -364,7 +364,8 @@ class ExBus:
         '''
 
         # packet to check is message without last 2 bytes
-        crc, _ = CRC16.crc16_ccitt(packet[:-2])
+        crc_int = CRC16.crc16_ccitt(packet[:-2], len(packet[:-2]))
+        crc = hex(crc_int)[2:]
 
         # the last 2 bytes of the message makeup the crc value for the packet
         crc_check = hexlify(packet[-2:]).decode()
