@@ -6,8 +6,12 @@ EX_Bus_protokol_v121_EN.pdf
 The checksum starts at the first byte of the message (0x3B for Slave packet).
 '''
 
+import micropython
+from micropython import const
 
-def crc16_ccitt(data : bytearray):
+
+@micropython.viper
+def crc16_ccitt(data:ptr8, length: int) -> int:
     '''Calculate the CRC16-CCITT value from data packet.
     Args:
         data (bytearray): Jeti EX bus packet
@@ -19,15 +23,15 @@ def crc16_ccitt(data : bytearray):
     Credits: Mark Adler https://stackoverflow.com/a/67115933/2264936
     '''
     crc = 0
-    for i in range(0, len(data)):
+    for i in range(length):
         crc ^= data[i]
-        for j in range(0,8):
+        for j in range(8):
             if (crc & 1) > 0:
                 crc = (crc >> 1) ^ 0x8408
             else:
                 crc = crc >> 1
 
-    return hex(crc)[2:], crc
+    return crc
 
 
 if __name__ == '__main__':
@@ -43,7 +47,8 @@ if __name__ == '__main__':
               0x82, 0x1F, 0x82, 0x1F, 0x82, 0x1F, 0x82, 0x1F, 0x82, 0x1F, 0x82,
               0x1F, 0x82, 0x1F, 0x82, 0x1F]
 
-    crc, _ = crc16_ccitt(packet)
+    crc_int = crc16_ccitt(packet, len(packet))
+    crc = hex(crc_int)[2:]
 
     print('')
     print('Example receiver (master) sends channel data:')
@@ -54,7 +59,8 @@ if __name__ == '__main__':
     # example receiver (master) sends telemetry request (EX_Bus_protokol_v121_EN.pdf, page 6)
     packet = [0x3D, 0x01, 0x08, 0x06, 0x3A, 0x00]
 
-    crc, _ = crc16_ccitt(packet)
+    crc_int = crc16_ccitt(packet, len(packet))
+    crc = hex(crc_int)[2:]
 
     print('')
     print('Example receiver (master) sends telemetry request:')
@@ -67,7 +73,8 @@ if __name__ == '__main__':
               0x55, 0xEE, 0x11, 0x30, 0x20, 0x21, 0x00, 0x40, 0x34, 0xA3, 0x28,
               0x00, 0x41, 0x00, 0x00, 0x51, 0x18, 0x00, 0x09]
 
-    crc, _ = crc16_ccitt(packet)
+    crc_int = crc16_ccitt(packet, len(packet))
+    crc = hex(crc_int)[2:]
 
     print('')
     print('Example sensor (slave) sends telemetry data:')
@@ -81,7 +88,8 @@ if __name__ == '__main__':
               0x20, 0x20, 0x20, 0x34, 0x2E, 0x38, 0x56, 0x20, 0x20, 0x31, 0x30,
               0x34, 0x30, 0x6D, 0x41, 0x68]
 
-    crc, _ = crc16_ccitt(packet)
+    crc_int = crc16_ccitt(packet, len(packet))
+    crc = hex(crc_int)[2:]
 
     print('')
     print('Example sensor (slave) sends Jetibox menu:')
