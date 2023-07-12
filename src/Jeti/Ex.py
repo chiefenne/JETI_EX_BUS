@@ -17,8 +17,6 @@ Date: 04-2021
 
 # modules starting with 'u' are Python standard libraries which
 # are stripped down in MicroPython to be efficient on microcontrollers
-from ubinascii import hexlify, unhexlify
-import ujson
 import utime as time
 import ustruct
 
@@ -203,7 +201,8 @@ class Ex:
 
         # vario calculation
         current_time = time.ticks_ms()
-        dt = time.ticks_diff(current_time, self.last_time) # use ticks_diff to produce correct result
+        # use ticks_diff to produce correct result
+        dt = time.ticks_diff(current_time, self.last_time)
         self.last_time = current_time
         altitude = self.current_sensor.altitude
         climbrate = (altitude - self.last_altitude) * (1000.0 / (dt + 1.e-9))
@@ -340,38 +339,18 @@ class Ex:
         value_scaled = int(value * 10**precision + mult * 0.5)
 
         # combine sign, precision and scaled value
-        # value_ex = (sign << (num_bytes*8 - 1) |
-        #             precision << (num_bytes*8 - 3) |
-        #             value_scaled)
-        value_ex = (sign << num_bytes * 8 - 1 |
-                    precision << num_bytes * 8 - 3 |
-                    value_scaled & 0xFF |
-                    (value_scaled >> 8 & 0x1F) << 8)
+        lo_byte = value_scaled & 0xFF
+        hi_byte = ((value_scaled >> 8) & 0x1F) | (sign << 7) | (precision << 5)
 
-        '''
-        if precision == 1:
-            prec = 0x20
-        elif precision == 2:
-            prec = 0x40
-        lo = value & 0xFF
-        hi1 = (value >> 8) & 0x1F
-        hi2 = ((value >> 8) & 0x1F) | (0x80 if value < 0 else 0x00)
-        hi3 = hi2 | prec
-        lo_pack = struct.pack(fmt, lo)
-        hi_pack = struct.pack(fmt, hi3)
-        '''
+        # encode the value
+        value_ex = ustruct.pack('bb', lo_byte, hi_byte)
 
-
-        # self.logger.log('debug', 'Encoding value: {}, dataType: {}, sign: {}, precision: {}, num_bytes {}'.format(value, dataType, sign, precision, num_bytes))
-        # self.logger.log('debug', 'fmt[dataType]: {}, value_scaled: {}, value_ex {}'.format(fmt[dataType], value_scaled, value_ex))
-        # self.logger.log('debug', 'bin(sign) {}'.format(bin(sign)))
-        # self.logger.log('debug', 'bin(precision) {}'.format(bin(precision)))
-        # self.logger.log('debug', 'bin(value_scaled) {}'.format(bin(value_scaled)))
-        # self.logger.log('debug', 'bin(value_ex) {}'.format(bin(value_ex)))
-        # self.logger.log('debug', 'ustruct.pack(fmt[dataType]) {}'.format(ustruct.pack(fmt[dataType], value_ex)))
+        # self.logger.log('debug',
+        #                 'Encoding value: {}, scaled: {}, sign: {}, precision: {}'.
+        #                 format(value, value_scaled, sign, precision))
 
         # return the encoded value as bytes in little endian format
-        return ustruct.pack(fmt[dataType], value_ex)
+        return value_ex
 
     def lowpass_iir_filter(input_signal, cutoff_frequency, sample_rate):
         '''Lowpass infinite impulse response filter (IIR).'''
