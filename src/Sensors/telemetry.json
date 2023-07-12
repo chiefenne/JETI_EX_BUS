@@ -32,7 +32,7 @@
         "description": "Variometer",
         "unit": "m/s",
         "data_type": 1,
-        "precision": 2
+        "precision": 1
     },
     "PRESSURE": {    
         "id": 5,
