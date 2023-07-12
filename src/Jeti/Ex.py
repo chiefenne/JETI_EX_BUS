@@ -339,6 +339,10 @@ class Ex:
         # scale value based on precision and round it
         value_scaled = int(value * 10**precision + mult * 0.5)
 
+        # check that zero is positive; otherwise wrong value is encoded
+        if value_scaled == 0:
+            sign = 0x00
+
         # combine sign, precision and scaled value
         lo_byte = value_scaled & 0xFF
         hi_byte = ((value_scaled >> 8) & 0x1F) | (sign << 7) | (precision << 5)
@@ -347,8 +351,8 @@ class Ex:
         value_ex = ustruct.pack('bb', lo_byte, hi_byte)
 
         # self.logger.log('debug',
-        #                 'Encoding value: {}, scaled: {}, sign: {}, precision: {}'.
-        #                 format(value, value_scaled, sign, precision))
+        #                 'Encoding value: {}, scaled: {}, sign: {}, lo: {}, hi: {}'.
+        #                 format(value, value_scaled, sign, lo_byte, hi_byte))
 
         # return the encoded value as bytes in little endian format
         return value_ex
