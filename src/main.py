@@ -35,7 +35,9 @@ from Utils.round_robin import cycler
 logger = Logger(prestring='JETI MAIN')
 
 # setup the led
+rp2 = False
 if 'rp2' in sys.platform:
+    rp2 = True
     ledg = Pin(19, Pin.OUT)
 
 # lock object used to prevent other cores from accessing shared resources
@@ -84,7 +86,8 @@ def core0():
     # exbus.dummy()
 
     try:
-        ledg.value(0)
+        if rp2:
+            ledg.value(0)
         exbus.run_forever()
     
     except KeyboardInterrupt:
@@ -96,19 +99,25 @@ def core0():
         logger.log('info', 'Stopping main thread on core 0')    
 
         # switch off the green led
-        ledg.value(1)
+        if rp2:
+            ledg.value(1)
 
         _thread.exit()
     
-    # except Exception as e:
+
+    # following code catches all exceptions, which is not useful for debugging
+
+    # # except Exception as e:
     #     # Set the flag to indicate that the main thread is not running
     #     main_thread_running = False
     #     logger.log('error', '{}'.format(e))
     # 
     #     # switch off the green led
-    #     ledg.value(1)
+    #     if rp2:
+    #         ledg.value(1)
     # 
     #     _thread.exit()
+
 
     # exit if the main thread is not running anymore
     _thread.exit()
