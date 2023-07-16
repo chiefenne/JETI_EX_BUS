@@ -287,7 +287,7 @@ class Ex:
     def variometer(self):
         '''Calculate the variometer value derived from the pressure sensor.
         
-        The time at which the data were measeured is stored in the sensor object to
+        The time at which the data were measured is stored in the sensor object to
         get better gradients (to be implemented in the sensor read_jeti method).
         '''
 
