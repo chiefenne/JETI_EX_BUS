@@ -1,9 +1,26 @@
-'''Python Implementation of the JETI EX Bus protocol
+'''JETI EX Bus protocol. Implemented using MicroPython.
+
+For sensor telemetry data transmission between a microcontroller and a
+JETI receiver.
+
+Source code and documentation:
+    https://github.com/chiefenne/JETI_EX_BUS
+
+
+JETI Ex Bus and JETI Ex specification:
+    http://www.jetimodel.com/en/Telemetry-Protocol/   
+    EX_Bus_protokol_v121_EN.pdf
+    JETI_Telem_protocol_EN_V1.07.pdf
+
+MicroPython:
+   https://micropython.org/
+   https://github.com/micropython/micropython    
+
 
 This module holds the overall program logic. It initializes the serial connection
-between board and Jeti receiver.
+between microcontroller (board) and Jeti receiver.
 
-Furter it connects via I2C to the sensors which are attached to the board.
+Further it connects the sensors via I2C to the board.
 
 After that it starts an endless loop to handle all data streams between the devices.
 
@@ -17,18 +34,17 @@ Date: 04-2021
 # are stripped down in MicroPython to be efficient on microcontrollers
 import usys as sys
 import uos as os
-import _thread
 from machine import Pin
+import _thread
 
-
-from Jeti.Serial_UART import Serial
-from Jeti.ExBus import ExBus
 from Jeti.Ex import Ex
-from Sensors.Sensors import Sensors
+from Jeti.ExBus import ExBus
+from Jeti.Serial_UART import Serial
 from Sensors.I2C import I2C_bus
+from Sensors.Sensors import Sensors
 from Utils.Logger import Logger
+from Utils import status
 from Utils.Streamrecorder import saveStream
-from Utils.round_robin import cycler
 
 
 # setup a logger for the REPL
@@ -42,9 +58,6 @@ if 'rp2' in sys.platform:
 
 # lock object used to prevent other cores from accessing shared resources
 lock = _thread.allocate_lock()
-
-# shared variable to indicate whether the main thread is still running
-main_thread_running = True
 
 # Serial connection bewtween Jeti receiver and microcontroller
 # defaults: baudrate=125000, 8-N-1
@@ -80,19 +93,17 @@ exbus = ExBus(serial, sensors, ex, lock)
 
 # function which is run on core 0
 def core0():
-    global main_thread_running
-
-    # debug
-    # exbus.dummy()
 
     try:
         if rp2:
             ledg.value(0)
+
+        # run the main loop on core 0
         exbus.run_forever()
     
     except KeyboardInterrupt:
         # Set the flag to indicate that the main thread is not running
-        main_thread_running = False
+        status.main_thread_running = False
 
         # inform the user
         logger.log('info', 'Keyboard interrupt occurred')
@@ -109,7 +120,7 @@ def core0():
 
     # # except Exception as e:
     #     # Set the flag to indicate that the main thread is not running
-    #     main_thread_running = False
+    #     status.main_thread_running = False
     #     logger.log('error', '{}'.format(e))
     # 
     #     # switch off the green led
@@ -124,57 +135,9 @@ def core0():
 
 # function which is run on core 1
 def core1():
-    global main_thread_running
 
-    # make a generator out of the list of sensors
-    cycle_sensors = cycler(sensors.get_sensors())
-
-    # get the first sensor
-    sensor = next(cycle_sensors)
-
-    #
-    device_sent = False
-    ex.exbus_device_ready = False
-    ex.exbus_data_ready = False
-    ex.exbus_text1_ready = False
-    ex.exbus_text2_ready = False
-    
-    while main_thread_running:
-
-        # cycle infinitely through all sensors
-        sensor = next(cycle_sensors)
-
-        # collect data from currently selected sensor
-        # the "read_jeti" method has to be implemented sensor specific
-        # e.g., see Sensors/bme280_float.py
-        sensor.read_jeti()
-
-        ex.lock.acquire()
-
-        # update data frame (new sensor data)
-        # 2 values per data frame, 1 value per text frame (so 2 text frames per data frame)
-        # FIXME: data are hardcoded for testing purposes
-        # FIXME: data are hardcoded for testing purposes
-        # FIXME: data are hardcoded for testing purposes
-        telemetry_1 = 'CLIMB'
-        telemetry_2 = 'REL_ALTITUDE'
-
-        if device_sent:
-            ex.exbus_data, _ = ex.exbus_frame(sensor, frametype='data', data_1=telemetry_1, data_2=telemetry_2)
-            ex.exbus_text1, _ = ex.exbus_frame(sensor, frametype='text', text=telemetry_1)
-            ex.exbus_text2, _ = ex.exbus_frame(sensor, frametype='text', text=telemetry_2)
-
-            ex.exbus_data_ready = True
-            ex.exbus_text1_ready = True
-            ex.exbus_text2_ready = True
-        else:
-            # send the device name first
-            ex.exbus_device, _ = ex.exbus_frame(sensor, frametype='text', text='DEVICE')
-            ex.exbus_device_ready = True
-            device_sent = True
-            logger.log('info', 'DEVICE information prepared')
-
-        ex.lock.release()
+    # run the second thread on core 1
+    ex.run_forever()
 
     # inform the user that the second thread is stopped
     logger.log('info', 'Stopping second thread on core 1')

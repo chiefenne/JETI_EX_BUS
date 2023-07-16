@@ -60,7 +60,7 @@ Usage:
 #
 '''
 
-import time
+import utime as time
 from ustruct import unpack, unpack_from
 from array import array
 
@@ -137,6 +137,9 @@ class BME280:
         self.i2c.writeto_mem(self.address, BME280_REGISTER_CONTROL,
                              self._l1_barray)
         self.t_fine = 0
+
+        # store initial altitude for relative altitude measurements
+        self.initial_altitude = self.altitude_bme280
 
     def read_raw_data(self, result):
         """ Reads the raw (uncompensated) data from the sensor.
@@ -283,6 +286,13 @@ class BME280:
         self.temperature = t
         self.humidity = h
         self.altitude = self.altitude_bme280
+        self.relative_altitude = self.altitude - self.initial_altitude
+        self.time = time.ticks_us()
         # self.dew_point = self.dew_point_bme280
 
-        return self.pressure, self.temperature, self.humidity, self.altitude
+        return self.pressure, \
+               self.temperature, \
+               self.humidity, \
+               self.altitude, \
+               self.relative_altitude, \
+               self.time
