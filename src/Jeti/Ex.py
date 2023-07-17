@@ -284,32 +284,7 @@ class Ex:
 
         return self.data, len(self.data)
 
-    def variometer(self):
-        '''Calculate the variometer value derived from the pressure sensor.
-        
-        The time at which the data were measured is stored in the sensor object to
-        get better gradients (to be implemented in the sensor read_jeti method).
-        '''
-
-        # calculate delta's for gradient
-        # use ticks_diff to produce correct result (when time overflows)
-        dt = time.ticks_diff(self.current_sensor.time, self.last_time) / 1.e6
-        dz = self.current_sensor.altitude - self.last_altitude
-
-        # calculate the climbrate
-        climbrate = dz / (dt + 1.e-9)
-
-        smoothing = 0.8
-        climbrate = climbrate + smoothing * (self.last_climbrate - climbrate)
-
-        # store data for next iteration
-        self.last_time = self.current_sensor.time
-        self.last_altitude = self.current_sensor.altitude
-        self.last_climbrate = climbrate
-
-        return climbrate
-
-    def Text(self, frametype='text', text=None):
+    def Text(self, text=None):
         '''EX text packet. This transfers the sensor description and unit for
         one sensor value. Two text packets are needed to transfer the
         description and unit for one data packet (as it sends two values).
@@ -336,6 +311,31 @@ class Ex:
             self.text += bytes([ord(c)])
 
         return self.text, len(self.text)
+
+    def variometer(self):
+        '''Calculate the variometer value derived from the pressure sensor.
+        
+        The time at which the data were measured is stored in the sensor object to
+        get better gradients (to be implemented in the sensor read_jeti method).
+        '''
+
+        # calculate delta's for gradient
+        # use ticks_diff to produce correct result (when time overflows)
+        dt = time.ticks_diff(self.current_sensor.time, self.last_time) / 1.e6
+        dz = self.current_sensor.altitude - self.last_altitude
+
+        # calculate the climbrate
+        climbrate = dz / (dt + 1.e-9)
+
+        smoothing = 0.8
+        climbrate = climbrate + smoothing * (self.last_climbrate - climbrate)
+
+        # store data for next iteration
+        self.last_time = self.current_sensor.time
+        self.last_altitude = self.current_sensor.altitude
+        self.last_climbrate = climbrate
+
+        return climbrate
 
     def Message(self):
         '''EX packet message.'''
@@ -383,9 +383,9 @@ class Ex:
             9     |   int30_t   |  Data type 30b (-536870911 ,536870911)
         '''
 
-        # FIXME: check if all formats are working
-        # FIXME: check if all formats are working
-        # FIXME: check if all formats are working
+        # FIXME: only innt14_t hardcoded for the moment
+        # FIXME: only innt14_t hardcoded for the moment
+        # FIXME: only innt14_t hardcoded for the moment
 
         # format for pack
         fmt = {0: '<b', 1: '<h', 4: '<i', 5: '<i', 8: '<l', 9: '<l'} # signed
