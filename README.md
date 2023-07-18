@@ -81,7 +81,7 @@ The program logic consists of two parts. Those are the similar to the Arduino <b
 
 <p align="center">
   <kbd> <!-- make a frame around the image -->
-    <img src="docs/images/program_logic1.png" height="400"/>
+    <img src="docs/images/program_logic.png" height="400"/>
   </kbd>
 </p>
 <p align="center">
