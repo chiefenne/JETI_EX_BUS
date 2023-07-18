@@ -54,8 +54,9 @@ class Ex:
 
         # setup moving average filter for the variometer
         window_size = 0.4
+        window_size1 = 0.7
         self.mav_filt_alt = MovingAverageFilter(window_size)
-        self.mav_filt_climb = MovingAverageFilter(window_size)
+        self.mav_filt_climb = MovingAverageFilter(window_size1)
 
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI EX')
@@ -126,6 +127,7 @@ class Ex:
                 self.exbus_device_ready = True
                 device_sent = True
                 self.logger.log('info', 'DEVICE information prepared')
+                self.logger.log('info', 'Starting EX BUS telemetry')
 
             self.lock.release()
 
@@ -256,7 +258,7 @@ class Ex:
 
         # get variometer data if pressure sensor is present
         if self.current_sensor.category == 'PRESSURE':
-            value_1, mav_rel_altitude = self.variometer(filter='mav')
+            value_1, mav_rel_altitude = self.variometer(filter='climb')
             value_2 = mav_rel_altitude
 
         # compile 9th byte of EX data specification (2x 4bit)
@@ -370,24 +372,35 @@ class Ex:
 
         # calculate the climbrate
         climbrate = dz / (dt + 1.e-9)
+        mav_rel_alt = self.current_sensor.relative_altitude
+        mav_rel_climb = climbrate
 
-        # simple signal filter
+        # signal filter
         if filter == 'simple':
+            # use a simple smoothing filter for the climb rate
             smoothing = 0.8
             climbrate = climbrate + smoothing * (self.last_climbrate - climbrate)
+            mav_rel_climb = climbrate
         elif filter == 'fir':
             # use a FIR filter
-            coefficients = [0.1, 0.2, 0.4, 0.2, 0.1]
+            # FIXME: coefficients are hardcoded, to be designed for the filter
+            # FIXME: coefficients are hardcoded, to be designed for the filter
+            # FIXME: coefficients are hardcoded, to be designed for the filter
+            coefficients = [-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
+                                0,  1,  2,  3,  4,  5,  6,  7,  9, 10]
             climbrate = fir_py.fir(coefficients, climbrate)
+            mav_rel_climb = climbrate
         elif filter == 'mav':
-            # use a moving average filter
+            # use a moving average filter for the climb rate and the altitude
             mav_rel_alt = self.mav_filt_alt.update(
                 self.current_sensor.relative_altitude, self.current_sensor.time)
             climbrate = (mav_rel_alt - self.last_altitude) / (dt + 1.e-9)
             mav_rel_climb = self.mav_filt_climb.update(climbrate, self.current_sensor.time)
-        else: # no filter
+        elif filter == 'climb':
+            # use a moving average filter only for the climb rate
             mav_rel_alt = self.current_sensor.relative_altitude
-            mav_rel_climb = climbrate
+            climbrate = (mav_rel_alt - self.last_altitude) / (dt + 1.e-9)
+            mav_rel_climb = self.mav_filt_climb.update(climbrate, self.current_sensor.time)
 
         # store data for next iteration
         self.last_time = self.current_sensor.time

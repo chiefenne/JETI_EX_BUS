@@ -1,4 +1,4 @@
-'''
+'''Calculate the moving average of a time series using a sliding window.
 '''
 
 
@@ -19,5 +19,10 @@ class MovingAverageFilter:
 
         # Compute the moving average
         average = sum(self.values) / len(self.values)
+
+        # keep number of values limited
+        if len(self.values) > 100:
+            self.values.pop(0)
+            self.times.pop(0)
 
         return average
