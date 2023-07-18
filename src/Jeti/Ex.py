@@ -25,7 +25,8 @@ from Jeti import CRC8
 from Jeti import CRC16
 from Utils.Logger import Logger
 from Utils.round_robin import cycler
-from Utils import status
+from Utils import status, fir_py
+from Utils.moving_average import MovingAverageFilter
 
 
 class Ex:
@@ -51,6 +52,11 @@ class Ex:
         self.exbus_text1_ready = False
         self.exbus_text2_ready = False
 
+        # setup moving average filter for the variometer
+        window_size = 0.4
+        self.mav_filt_alt = MovingAverageFilter(window_size)
+        self.mav_filt_climb = MovingAverageFilter(window_size)
+
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI EX')
 
@@ -65,14 +71,6 @@ class Ex:
         end = time.ticks_us()
         diff = time.ticks_diff(end, start)
         self.logger.log('debug', 'core 1: EX, lock released after {} us'.format(diff))
-
-    def Message(self):
-        pass
-
-    def Alarm(self):
-        '''[summary]
-        '''
-        pass
 
     def run_forever(self):
         '''Run the EX protocol forever.
@@ -136,7 +134,8 @@ class Ex:
     def exbus_frame(self, frametype='data',
                                   data_1=None,
                                   data_2=None,
-                                  text=None):
+                                  text=None,
+                                  msg_class=None):
         '''Prepare the EX BUS telemetry packet.
         It includes the EX packet and the EX BUS header.
         CRC16 is added later in ExBus.py as it needs to include the packet id.
@@ -146,7 +145,8 @@ class Ex:
         ex_packet, len_ex = self.ex_frame(frametype=frametype,
                                           data_1=data_1,
                                           data_2=data_2,
-                                          text=text)
+                                          text=text,
+                                          msg_class=msg_class)
 
         # initiliaze the EX BUS packet
         exbus_packet = bytearray()
@@ -174,17 +174,21 @@ class Ex:
         return exbus_packet, ex_packet
 
     def ex_frame(self, frametype=None,
-                               data_1=None,
-                               data_2=None,
-                               text=None):
+                       data_1=None,
+                       data_2=None,
+                       text=None,
+                       msg_class=None):
         '''Compile the EX telemetry packet (Header, data or text, etc.).'''
 
         if frametype == 'data':
-            # get sensor data
+            # put sensor data into ex frame
             data, length = self.Data(data_1=data_1, data_2=data_2)
         elif frametype == 'text':
-            # get text data
+            # put text data into ex frame
             data, length = self.Text(text=text)
+        elif frametype == 'message':
+            # put message data into ex frame
+            data, length = self.Message(message=text, msg_class=msg_class)
 
         # compile header (types are 'text', 'data', 'message')
         header = self.Header(frametype, length)
@@ -250,35 +254,31 @@ class Ex:
 
         self.data = bytearray()
 
-        # FIXME: telemetry data are hardcoded for now
-        # FIXME: telemetry data are hardcoded for now
-        # FIXME: telemetry data are hardcoded for now
-
         # get variometer data if pressure sensor is present
         if self.current_sensor.category == 'PRESSURE':
-            altitude = self.current_sensor.relative_altitude
-            climbrate = self.variometer()
+            value_1, mav_rel_altitude = self.variometer(filter='mav')
+            value_2 = mav_rel_altitude
 
         # compile 9th byte of EX data specification (2x 4bit)
-        id1 = self.sensors.meta[data_1]['id'] << 4
+        id1 = self.sensors.meta[data_1]['id'] << const(4)
         data_type = self.sensors.meta[data_1]['data_type']
         # combine bits for id and data type
         self.data += ustruct.pack('B', id1 | data_type)
 
         # data of 1st telemetry value, converted to EX format
-        self.data += self.EncodeValue(climbrate,
+        self.data += self.EncodeValue(value_1,
                                       self.sensors.meta[data_1]['data_type'],
                                       self.sensors.meta[data_1]['precision'])
 
         # compile 11th+x byte of EX data specification (2x 4bit)
-        id2 = self.sensors.meta[data_2]['id'] << 4
+        id2 = self.sensors.meta[data_2]['id'] << const(4)
         data_type = self.sensors.meta[data_2]['data_type']
 
         # combine bits for id and data type
         self.data += ustruct.pack('B', id2 | data_type)
         
         # data of 2nd telemetry value, converted to EX format
-        self.data += self.EncodeValue(altitude,
+        self.data += self.EncodeValue(value_2,
                                       self.sensors.meta[data_2]['data_type'],
                                       self.sensors.meta[data_2]['precision'])
 
@@ -290,29 +290,69 @@ class Ex:
         description and unit for one data packet (as it sends two values).
         '''
 
-        self.text = bytearray()
+        extext = bytearray()
         # compile 9th byte of EX text specification (1 byte)
         id = self.sensors.meta[text]['id']
-        self.text += ustruct.pack('B', id)
+        extext += ustruct.pack('B', id)
 
         # compile 10th byte of EX text specification (5bits + 3bits)
         len_description = len(self.sensors.meta[text]['description'])
         len_unit = len(self.sensors.meta[text]['unit'])
-        self.text += ustruct.pack('B', len_description << 3 | len_unit)
+        extext += ustruct.pack('B', len_description << 3 | len_unit)
 
         # compile 11th+x bytes of EX text specification
         description = self.sensors.meta[text]['description']
         for c in description:
-            self.text += bytes([ord(c)])
+            extext += bytes([ord(c)])
 
         # compile 11+x+y bytes of EX text specification (y bytes)
         unit = self.sensors.meta[text]['unit']
         for c in unit:
-            self.text += bytes([ord(c)])
+            extext += bytes([ord(c)])
 
-        return self.text, len(self.text)
+        return extext, len(extext)
 
-    def variometer(self):
+    def Message(self, message=None, msg_class=0):
+        '''This message type allows transmitting any textual information directly
+        to the pilot. Additional semantics can be added to the message
+        (alarm/status/warning).'''
+
+        message = bytearray()
+        # compile 9th byte of EX message specification (1 byte)
+        # identifyer of message type (0-255)
+        message += ustruct.pack('B', 0)
+
+        # compile 10th byte of EX message specification (3bits + 5bits)
+        # message class (0-4)
+        # 0: Basic informative message (really unimportant messages)
+        # 1: Status message (device ready, motors armed, GPS position fix etc.)
+        # 2: Warning (alarm, high vibrations, preflight conditions check, …)
+        # 3: Recoverable error (loss of GPS position, erratic sensor data, …)
+        # 4: Nonrecoverable error (peripheral failure, unexpected hardware fault, …)
+        message += ustruct.pack('B', msg_class << 5 | len(message))
+
+        # compile 11th+x bytes of EX message specification
+        for c in message:
+            message += bytes([ord(c)])
+
+        return message, len(message)
+
+    def Alarm(self, tone=False, code=None):
+        '''EX packet alarm.'''
+        alarm = bytearray()
+
+        # number of bytes following (always 2)
+        alarm += b'\x02'
+
+        # 0x22 (without reminder tone, e.g. vario) or 0x23 (with reminder tone, e.g. low battery)
+        alarm += b'\x23' if tone else b'\x22'
+
+        # ASCII letter ('A' to 'Z') to be signalized by Morse alarm
+        alarm += bytes([ord(code)])
+
+        return alarm, len(alarm)
+
+    def variometer(self, filter='mav'):
         '''Calculate the variometer value derived from the pressure sensor.
         
         The time at which the data were measured is stored in the sensor object to
@@ -322,34 +362,48 @@ class Ex:
         # calculate delta's for gradient
         # use ticks_diff to produce correct result (when time overflows)
         dt = time.ticks_diff(self.current_sensor.time, self.last_time) / 1.e6
-        dz = self.current_sensor.altitude - self.last_altitude
+        dz = self.current_sensor.relative_altitude - self.last_altitude
+
+        # write file for signal analysis
+        # with open('signal.txt', 'a') as f:
+        #     f.write('{},{},{}\n'.format(dt, dz, self.current_sensor.altitude))
 
         # calculate the climbrate
         climbrate = dz / (dt + 1.e-9)
 
-        smoothing = 0.8
-        climbrate = climbrate + smoothing * (self.last_climbrate - climbrate)
+        # simple signal filter
+        if filter == 'simple':
+            smoothing = 0.8
+            climbrate = climbrate + smoothing * (self.last_climbrate - climbrate)
+        elif filter == 'fir':
+            # use a FIR filter
+            coefficients = [0.1, 0.2, 0.4, 0.2, 0.1]
+            climbrate = fir_py.fir(coefficients, climbrate)
+        elif filter == 'mav':
+            # use a moving average filter
+            mav_rel_alt = self.mav_filt_alt.update(
+                self.current_sensor.relative_altitude, self.current_sensor.time)
+            climbrate = (mav_rel_alt - self.last_altitude) / (dt + 1.e-9)
+            mav_rel_climb = self.mav_filt_climb.update(climbrate, self.current_sensor.time)
+        else: # no filter
+            mav_rel_alt = self.current_sensor.relative_altitude
+            mav_rel_climb = climbrate
 
         # store data for next iteration
         self.last_time = self.current_sensor.time
-        self.last_altitude = self.current_sensor.altitude
+        self.last_altitude = mav_rel_alt
         self.last_climbrate = climbrate
 
-        return climbrate
-
-    def Message(self):
-        '''EX packet message.'''
-
-        pass
-
-    def Alarm(self):
-        '''EX packet alarm.'''
-        pass
+        return mav_rel_climb, mav_rel_alt
 
     def SimpleText(self, text):
         '''EX packet simple text (must be 34 bytes long).
+        This text is shown on the Jetibox.
+
         32 bytes of text are needed + 2 bytes for the separators.
         The simple text is concatenated to every telemetry packet.
+        8th bit of message separators needs to be 0
+        8th bit of each text character needs to be 1
         '''
 
         # crop text if too long, fill up if needed, left adjusted
@@ -358,15 +412,15 @@ class Ex:
 
         simple_text = bytearray()
 
-        # separator of message (begin)
-        simple_text += b'\xFE'
+        # separator of message (begin), clear 8th bit
+        simple_text += (0xFE & ~(1 << 7)).to_bytes(1, 'little')
 
-        # add the text to the packet
+        # add the text to the packet, set 8th bit
         for c in text:
-            simple_text += bytes([ord(c)])
+            simple_text += bytes([ord(c) | (1 << 7)])
 
-        # separator of message (end)
-        simple_text += b'\xFF'
+        # separator of message (end), clear 8th bit
+        simple_text += (0xFF & ~(1 << 7)).to_bytes(1, 'little')
 
         return simple_text
 
