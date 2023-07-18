@@ -1,46 +1,8 @@
 '''Python Implementation of the JETI EX Bus protocol
 
-
-Implementation via MicroPython (Python for microprocessors):
-    https://micropython.org/
-    https://github.com/micropython/micropython    
-
-
 JETI Ex Bus specification:
-    http://www.jetimodel.com/en/Telemetry-Protocol/
-    
+    http://www.jetimodel.com/en/Telemetry-Protocol/   
     File: EX_Bus_protokol_v121_EN.pdf
-
-Ex Bus protocol description:
-============================
-
-1) Packet (8 bytes) with the telemetry request sent by the receiver (master)
-
-    Byte | Length |     Data     |  Description
-   ------|--------|--------------|----------------------------------------
-     1   |    1   |     0x3D     |  Header
-     2   |    1   |     0x01     |  Header
-     3   |    1   |      LEN     |  Message length incl. header and CRC
-     4   |    1   |       ID     |  Packet ID
-     5   |    1   |     0x3A     |  Identifier for a telemetry request
-     6   |    1   |        0     |  Length of data block
-    7/8  |    2   |    CRC16     |  CRC16-CCITT in sequence LSB, MSB             |
-
-   NOTE: - slave needs to answer with this Packet ID (byte 4)
-         - LSB, MSB need to be swapped to get the checksum
-         - byte 1 (0x3D) states that this is a request
-         - byte 2 (0x01) states that after this packet there is a 4ms slot on
-           the ex bus to answer with the corresponding information
-         - byte 5 (0x3A) states that this is a telemetry request
-
-2) Packet (9 bytes) with the JetiBox request sent by the receiver (master)
-   There is only little difference to the telemetry request:
-
-    Byte | Length |     Data     |  Description
-   ------|--------|--------------|----------------------------------------
-     5   |    1   |     0x3B     |  Identifier for a JetiBox request
-     7   |    1   |  0bLDUR0000  |  Information of the buttons
-
 
 
 Author: Dipl.-Ing. A. Ennemoser
@@ -53,7 +15,6 @@ Date: 04-2021
 
 from ubinascii import hexlify, unhexlify
 import utime
-import ustruct
 import micropython
 from micropython import const
 
@@ -265,7 +226,6 @@ class ExBus:
         # EX BUS packet (send data and text alternately)
         # check if packet is available (set in main.py)
         if self.ex.exbus_device_ready:
-            print('EXBUS device')
         
             # description of the device
             telemetry = self.ex.exbus_device
@@ -323,11 +283,11 @@ class ExBus:
 
         # self.logger.log('debug', 'Packet ID: {}'.format(packetID))
         # self.logger.log('debug', 'Bytes written: {}'.format(bytes_written))
-        self.logger.log('debug', 'Time for answer: {} ms'.format(diff / 1000.))
-        self.logger.log('debug', 'Frame counter: {}'.format(self.frame_count))
+        # self.logger.log('debug', 'Time for answer: {} ms'.format(diff / 1000.))
+        # self.logger.log('debug', 'Frame counter: {}'.format(self.frame_count))
         # self.logger.log('debug', 'CRC16 check: {}'.format(self.checkCRC(telemetry)))
-        if not self.checkCRC(telemetry):
-            self.logger.log('debug', 'CRC16 WRONG, telemetry: {}'.format(telemetry))
+        # if not self.checkCRC(telemetry):
+        #     self.logger.log('debug', 'CRC16 WRONG, telemetry: {}'.format(telemetry))
 
         # save packet ID for next packet (to check if it is a new packet)
         self.old_packetID = packetID

@@ -15,11 +15,8 @@ Trick for text coloring as its not implemented yet in Github flavored markdown
 -->
 ```diff
 + SENDING TELEMETRY WORKS
-+ CORE PART OF THE BUS STRUCTURE EXISTS
-+ VARIO (climb) and ALTITUDE are working (but hardcoded) for BME280 sensor
-+ CHANNEL INFORMATION CAN BE READ
-- STILL NEED TO FIX BUGS
-- IMPROVE PERFORMANCE
++ VARIO WORKS, BUT IS HARDCODED FOR BME2808
+- FIX HARDCODED CODE
 ```
 
 

@@ -3,6 +3,9 @@
 For example the sensor can be a pressure sensor (e.g. BME280) which in turn
 is used to make up a vario.
 
+Author: Dipl.-Ing. A. Ennemoser
+Date: 04-2021
+
 '''
 
 import json
