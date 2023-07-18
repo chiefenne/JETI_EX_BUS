@@ -226,7 +226,6 @@ class ExBus:
         # EX BUS packet (send data and text alternately)
         # check if packet is available (set in main.py)
         if self.ex.exbus_device_ready:
-            print('EXBUS device')
         
             # description of the device
             telemetry = self.ex.exbus_device
@@ -284,11 +283,11 @@ class ExBus:
 
         # self.logger.log('debug', 'Packet ID: {}'.format(packetID))
         # self.logger.log('debug', 'Bytes written: {}'.format(bytes_written))
-        self.logger.log('debug', 'Time for answer: {} ms'.format(diff / 1000.))
-        self.logger.log('debug', 'Frame counter: {}'.format(self.frame_count))
+        # self.logger.log('debug', 'Time for answer: {} ms'.format(diff / 1000.))
+        # self.logger.log('debug', 'Frame counter: {}'.format(self.frame_count))
         # self.logger.log('debug', 'CRC16 check: {}'.format(self.checkCRC(telemetry)))
-        if not self.checkCRC(telemetry):
-            self.logger.log('debug', 'CRC16 WRONG, telemetry: {}'.format(telemetry))
+        # if not self.checkCRC(telemetry):
+        #     self.logger.log('debug', 'CRC16 WRONG, telemetry: {}'.format(telemetry))
 
         # save packet ID for next packet (to check if it is a new packet)
         self.old_packetID = packetID
