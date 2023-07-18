@@ -16,8 +16,6 @@ Trick for text coloring as its not implemented yet in Github flavored markdown
 ```diff
 + SENDING TELEMETRY WORKS
 + VARIO WORKS, BUT IS HARDCODED FOR BME2808
-+ CHANNEL INFORMATION CAN BE READ
-- IMPROVE PERFORMANCE
 - FIX HARDCODED CODE
 ```
 
