@@ -67,16 +67,24 @@ from array import array
 # BME280 default address.
 BME280_I2CADDR = 0x76
 
-# Operating Modes
+# oversampling values
 BME280_OSAMPLE_1 = 1
 BME280_OSAMPLE_2 = 2
 BME280_OSAMPLE_4 = 3
 BME280_OSAMPLE_8 = 4
 BME280_OSAMPLE_16 = 5
 
+# iir_filter values
+IIR_FILTER_DISABLE = const(0)
+IIR_FILTER_X2 = const(0x01)
+IIR_FILTER_X4 = const(0x02)
+IIR_FILTER_X8 = const(0x03)
+IIR_FILTER_X16 = const(0x04)
+
 BME280_REGISTER_CONTROL_HUM = 0xF2
 BME280_REGISTER_STATUS = 0xF3
 BME280_REGISTER_CONTROL = 0xF4
+BME280_REGISTER_CONFIG = 0xF5
 
 MODE_SLEEP = const(0)
 MODE_FORCED = const(1)
@@ -87,25 +95,17 @@ BME280_TIMEOUT = const(100)  # about 1 second timeout
 class BME280:
 
     def __init__(self,
-                 mode=BME280_OSAMPLE_8,
                  address=BME280_I2CADDR,
                  i2c=None,
                  **kwargs):
-        # Check that mode is valid.
-        if type(mode) is tuple and len(mode) == 3:
-            self._mode_hum, self._mode_temp, self._mode_press = mode
-        elif type(mode) == int:
-            self._mode_hum, self._mode_temp, self._mode_press = mode, mode, mode
-        else:
-            raise ValueError("Wrong type for the mode parameter, must be int or a 3 element tuple")
 
-        for mode in (self._mode_hum, self._mode_temp, self._mode_press):
-            if mode not in [BME280_OSAMPLE_1, BME280_OSAMPLE_2, BME280_OSAMPLE_4,
-                            BME280_OSAMPLE_8, BME280_OSAMPLE_16]:
-                raise ValueError(
-                    'Unexpected mode value {0}. Set mode to one of '
-                    'BME280_ULTRALOWPOWER, BME280_STANDARD, BME280_HIGHRES, or '
-                    'BME280_ULTRAHIGHRES'.format(mode))
+        # use fixed modes for oversampling
+        # according to datasheet 3.5.3 (indoor navigation, page 20)
+        # normal mode, t_standby = 0.5ms, filter coefficient 16
+        self._mode_hum = BME280_OSAMPLE_1
+        self._mode_temp = BME280_OSAMPLE_2
+        self._mode_press = BME280_OSAMPLE_16
+        self._mode_filter = IIR_FILTER_X16
 
         self.address = address
         if i2c is None:
@@ -139,7 +139,13 @@ class BME280:
         self.t_fine = 0
 
         # store initial altitude for relative altitude measurements
-        self.initial_altitude = self.altitude_bme280
+        # make an initial averaged measurement out of 20 values
+        self.initial_altitude = 0
+        num = 20
+        for _ in range(num):
+            self.initial_altitude += self.altitude_bme280
+            time.sleep_ms(10)
+        self.initial_altitude /= num
 
     def read_raw_data(self, result):
         """ Reads the raw (uncompensated) data from the sensor.
@@ -157,6 +163,10 @@ class BME280:
         self._l1_barray[0] = self._mode_temp << 5 | self._mode_press << 2 | MODE_FORCED
         self.i2c.writeto_mem(self.address, BME280_REGISTER_CONTROL,
                              self._l1_barray)
+        # set IIR filter parameters
+        self._l1_barray[0] = self._mode_filter << 2 | MODE_SLEEP
+        self.i2c.writeto_mem(self.address, BME280_REGISTER_CONFIG,
+                                self._l1_barray)
 
         # Wait for conversion to complete
         for _ in range(BME280_TIMEOUT):
