@@ -147,7 +147,7 @@ def core1():
 
 
 # start the second thread on core 1
-# logger.log('info', 'Starting second thread on core 1')
+logger.log('info', 'Starting second thread on core 1')
 second_thread = _thread.start_new_thread(core1, ())
 
 # run the main loop on core 0
