@@ -67,7 +67,6 @@ class Sensors:
             sensor = sensor_class(address=address, i2c=self.i2c)
 
             sensor.address = address
-            sensor.i2c = self.i2c
             sensor.name = self.sensor_data[addr]['name']
             sensor.manufacturer = self.sensor_data[addr]['manufacturer']
             sensor.description = self.sensor_data[addr]['description']

@@ -3,8 +3,8 @@
         "name": "BME280",
         "manufacturer": "BOSCH",
         "description": "Combined humidity and pressure sensor",
-        "module": "bme280_float",
-        "class": "BME280",
+        "module": "bme280_i2c",
+        "class": "BME280_I2C",
         "category": "PRESSURE",
         "subcategory": "TEMP"
     },

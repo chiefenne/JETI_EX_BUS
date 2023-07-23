@@ -41,22 +41,18 @@ class Ex:
         # lock object used to prevent other cores from accessing shared resources
         self.lock = lock
 
-        # remember several values for the EX BUS
+        # remember values for the variometer
         self.last_altitude = 0
         self.last_climbrate = 0
-        self.last_time = 0
+        self.vario_time_old = time.ticks_ms()
+        self.vario_smoothing = const(0.85)
+        self.deadzone = 0.05
 
         # initialize the EX BUS packet 
         # needed for check in ExBus.py, set to 'True' in main.py
         self.exbus_data_ready = False
         self.exbus_text1_ready = False
         self.exbus_text2_ready = False
-
-        # setup moving average filter for the variometer
-        window_size = 0.4
-        window_size1 = 0.7
-        self.mav_filt_alt = MovingAverageFilter(window_size)
-        self.mav_filt_climb = MovingAverageFilter(window_size1)
 
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI EX')
@@ -95,7 +91,7 @@ class Ex:
 
             # collect data from currently selected sensor
             # the "read_jeti" method must be implemented sensor specific
-            # see Sensors/bme280_float.py
+            # see Sensors/bme280_i2c.py
             self.current_sensor.read_jeti()
 
             self.lock.acquire()
@@ -258,8 +254,8 @@ class Ex:
 
         # get variometer data if pressure sensor is present
         if self.current_sensor.category == 'PRESSURE':
-            value_1, mav_rel_altitude = self.variometer(filter='climb')
-            value_2 = mav_rel_altitude
+            value_1, rel_altitude = self.variometer()
+            value_2 = rel_altitude
 
         # compile 9th byte of EX data specification (2x 4bit)
         id1 = self.sensors.meta[data_1]['id'] << const(4)
@@ -354,60 +350,36 @@ class Ex:
 
         return alarm, len(alarm)
 
-    def variometer(self, filter='mav'):
-        '''Calculate the variometer value derived from the pressure sensor.
-        
-        The time at which the data were measured is stored in the sensor object to
-        get better gradients (to be implemented in the sensor read_jeti method).
-        '''
+    def variometer(self):
+        '''Calculate the variometer value derived from the pressure sensor.'''
 
         # calculate delta's for gradient
-        # use ticks_diff to produce correct result (when time overflows)
-        dt = time.ticks_diff(self.current_sensor.time, self.last_time) / 1.e6
+        # use ticks_diff to produce correct result (when timer overflows)
+        self.vario_time = time.ticks_ms()
+        dt = time.ticks_diff(self.vario_time, self.vario_time_old) / 1000.0
         dz = self.current_sensor.relative_altitude - self.last_altitude
-
-        # write file for signal analysis
-        # with open('signal.txt', 'a') as f:
-        #     f.write('{},{},{}\n'.format(dt, dz, self.current_sensor.altitude))
 
         # calculate the climbrate
         climbrate = dz / (dt + 1.e-9)
-        mav_rel_alt = self.current_sensor.relative_altitude
-        mav_rel_climb = climbrate
 
-        # signal filter
-        if filter == 'simple':
-            # use a simple smoothing filter for the climb rate
-            smoothing = 0.8
-            climbrate = climbrate + smoothing * (self.last_climbrate - climbrate)
-            mav_rel_climb = climbrate
-        elif filter == 'fir':
-            # use a FIR filter
-            # FIXME: coefficients are hardcoded, to be designed for the filter
-            # FIXME: coefficients are hardcoded, to be designed for the filter
-            # FIXME: coefficients are hardcoded, to be designed for the filter
-            coefficients = [-10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-                                0,  1,  2,  3,  4,  5,  6,  7,  9, 10]
-            climbrate = fir_py.fir(coefficients, climbrate)
-            mav_rel_climb = climbrate
-        elif filter == 'mav':
-            # use a moving average filter for the climb rate and the altitude
-            mav_rel_alt = self.mav_filt_alt.update(
-                self.current_sensor.relative_altitude, self.current_sensor.time)
-            climbrate = (mav_rel_alt - self.last_altitude) / (dt + 1.e-9)
-            mav_rel_climb = self.mav_filt_climb.update(climbrate, self.current_sensor.time)
-        elif filter == 'climb':
-            # use a moving average filter only for the climb rate
-            mav_rel_alt = self.current_sensor.relative_altitude
-            climbrate = (mav_rel_alt - self.last_altitude) / (dt + 1.e-9)
-            mav_rel_climb = self.mav_filt_climb.update(climbrate, self.current_sensor.time)
+        # deadzone filtering
+        if climbrate > self.deadzone:
+            climbrate -= self.deadzone
+        elif climbrate < -self.deadzone:
+            climbrate += self.deadzone
+        else:
+            climbrate = 0.0
+
+        # smoothing filter for the climb rate
+        climbrate = climbrate + self.vario_smoothing * \
+            (self.last_climbrate - climbrate)
 
         # store data for next iteration
-        self.last_time = self.current_sensor.time
-        self.last_altitude = mav_rel_alt
+        self.vario_time_old = self.vario_time
+        self.last_altitude = self.current_sensor.relative_altitude
         self.last_climbrate = climbrate
 
-        return mav_rel_climb, mav_rel_alt
+        return climbrate, self.current_sensor.relative_altitude
 
     def SimpleText(self, text):
         '''EX packet simple text (must be 34 bytes long).
