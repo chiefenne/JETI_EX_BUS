@@ -250,25 +250,6 @@ Below figure depicts the JETI display for the receiver settings (German language
     <i>Fig. 11: The receiver channel where the microcontroller is connected needs the <b>EX Bus</b> setting activated</i>
 </p>
 
-<br>
-
-### EX Bus connection cable
-
-<br>
-
-<p align="center">
-  <kbd> <!-- make a frame around the image -->
-    <img src="docs/images/EX_Bus_connection_cable.png" width="800" />
-  </kbd>
-</p>
-<p align="center">
-    <i>Fig. 12: Comparison of standard servo cable vs. EX bus cable attached to a RP2040 Zero</i>
-</p>
-
-<br>
-
-The connection cable from board to receiver (EX Bus telemetry transfer) can be derived from a standard RC servo cable. It has 3 wires (signal, vcc, gnd).The resitor is soldered between TX and RX and the signal cable (yellow here) is connected to TX directly.
-
 <br><br>
 2023 Andreas Ennemoser – andreas.ennemoser@aon.at
 
