@@ -235,6 +235,21 @@ The servo cable (red, brown, orange) is soldered according to the image below. T
 
 <br>
 
+Figure 11 shows a USB-C plug connected to the microcontroller. The connection from the microcontroller to the JETI receiver needs to be on a socket (here 6), which is set to run the EX BUS protocol (see also figure 12).
+
+<br>
+
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/setup_XIAO2040_JetiRex6_03.png" width="600" />
+  </kbd>
+</p>
+<p align="center">
+    <i>Fig. 11: Setup for software update and development</i>
+</p>
+
+<br>
+
 ### Channel setup in the device manager of the transmitter
 
 Below figure depicts the JETI display for the receiver settings (German language).
@@ -247,7 +262,7 @@ Below figure depicts the JETI display for the receiver settings (German language
   </kbd>
 </p>
 <p align="center">
-    <i>Fig. 11: The receiver channel where the microcontroller is connected needs the <b>EX Bus</b> setting activated</i>
+    <i>Fig. 12: The receiver channel where the microcontroller is connected needs the <b>EX Bus</b> setting activated</i>
 </p>
 
 <br><br>
