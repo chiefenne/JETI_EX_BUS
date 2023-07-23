@@ -1,0 +1,12 @@
+{
+    "urls": [
+        ["Jeti", "github:org/chiefenne/JETI_EX_BUS/src/Jeti"],
+        ["Jeti", "github:org/chiefenne/JETI_EX_BUS/src/Sensors"],
+        ["Jeti", "github:org/chiefenne/JETI_EX_BUS/src/Utils"],
+        ["Jeti", "github:org/chiefenne/JETI_EX_BUS/src/boot.py"],
+        ["Jeti", "github:org/chiefenne/JETI_EX_BUS/src/main.py"],
+    ],
+    "deps": [
+    ],
+    "version": "0.4"
+}
