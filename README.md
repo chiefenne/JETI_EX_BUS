@@ -21,7 +21,7 @@ Trick for text coloring as its not implemented yet in Github flavored markdown
 
 
 A [JETI](http://www.jetimodel.com/en/) [Ex Bus protocol](http://www.jetimodel.com/en/Telemetry-Protocol/) implementation in Python or more specifically in [MicroPython](https://micropython.org/).
-This will allow to use boards like Raspbery Pi, ESP32 or similar to act as a sensor hub for [Jeti RC receivers](http://www.jetimodel.com/en/katalog/Duplex-2-4-EX/Receivers-EX/) and to transmit telemetry data from the board to the receiver and thus back to the transmitter (i.e. RC controls like this [DC24](http://www.jetimodel.com/en/katalog/Transmitters/@produkt/DC-24/)).
+This will allow to use microcontrollers (aka boards) like Raspbery Pi, ESP32 or similar to act as a sensor hub for [Jeti RC receivers](http://www.jetimodel.com/en/katalog/Duplex-2-4-EX/Receivers-EX/) and to transmit telemetry data from the board to the receiver and thus back to the transmitter (i.e. RC controls like this [DC24](http://www.jetimodel.com/en/katalog/Transmitters/@produkt/DC-24/)).
 
 > NOTE: The current implementation relies on threading using two cores. The development platform thus has changed from the [Pyboard](https://store.micropython.org/product/PYBv1.1) to the [Pimoroni Tiny 2040](https://shop.pimoroni.com/products/tiny-2040) which uses the Raspberry Pi [RP2040](https://www.raspberrypi.com/products/rp2040/) processor.
 
@@ -29,23 +29,26 @@ This will allow to use boards like Raspbery Pi, ESP32 or similar to act as a sen
 ## Features
 
  - Pure Python (MicroPython) impementation of the Jeti Ex Bus protocol
- - Runs on two core boards which are supported by MicroPython (see [forum](https://forum.micropython.org/viewforum.php?f=10) or [code repository](https://github.com/micropython/micropython/tree/master/ports))
+ - Runs on boards which are supported by MicroPython (see [forum](https://forum.micropython.org/viewforum.php?f=10) or [code repository](https://github.com/micropython/micropython/tree/master/ports))
+   > NOTE: Only boards with two cores are supported
  - Two core implementation
    - Core-0 handles the transfer of JETI telemetry data via UART
    - Core-1 does the sensor reading via I2C and prepares the packets for the EX and EX-BUS protocol
  - Simple firmware/software update via USB-C
  - Easy logging of sensor data on the board
+ - Variometer functionality (via pressure sensors like BME280)
+ - Can be extended by more I2C sensors
 
 ## Boards
 
- ### Tested
+ #### Tested
  - [Pimoroni TINY 2040](https://shop.pimoroni.com/products/tiny-2040) (22.9 x 18.2 mm)
    - 133 MHz Cortex-M0+
    - 8MB QSPI flash
 - [Seeed Studio XIAO RP2040](https://www.seeedstudio.com/XIAO-RP2040-v1-0-p-5026.html) (21 x 17.5 mm)
    - 133 MHz Cortex-M0+
    - 8MB QSPI flash
- ### Planned
+ #### Planned
  - [ESP32](https://en.wikipedia.org/wiki/ESP32)
    - 160 MHz - 240 MHz
    - up to 16 Mb flash memory
@@ -55,9 +58,29 @@ This will allow to use boards like Raspbery Pi, ESP32 or similar to act as a sen
 
  - [MicroPython](https://micropython.org/)
 
+## Installation
+
+After finishing board and sensors (see further down) the MicroPython firmware needs to be installed. The firmware then is the operating system where MicroPython code can run. After this the software in the [src folder](https://github.com/chiefenne/JETI_EX_BUS/tree/main/src) must be copied onto the board.
+
+Following steps describe the process:
+1. Download the Micropython firmware for the specific board in use
+   - As an example, the [XAIO RP2040](https://www.seeedstudio.com/XIAO-RP2040-v1-0-p-5026.html) runs the [Raspberry Pi Pico](https://micropython.org/download/rp2-pico/)  firmware
+   - The firmware typically comes in the [USB flashing format (UF2)](https://github.com/Microsoft/uf2), for example [rp2-pico-20230426-v1.20.0.uf2](https://micropython.org/resources/firmware/rp2-pico-20230426-v1.20.0.uf2)
+1. Press and hold the boot button (B), connect the USB-C cable and release the button. This will put the board into the so called ***bootloader mode***. The board now will appear as USB drive on the computer
+1. Copy (drag) the firmware onto this USB drive
+1. Disconnect and re-connect the USB-C plug. The board is now ready to run MicroPython code
+1. Use one of the following tools to copy all files and folders from the [src folder](https://github.com/chiefenne/JETI_EX_BUS/tree/main/src) onto the board
+   - [mpremote](https://docs.micropython.org/en/latest/reference/mpremote.html?highlight=mpremote)
+   - [Thonny editor](https://thonny.org/)
+   - [tio](https://github.com/tio/tio)
+   - []()
+1. Unplug the USB-C cable and connect the board/sensor to the JETI receiver
+
+> NOTE: From the MicroPython docs: "The exact procedure for these steps is highly dependent on the particular board and you will need to refer to its documentation for details."
+
 ## Hardware Layer
 
- The flowchart (Fig. 1) describes the setup of the hardware and indicates the physical connections. The microcontroller is connected with the receiver via a serial asynchronous interface [UART](https://de.wikipedia.org/wiki/Universal_Asynchronous_Receiver_Transmitter). Physically the connection uses three wires (vcc, gnd, signal). Examples are shown in Fig. 7, Fig. 8, Fig. 9 and Fig. 11.
+ The flowchart (Fig. 1) describes the setup of the hardware and indicates the physical connections. The microcontroller is connected with the receiver via a serial asynchronous interface [UART](https://de.wikipedia.org/wiki/Universal_Asynchronous_Receiver_Transmitter). Physically the connection uses three wires (vcc, gnd, signal). Examples are shown in figures 9, 10 and 11.
 
  The Jeti telemetry runs via a half-duplex serial communication protocol. This means that there is a master (receiver) controlling the data flow and a slave (microcontroller/sensor) which is only allowed to answer upon request from the master. The master reserves a 4ms period for this to work. Measurments show approximately a 6ms period (see Fig. 4).
 
@@ -265,7 +288,9 @@ Below figure depicts the JETI display for the receiver settings (German language
     <i>Fig. 12: The receiver channel where the microcontroller is connected needs the <b>EX Bus</b> setting activated</i>
 </p>
 
-<br><br>
-2023 Andreas Ennemoser – andreas.ennemoser@aon.at
+## License
 
 Distributed under the MIT license. See [LICENSE](https://raw.githubusercontent.com/chiefenne/PyAero/master/LICENSE) for more information.
+
+<br><br>
+2023 Andreas Ennemoser – andreas.ennemoser@aon.at
