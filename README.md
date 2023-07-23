@@ -29,19 +29,27 @@ This will allow to use boards like Raspbery Pi, ESP32 or similar to act as a sen
 ## Features
 
  - Pure Python (MicroPython) impementation of the Jeti Ex Bus protocol
- - Runs on boards which are supported by MicroPython (see [forum](https://forum.micropython.org/viewforum.php?f=10) or [code repository](https://github.com/micropython/micropython/tree/master/ports))
- - Simple firmware/software update via USB
+ - Runs on two core boards which are supported by MicroPython (see [forum](https://forum.micropython.org/viewforum.php?f=10) or [code repository](https://github.com/micropython/micropython/tree/master/ports))
+ - Two core implementation
+   - Core-0 handles the transfer of JETI telemetry data via UART
+   - Core-1 does the sensor reading via I2C and prepares the packets for the EX and EX-BUS protocol
+ - Simple firmware/software update via USB-C
  - Easy logging of sensor data on the board
 
 ## Boards
 
- - [TINY 2040](https://shop.pimoroni.com/products/tiny-2040) (22.9 x 18.2)
+ ### Tested
+ - [Pimoroni TINY 2040](https://shop.pimoroni.com/products/tiny-2040) (22.9 x 18.2 mm)
    - 133 MHz Cortex-M0+
    - 8MB QSPI flash
- - Planned: [ESP32](https://en.wikipedia.org/wiki/ESP32)
+- [Seeed Studio XIAO RP2040](https://www.seeedstudio.com/XIAO-RP2040-v1-0-p-5026.html) (21 x 17.5 mm)
+   - 133 MHz Cortex-M0+
+   - 8MB QSPI flash
+ ### Planned
+ - [ESP32](https://en.wikipedia.org/wiki/ESP32)
    - 160 MHz - 240 MHz
    - up to 16 Mb flash memory
-   - Wi-Fi (use the phone as a JetiBox ???)
+   - Wi-Fi
 
 ## Dependencies
 
@@ -53,9 +61,7 @@ This will allow to use boards like Raspbery Pi, ESP32 or similar to act as a sen
 
  The Jeti telemetry runs via a half-duplex serial communication protocol. This means that there is a master (receiver) controlling the data flow and a slave (microcontroller/sensor) which is only allowed to answer upon request from the master. The master reserves a 4ms period for this to work. Measurments show approximately a 6ms period (see Fig. 4).
 
- The connection between the board and the sensors is established via [I2C](https://de.wikipedia.org/wiki/I%C2%B2C). Four wires are (vcc, gnd, sda, scl) needed to connect each of the sensors.
- 
-> NOTE: During testing the microcontroller is supplied via USB power (thus no vcc connection between board and receiver) and the Jeti receiver is powered via 4S NiMH batteries. They share a common ground. In the real application the microcontroller will also be powered via the the battery (through the receiver).
+ The connection between the board and the sensors is established via [I2C](https://de.wikipedia.org/wiki/I%C2%B2C). Four wires (vcc, gnd, sda, scl) are needed to connect each of the sensors.
 
 </br>
 
@@ -75,7 +81,7 @@ This will allow to use boards like Raspbery Pi, ESP32 or similar to act as a sen
 The program logic consists of two parts. Those are the similar to the Arduino <b>*setup()*</b> and <b>*loop()*</b> functions.
 
   * In the beginning the communication channels (UART, I2C) are initialized. A serial connection (UART) is established between the microcontroller and the receiver. Additionally an I2C connection is setup between the microcontroller and the sensor(s).
-  * After the setup of the communication, the main (infinite) loop starts. 
+  * After the setup of the communication, the two main (infinite) loops start, one infinite loop on each core. 
 
 </br>
 
@@ -91,7 +97,7 @@ The program logic consists of two parts. Those are the similar to the Arduino <b
 </br>
 
 ## Sample EX Bus data stream
-Written by function [Streamrecorder.py](https://github.com/chiefenne/JETI_EX_BUS/blob/main/src/Utils/Streamrecorder.py).
+Written by the function [Streamrecorder.py](https://github.com/chiefenne/JETI_EX_BUS/blob/main/src/Utils/Streamrecorder.py) which should only be activated to record the serial stream. This is only meaningful for debugging purposes.
 
 The receiver is the master and triggers the half-duplex communication. As an example **3e:03** is the beginning of a packet containing channel data sent by the receiver (the packet describes the current actuator settings of the transmitter). A telemetry request (from receiver/master to the microcontroller/sensor) is indicated by **3d:01** which is the start of an 8 byte packet. After this there is a 4ms window to send telemetry data back from the board to the receiver (not visible in this data stream).
 
@@ -167,11 +173,41 @@ The next figure depicts a telemetry answer from the microcontroller/sensor (slav
 
 <br>
 
-## Connecting TINY 2040 and receiver
+## Connecting XIAO RP2040 and receiver with a BME280 sensor
 
-### Setup used during develompent and testing
+### Setup used for develompent, testing and real application
+<br>
 
-The following image shows the components and connections as used during the development.
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/setup_XIAO2040_JetiRex6_04.png" width="600" />
+  </kbd>
+</p>
+<p align="center">
+    <i>Fig. 7: BME280 sensor at first connected to SDA, SCL. The sensor is then flipped down.</i>
+</p>
+
+<br>
+
+A resistor (2.4 k&Omega; up to a few k&Omega;s) needs to be soldered between TX (pin D6) and RX (pin D7) as per the JETI documentation.
+<br>
+
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/JETI_TX_RX_resistor.png" width="400" />
+  </kbd>
+</p>
+<p align="center">
+    <i>Fig. 8: JETI half-duplex wiring (resistor 2.4k&Omega; up to a few k&Omega;s)</i>
+</p>
+
+<br>
+
+The following images show the components and connections for a XIAO RP2040 board. For other boards the respective UART pins (TX, RX) have to be selected according the board specific pinout. After the pressure sensor is flipped down, the power and ground (GND) connections can be established. Double-sided adhesive tape or hot glue fix the board and the sensor to each other.
+
+The voltage requirements of the sensor have to be checked, in this case it runs on 3.3V. The respective pin on the board (which outputs this voltage) has then to be connected to VIN on the sensor.
+
+The servo cable (red, brown, orange) is soldered according to the image below. The servo signal cable (orange) goes to RX (pin D7). The VIN pin needs to work with 5V. If the board is connected to a USB-C cable then this pin outputs approximately 5V and powers the receiver if it is attached. If used in the RC plane then the power comes from the receiver to the board.
 
 <!-- HTML syntax for image display allows to change the image size -->
 
@@ -179,44 +215,29 @@ The following image shows the components and connections as used during the deve
 
 <p align="center">
   <kbd> <!-- make a frame around the image -->
-    <img src="docs/images/setup_TINY2040_JetiRex6_04.png" width="600" />
+    <img src="docs/images/setup_XIAO2040_JetiRex6_01.png" width="600" />
   </kbd>
 </p>
 <p align="center">
-    <i>Fig. 7: Development setup. Note: no vcc from receiver to microcontroller.</i>
+    <i>Fig. 9: Setup with a BME280 sensor. 3.3V (red) and GND (black) from board to sensor</i>
 </p>
 
 <br>
 
 <p align="center">
   <kbd> <!-- make a frame around the image -->
-    <img src="docs/images/setup_TINY2040_JetiRex6_03.png" width="600" />
+    <img src="docs/images/setup_XIAO2040_JetiRex6_02.png" width="600" />
   </kbd>
 </p>
 <p align="center">
-    <i>Fig. 8: Development setup. Closeup view.</i>
+    <i>Fig. 10: Data (SDA, yellow) and clock (SCL, green) connections for I2C bus</i>
 </p>
 
 <br>
-
-The figure below shows how the signal cable coming from the receiver is "split" to create the half-duplex communication. The resistor is soldered only on one of the split wires. The wire with the resistor needs to be connected with the <b>TX</b> pin of the board. The other wire connects to the <b>RX</b> pin respectively.
-
-<br>
-
-<p align="center">
-  <kbd> <!-- make a frame around the image -->
-    <img src="docs/images/setup_Pyboard_JetiRex6_02.png" height="600" />
-  </kbd>
-</p>
-<p align="center">
-    <i>Fig. 9: Development setup (here on the Pyboard). Closeup view on the cable split and resistor.</i>
-</p>
-
-<br>
-
-The Pyboard is in a small housing and a Jeti REX6 receiver is attached. The yellow wire (here channel 6 on the receiver) splits into two wires (one with a 2.4kOhm resistor as per the Jeti specification) which are connected to TX(Y9) and RX(Y10) on UART(3) on the Pyboard. The black wire establishes a common ground. The receiver is powered by a 4S NiMH accumulator via channel 1. Channel 6 of the receiver was set to "Ex Bus" (see image below) in the device manager of the Jeti transmitter.
 
 ### Channel setup in the device manager of the transmitter
+
+Below figure depicts the JETI display for the receiver settings (German language).
 
 <br>
 
@@ -226,7 +247,7 @@ The Pyboard is in a small housing and a Jeti REX6 receiver is attached. The yell
   </kbd>
 </p>
 <p align="center">
-    <i>Fig. 10: The receiver channel where the microcontroller is connected needs the <b>EX Bus</b> setting.</i>
+    <i>Fig. 11: The receiver channel where the microcontroller is connected needs the <b>EX Bus</b> setting activated</i>
 </p>
 
 <br>
@@ -241,14 +262,14 @@ The Pyboard is in a small housing and a Jeti REX6 receiver is attached. The yell
   </kbd>
 </p>
 <p align="center">
-    <i>Fig. 11: Comparison of standard servo cable vs. EX bus cable attached to a RP2040 Zero.</i>
+    <i>Fig. 12: Comparison of standard servo cable vs. EX bus cable attached to a RP2040 Zero</i>
 </p>
 
 <br>
 
-Connection cable for the EX Bus. A standard RC servo cable has 3 wires (signal, vcc, gnd). When connecting to an EX Bus channel on the receiver, one needs one wire (yellow here) which splits into two wires (yellow, green). The yellow cable gets a resistor (2.4k&Omega;) soldered in line which needs to be connected to <b>*TX*</b> on the microcontroller. The green cable splits off the yellow cable before the transistor and needs to be connected to <b>*RX*</b> on the microcontroller.
+Connection cable for the EX Bus. A standard RC servo cable has 3 wires (signal, vcc, gnd). When connecting to an EX Bus channel on the receiver, one needs one wire (yellow here) which splits into two wires (yellow, green). The yellow cable gets a resistor (2.4k&Omega; up to 10k&Omega;s) soldered in line which needs to be connected to <b>*TX*</b> on the microcontroller. The green cable splits off the yellow cable before the transistor and needs to be connected to <b>*RX*</b> on the microcontroller.
 
- The yellow wire is the one that needs to be connected to the signal pin on the receiver. The black wire (as described above) establishes a common ground between receiver and the microcontroller. Since the board is powered via USB here, we do not need to connect the vcc (red plus wire). This is obviously only meaningful, while in a development phase on the computer. In normal operation, the board running MicroPython would need a voltage supply (normally it comes from the receiver then).
+This setup can be simplified as shown on the real sensor (see figures 9, 10). The resitor is soldered between TX and RX and the signal cable (yellow here) is connected to TX directly.
 
 <br><br>
 2023 Andreas Ennemoser – andreas.ennemoser@aon.at
