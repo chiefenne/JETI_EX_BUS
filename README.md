@@ -70,10 +70,17 @@ Following steps describe the process:
 1. Copy (drag) the firmware onto this USB drive
 1. Disconnect and re-connect the USB-C plug. The board is now ready to run MicroPython code
 1. Use one of the following tools to copy all files and folders from the [src folder](https://github.com/chiefenne/JETI_EX_BUS/tree/main/src) onto the board
-   - [mpremote](https://docs.micropython.org/en/latest/reference/mpremote.html?highlight=mpremote)
+   - [mpremote](https://docs.micropython.org/en/latest/reference/mpremote.html?highlight=mpremote) This command line tool is the recommended way, as it allows to copy all files at once. 
+     ```
+     mpremote mip install --target=/ github:chiefenne/JETI_EX_BUS
+     ```
+     To install a specific GitHub branch use:
+     ```
+     mpremote mip install --target=/ github:chiefenne/JETI_EX_BUS@develop
+     ```
    - [Thonny editor](https://thonny.org/)
    - [tio](https://github.com/tio/tio)
-   - []()
+   - There exist more options not described here
 1. Unplug the USB-C cable and connect the board/sensor to the JETI receiver
 
 > NOTE: From the MicroPython docs: "The exact procedure for these steps is highly dependent on the particular board and you will need to refer to its documentation for details."
