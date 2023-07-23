@@ -27,5 +27,5 @@
   [ "Jeti/Serial_UART.py", "github:chiefenne/JETI_EX_BUS/src/Jeti/Serial_UART.py" ]
  ],
  "deps":[],
- "version":"0.3"
+ "version":"1.0"
 }
