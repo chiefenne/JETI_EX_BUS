@@ -189,7 +189,7 @@ The next figure depicts a telemetry answer from the microcontroller/sensor (slav
 
 <br>
 
-A resistor (2.4 k&Omega; up to a few k&Omega;s) needs to be soldered between TX (pin D6) and RX (pin D7) as per the JETI documentation.
+A resistor (2.4 k&Omega; up to a few k&Omega;s) needs to be soldered between the TX and RX pins. On the XIAO RP2040 these are pins D6 and D7 respectively.
 <br>
 
 <p align="center">
@@ -198,7 +198,7 @@ A resistor (2.4 k&Omega; up to a few k&Omega;s) needs to be soldered between TX 
   </kbd>
 </p>
 <p align="center">
-    <i>Fig. 8: JETI half-duplex wiring (resistor 2.4k&Omega; up to a few k&Omega;s)</i>
+    <i>Fig. 8: <a href="https://www.jetimodel.com/support/telemetry-protocol/">JETI half-duplex wiring</a> (resistor 2.4k&Omega; up to a few k&Omega;s)</i>
 </p>
 
 <br>
@@ -267,9 +267,7 @@ Below figure depicts the JETI display for the receiver settings (German language
 
 <br>
 
-Connection cable for the EX Bus. A standard RC servo cable has 3 wires (signal, vcc, gnd). When connecting to an EX Bus channel on the receiver, one needs one wire (yellow here) which splits into two wires (yellow, green). The yellow cable gets a resistor (2.4k&Omega; up to 10k&Omega;s) soldered in line which needs to be connected to <b>*TX*</b> on the microcontroller. The green cable splits off the yellow cable before the transistor and needs to be connected to <b>*RX*</b> on the microcontroller.
-
-This setup can be simplified as shown on the real sensor (see figures 9, 10). The resitor is soldered between TX and RX and the signal cable (yellow here) is connected to TX directly.
+The connection cable from board to receiver (EX Bus telemetry transfer) can be derived from a standard RC servo cable. It has 3 wires (signal, vcc, gnd).The resitor is soldered between TX and RX and the signal cable (yellow here) is connected to TX directly.
 
 <br><br>
 2023 Andreas Ennemoser – andreas.ennemoser@aon.at
