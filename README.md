@@ -86,6 +86,7 @@ Following steps describe the process:
    - [tio](https://github.com/tio/tio)
    - There exist many more options (search the internet)
 1. Unplug the USB-C cable and connect the board/sensor to the JETI receiver
+1. Ready to go!
 
 > NOTE: From the MicroPython docs: "The exact procedure for these steps is highly dependent on the particular board and you will need to refer to its documentation for details." 
 
