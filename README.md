@@ -28,7 +28,7 @@ The implementation runs on two cores. One core handles the telemetry transfer, t
 
 ## Features
 
- - Pure Python (MicroPython) impementation of the Jeti Ex Bus protocol
+ - Pure Python (MicroPython) implementation of the Jeti Ex Bus protocol
  - Variometer functionality (via pressure sensors like [BME280](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/))
  - Can be extended by any I2C capable sensor
  - Simple firmware/software update via USB-C
