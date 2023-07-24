@@ -15,38 +15,39 @@ Trick for text coloring as its not implemented yet in Github flavored markdown
 -->
 ```diff
 + SENDING TELEMETRY WORKS
-+ VARIO WORKS, BUT IS HARDCODED FOR BME2808
-- FIX HARDCODED CODE
++ VARIO WORKS, BUT IS CURRENTLY HARDCODED FOR A BME280 SENSOR
+! HARDCODED CODE NEEDS TO BE FIXED
 ```
 
 
-A [JETI](http://www.jetimodel.com/en/) [Ex Bus protocol](http://www.jetimodel.com/en/Telemetry-Protocol/) implementation in Python or more specifically in [MicroPython](https://micropython.org/).
-This will allow to use microcontrollers (aka boards) like Raspbery Pi, ESP32 or similar to act as a sensor hub for [Jeti RC receivers](http://www.jetimodel.com/en/katalog/Duplex-2-4-EX/Receivers-EX/) and to transmit telemetry data from the board to the receiver and thus back to the transmitter (i.e. RC controls like this [DC24](http://www.jetimodel.com/en/katalog/Transmitters/@produkt/DC-24/)).
+A [JETI EX BUS protocol](http://www.jetimodel.com/en/Telemetry-Protocol/) implementation in Python or more specifically in [MicroPython](https://micropython.org/).
+This allows to use microcontrollers (aka boards) like Raspbery Pi, ESP32 or similar to act as a sensor hub for [Jeti RC receivers](http://www.jetimodel.com/en/katalog/Duplex-2-4-EX/Receivers-EX/) and to transmit telemetry data from the board to the receiver and back to the transmitter (i.e. RC controls like this [DC24](http://www.jetimodel.com/en/katalog/Transmitters/@produkt/DC-24/)).
 
-> NOTE: The current implementation relies on threading using two cores. The development platform thus has changed from the [Pyboard](https://store.micropython.org/product/PYBv1.1) to the [Pimoroni Tiny 2040](https://shop.pimoroni.com/products/tiny-2040) which uses the Raspberry Pi [RP2040](https://www.raspberrypi.com/products/rp2040/) processor.
+The implementation runs on two cores. One core handles the telemetry transfer, the other core prepares the telemetry based on data retrieved from sensors. [Raspberry Pi  RP2040](https://www.raspberrypi.com/products/rp2040/) based platforms were used for development.
 
 
 ## Features
 
  - Pure Python (MicroPython) impementation of the Jeti Ex Bus protocol
- - Runs on boards which are supported by MicroPython (see [forum](https://forum.micropython.org/viewforum.php?f=10) or [code repository](https://github.com/micropython/micropython/tree/master/ports))
-   > NOTE: Only boards with two cores are supported
- - Two core implementation
-   - Core-0 handles the transfer of JETI telemetry data via UART
-   - Core-1 does the sensor reading via I2C and prepares the packets for the EX and EX-BUS protocol
+ - Variometer functionality (via pressure sensors like [BME280](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/))
+ - Can be extended by any I2C capable sensor
  - Simple firmware/software update via USB-C
  - Easy logging of sensor data on the board
- - Variometer functionality (via pressure sensors like BME280)
- - Can be extended by more I2C sensors
+ - Runs on boards which are supported by MicroPython (see [forum](https://forum.micropython.org/viewforum.php?f=10) or [code repository](https://github.com/micropython/micropython/tree/master/ports))
+ - Two core implementation
+   - Core-0 handles the transfer of JETI telemetry data via UART
+   - Core-1 does the sensor reading via I2C and prepares the packets for the EX and EX-BUS protocols
+
+> NOTE: Due to the implementation only boards with two cores are supported
 
 ## Boards
 
  #### Tested
  - [Pimoroni TINY 2040](https://shop.pimoroni.com/products/tiny-2040) (22.9 x 18.2 mm)
-   - 133 MHz Cortex-M0+
+   - 2x Cortex-M0+ (133 MHz)
    - 8MB QSPI flash
 - [Seeed Studio XIAO RP2040](https://www.seeedstudio.com/XIAO-RP2040-v1-0-p-5026.html) (21 x 17.5 mm)
-   - 133 MHz Cortex-M0+
+   - 2x Cortex-M0+ (133 MHz)
    - 8MB QSPI flash
  #### Planned
  - [ESP32](https://en.wikipedia.org/wiki/ESP32)
@@ -66,11 +67,13 @@ Following steps describe the process:
 1. Download the Micropython firmware for the specific board in use
    - As an example, the [XAIO RP2040](https://www.seeedstudio.com/XIAO-RP2040-v1-0-p-5026.html) runs the [Raspberry Pi Pico](https://micropython.org/download/rp2-pico/)  firmware
    - The firmware typically comes in the [USB flashing format (UF2)](https://github.com/Microsoft/uf2), for example [rp2-pico-20230426-v1.20.0.uf2](https://micropython.org/resources/firmware/rp2-pico-20230426-v1.20.0.uf2)
-1. Press and hold the boot button (B), connect the USB-C cable and release the button. This will put the board into the so called ***bootloader mode***. The board now will appear as USB drive on the computer
+1. Press and hold the boot button (B) on the board, connect the USB-C cable and then release the button. This will put the board into the so called ***bootloader mode***. The board should now appear as USB drive on the computer
 1. Copy (drag) the firmware onto this USB drive
 1. Disconnect and re-connect the USB-C plug. The board is now ready to run MicroPython code
-1. Use one of the following tools to copy all files and folders from the [src folder](https://github.com/chiefenne/JETI_EX_BUS/tree/main/src) onto the board
-   - [mpremote](https://docs.micropython.org/en/latest/reference/mpremote.html?highlight=mpremote) This command line tool is the recommended way, as it allows to copy all files at once. 
+1. Use one of the following tools to copy all files and folders from the [src folder](https://github.com/chiefenne/JETI_EX_BUS/tree/main/src) onto the board:
+   - [mpremote](https://docs.micropython.org/en/latest/reference/mpremote.html?highlight=mpremote)
+   
+     This command line tool is the recommended way, as it allows to copy all files at once
      ```
      mpremote mip install --target=/ github:chiefenne/JETI_EX_BUS
      ```
@@ -79,11 +82,22 @@ Following steps describe the process:
      mpremote mip install --target=/ github:chiefenne/JETI_EX_BUS@develop
      ```
    - [Thonny editor](https://thonny.org/)
+   - [rshell](https://github.com/dhylands/rshell)
    - [tio](https://github.com/tio/tio)
-   - There exist more options not described here
+   - There exist many more options (search the internet)
 1. Unplug the USB-C cable and connect the board/sensor to the JETI receiver
 
-> NOTE: From the MicroPython docs: "The exact procedure for these steps is highly dependent on the particular board and you will need to refer to its documentation for details."
+> NOTE: From the MicroPython docs: "The exact procedure for these steps is highly dependent on the particular board and you will need to refer to its documentation for details." 
+
+> NOTE: If there is already an older release of [JETI Ex Bus protocol (Python)](https://github.com/chiefenne/JETI_EX_BUS) installed, and an upddate to a newer version is performed, it is highly recommended to delete at first all files from the board.
+
+Wiping the board, is at the time of this writing, not easily possible with ```mpremote```. The filesystem can be formatted with the following fancy command for RP2040 boards (copied from [here](https://forum.micropython.org/viewtopic.php?t=12674)):
+        
+```
+mpremote exec --no-follow "import os, machine, rp2; os.umount(/); bdev = rp2.Flash(); os.VfsLfs2.mkfs(bdev, progsize=256); vfs = os.VfsLfs2(bdev, progsize=256); os.mount(vfs, /); machine.reset()"
+```
+
+Sooner or later ```mpremote``` will have an option to achieve this in a simpler way. Check for this.
 
 ## Hardware Layer
 
@@ -126,21 +140,99 @@ The program logic consists of two parts. Those are the similar to the Arduino <b
 
 </br>
 
-## Sample EX Bus data stream
-Written by the function [Streamrecorder.py](https://github.com/chiefenne/JETI_EX_BUS/blob/main/src/Utils/Streamrecorder.py) which should only be activated to record the serial stream. This is only meaningful for debugging purposes.
+## Connecting XIAO RP2040 and receiver with a BME280 sensor
 
-The receiver is the master and triggers the half-duplex communication. As an example **3e:03** is the beginning of a packet containing channel data sent by the receiver (the packet describes the current actuator settings of the transmitter). A telemetry request (from receiver/master to the microcontroller/sensor) is indicated by **3d:01** which is the start of an 8 byte packet. After this there is a 4ms window to send telemetry data back from the board to the receiver (not visible in this data stream).
+### Setup used for develompent, testing and real application
+<br>
 
-```Text
-02:02:7d:dd:2e:e7:2e:f2:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:78:69:3e:03:28:42:31:20:40:1f:dd:2e:e7:2e:f2:2e:e0
-2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:78:69:3d:01:08:42:3a:00:8f:e4:3e:03:28:42:31:20:40:1f:dd:2e:e7:2e:f2:2e:e0
-2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:3e:03:28:42:31:20:40:1f:dd:2e:e7:2e:f2:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0
-2e:e0:2e:78:69:3d:01:08:42:3a:00:8f:e4:3e:03:28:42:31:20:40:1f:dd:2e:e7:2e:f2:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0
-2e:78:69:3d:01:08:42:3a:00:8f:e4:3e:03:28:42:31:20:40:1f:dd:2e:e7:2e:f2:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:78
-69:3d:01:08:42:3a:00:8f:e4:3e:03:28:42:31:20:40:1f:dc:2e:e7:2e:f2:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:8b:49:3d
-```
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/setup_XIAO2040_JetiRex6_04.png" width="600" />
+  </kbd>
+</p>
+<p align="center">
+    <i>Fig. 7: BME280 sensor at first connected to SDA, SCL. The sensor is then flipped down.</i>
+</p>
 
-See [EX_Bus_stream.txt](https://github.com/chiefenne/JETI_EX_BUS/blob/main/docs/EX_Bus_stream.txt) for a 1 second recording of the bus (this feature can be activated in the code for debugging purposes).
+<br>
+
+A resistor (2.4 k&Omega; up to a few k&Omega;s) needs to be soldered between the TX and RX pins. On the XIAO RP2040 these are pins D6 and D7 respectively.
+<br>
+
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/JETI_TX_RX_resistor.png" width="400" />
+  </kbd>
+</p>
+<p align="center">
+    <i>Fig. 8: <a href="https://www.jetimodel.com/support/telemetry-protocol/">JETI half-duplex wiring</a> (resistor 2.4k&Omega; up to a few k&Omega;s)</i>
+</p>
+
+<br>
+
+The following images show the components and connections for a XIAO RP2040 board. For other boards the respective UART pins (TX, RX) have to be selected according the board specific pinout. After the pressure sensor is flipped down, the power and ground (GND) connections can be established. Double-sided adhesive tape or hot glue fix the board and the sensor to each other.
+
+The voltage requirements of the sensor have to be checked, the used [BME280](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/) sensor runs on 3.3V. The respective pin on the microcontroller has then to be connected to VIN on the sensor.
+
+The servo cable (red, brown, orange) is soldered according to the image below. The servo signal cable (orange) goes to RX (pin D7). The VIN pin needs to work with 5V. If the board is connected to a USB-C cable then this pin outputs approximately 5V and powers the receiver if it is attached. If used in the RC plane then the power comes from the receiver to the board.
+
+<!-- HTML syntax for image display allows to change the image size -->
+
+<br>
+
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/setup_XIAO2040_JetiRex6_01.png" width="600" />
+  </kbd>
+</p>
+<p align="center">
+    <i>Fig. 9: Setup with a BME280 sensor. 3.3V (red) and GND (black) from board to sensor</i>
+</p>
+
+<br>
+
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/setup_XIAO2040_JetiRex6_02.png" width="600" />
+  </kbd>
+</p>
+<p align="center">
+    <i>Fig. 10: Data (SDA, yellow) and clock (SCL, green) connections for I2C bus</i>
+</p>
+
+<br>
+
+Figure 11 shows a USB-C plug connected to the microcontroller. The connection from the microcontroller to the JETI receiver needs to be on a socket (here 6), which is set to run the EX BUS protocol (see also figure 12).
+
+<br>
+
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/setup_XIAO2040_JetiRex6_03.png" width="600" />
+  </kbd>
+</p>
+<p align="center">
+    <i>Fig. 11: Setup for software update and development</i>
+</p>
+
+<br>
+
+### Channel setup in the device manager of the transmitter
+
+Below figure depicts the JETI display for the receiver settings (German language).
+
+<br>
+
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/EX_Bus_channel_6.png"/>
+  </kbd>
+</p>
+<p align="center">
+    <i>Fig. 12: The receiver channel where the microcontroller is connected needs the <b>EX Bus</b> setting activated</i>
+</p>
+
+<br>
 
 ## Data from logic level analyzer
 
@@ -203,97 +295,23 @@ The next figure depicts a telemetry answer from the microcontroller/sensor (slav
 
 <br>
 
-## Connecting XIAO RP2040 and receiver with a BME280 sensor
+## Sample EX Bus data stream
+Written by the function [Streamrecorder.py](https://github.com/chiefenne/JETI_EX_BUS/blob/main/src/Utils/Streamrecorder.py) which should only be activated to record the serial stream. This is only meaningful for debugging purposes.
 
-### Setup used for develompent, testing and real application
-<br>
+The receiver is the master and triggers the half-duplex communication. As an example **3e:03** is the beginning of a packet containing channel data sent by the receiver (the packet describes the current actuator settings of the transmitter). A telemetry request (from receiver/master to the microcontroller/sensor) is indicated by **3d:01** which is the start of an 8 byte packet. After this there is a 4ms window to send telemetry data back from the board to the receiver (not visible in this data stream).
 
-<p align="center">
-  <kbd> <!-- make a frame around the image -->
-    <img src="docs/images/setup_XIAO2040_JetiRex6_04.png" width="600" />
-  </kbd>
-</p>
-<p align="center">
-    <i>Fig. 7: BME280 sensor at first connected to SDA, SCL. The sensor is then flipped down.</i>
-</p>
+```Text
+02:02:7d:dd:2e:e7:2e:f2:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:78:69:3e:03:28:42:31:20:40:1f:dd:2e:e7:2e:f2:2e:e0
+2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:78:69:3d:01:08:42:3a:00:8f:e4:3e:03:28:42:31:20:40:1f:dd:2e:e7:2e:f2:2e:e0
+2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:3e:03:28:42:31:20:40:1f:dd:2e:e7:2e:f2:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0
+2e:e0:2e:78:69:3d:01:08:42:3a:00:8f:e4:3e:03:28:42:31:20:40:1f:dd:2e:e7:2e:f2:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0
+2e:78:69:3d:01:08:42:3a:00:8f:e4:3e:03:28:42:31:20:40:1f:dd:2e:e7:2e:f2:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:78
+69:3d:01:08:42:3a:00:8f:e4:3e:03:28:42:31:20:40:1f:dc:2e:e7:2e:f2:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:e0:2e:8b:49:3d
+```
 
-<br>
+See [EX_Bus_stream.txt](https://github.com/chiefenne/JETI_EX_BUS/blob/main/docs/EX_Bus_stream.txt) for a 1 second recording of the bus (this feature can be activated in the code for debugging purposes).
 
-A resistor (2.4 k&Omega; up to a few k&Omega;s) needs to be soldered between the TX and RX pins. On the XIAO RP2040 these are pins D6 and D7 respectively.
-<br>
 
-<p align="center">
-  <kbd> <!-- make a frame around the image -->
-    <img src="docs/images/JETI_TX_RX_resistor.png" width="400" />
-  </kbd>
-</p>
-<p align="center">
-    <i>Fig. 8: <a href="https://www.jetimodel.com/support/telemetry-protocol/">JETI half-duplex wiring</a> (resistor 2.4k&Omega; up to a few k&Omega;s)</i>
-</p>
-
-<br>
-
-The following images show the components and connections for a XIAO RP2040 board. For other boards the respective UART pins (TX, RX) have to be selected according the board specific pinout. After the pressure sensor is flipped down, the power and ground (GND) connections can be established. Double-sided adhesive tape or hot glue fix the board and the sensor to each other.
-
-The voltage requirements of the sensor have to be checked, in this case it runs on 3.3V. The respective pin on the board (which outputs this voltage) has then to be connected to VIN on the sensor.
-
-The servo cable (red, brown, orange) is soldered according to the image below. The servo signal cable (orange) goes to RX (pin D7). The VIN pin needs to work with 5V. If the board is connected to a USB-C cable then this pin outputs approximately 5V and powers the receiver if it is attached. If used in the RC plane then the power comes from the receiver to the board.
-
-<!-- HTML syntax for image display allows to change the image size -->
-
-<br>
-
-<p align="center">
-  <kbd> <!-- make a frame around the image -->
-    <img src="docs/images/setup_XIAO2040_JetiRex6_01.png" width="600" />
-  </kbd>
-</p>
-<p align="center">
-    <i>Fig. 9: Setup with a BME280 sensor. 3.3V (red) and GND (black) from board to sensor</i>
-</p>
-
-<br>
-
-<p align="center">
-  <kbd> <!-- make a frame around the image -->
-    <img src="docs/images/setup_XIAO2040_JetiRex6_02.png" width="600" />
-  </kbd>
-</p>
-<p align="center">
-    <i>Fig. 10: Data (SDA, yellow) and clock (SCL, green) connections for I2C bus</i>
-</p>
-
-<br>
-
-Figure 11 shows a USB-C plug connected to the microcontroller. The connection from the microcontroller to the JETI receiver needs to be on a socket (here 6), which is set to run the EX BUS protocol (see also figure 12).
-
-<br>
-
-<p align="center">
-  <kbd> <!-- make a frame around the image -->
-    <img src="docs/images/setup_XIAO2040_JetiRex6_03.png" width="600" />
-  </kbd>
-</p>
-<p align="center">
-    <i>Fig. 11: Setup for software update and development</i>
-</p>
-
-<br>
-
-### Channel setup in the device manager of the transmitter
-
-Below figure depicts the JETI display for the receiver settings (German language).
-
-<br>
-
-<p align="center">
-  <kbd> <!-- make a frame around the image -->
-    <img src="docs/images/EX_Bus_channel_6.png"/>
-  </kbd>
-</p>
-<p align="center">
-    <i>Fig. 12: The receiver channel where the microcontroller is connected needs the <b>EX Bus</b> setting activated</i>
-</p>
 
 ## License
 
