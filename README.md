@@ -23,7 +23,7 @@ Trick for text coloring as its not implemented yet in Github flavored markdown
 A [JETI EX BUS protocol](http://www.jetimodel.com/en/Telemetry-Protocol/) implementation in Python or more specifically in [MicroPython](https://micropython.org/).
 This allows to use microcontrollers (aka boards) like Raspbery Pi, ESP32 or similar to act as a sensor hub for [Jeti RC receivers](http://www.jetimodel.com/en/katalog/Duplex-2-4-EX/Receivers-EX/) and to transmit telemetry data from the board to the receiver and back to the transmitter (i.e. RC controls like this [DC24](http://www.jetimodel.com/en/katalog/Transmitters/@produkt/DC-24/)).
 
-The implementation runs on two cores. One core handles the telemetry transfer, the other core prepares the telemetry based on data retrieved from sensors. [Raspberry Pi  RP2040](https://www.raspberrypi.com/products/rp2040/) based platforms were used for development.
+The code runs on two cores. One core handles the telemetry transfer, the other core prepares the telemetry based on data retrieved from sensors. [Raspberry Pi  RP2040](https://www.raspberrypi.com/products/rp2040/) based platforms were used for development.
 
 
 ## Features
