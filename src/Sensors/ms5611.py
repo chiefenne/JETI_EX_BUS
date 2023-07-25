@@ -15,7 +15,8 @@ MicroPython Driver for the TE MS5611 Pressure and Temperature Sensor
 
 import time
 from micropython import const
-from micropython_ms5611.i2c_helpers import CBits, RegisterStruct
+# from micropython_ms5611.i2c_helpers import CBits, RegisterStruct
+from Sensors.i2c_helpers import CBits, RegisterStruct
 
 try:
     from typing import Tuple
