@@ -12,7 +12,7 @@
         "name": "MS5611",
         "manufacturer": "AMSYS",
         "description": "High resolution precision barometer",
-        "module": "MS5611",
+        "module": "ms5611",
         "class": "MS5611",
         "category": "PRESSURE",
         "subcategory": "TEMP"
