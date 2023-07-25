@@ -148,9 +148,6 @@ class BME280_I2C:
         # Start the sensor automatically sensing
         self.set_power_mode(BME280_NORMAL_MODE)
 
-        # pressure smoothing factor
-        self.pressure_smoothing = 0.85
-
         # store initial altitude for relative altitude measurements
         # make an initial averaged measurement
         self.initial_altitude = 0.0
@@ -162,6 +159,12 @@ class BME280_I2C:
             self.initial_altitude += self.calc_altitude(data['pressure'])
             sleep_ms(20)
         self.initial_altitude /= num
+
+        # pressure smoothing factor
+        self.pressure_smoothing = 0.85
+
+        # set initial smoothed pressure
+        self.pressure_smoothed = data['pressure']
 
     def _read_chip_id(self):
         """
@@ -651,8 +654,10 @@ class BME280_I2C:
 
         # compile available sensor data
         self.pressure = measurement['pressure']
-        self.pressure_smoothed = measurement['pressure'] + \
-            self.pressure_smoothing * (self.pressure - measurement['pressure'])
+
+        self.pressure_smoothed = self.pressure + \
+            self.pressure_smoothing * (self.pressure_smoothed - self.pressure)
+        
         self.temperature = measurement['temperature']
         self.humidity = measurement['humidity']
         self.altitude = self.calc_altitude(self.pressure_smoothed)
