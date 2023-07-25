@@ -15,7 +15,7 @@ Trick for text coloring as its not implemented yet in Github flavored markdown
 -->
 ```diff
 + SENDING TELEMETRY WORKS
-+ VARIO WORKS, BUT IS CURRENTLY HARDCODED FOR A BME280 SENSOR
++ VARIO WORKS, BUT IS CURRENTLY HARDCODED
 ! HARDCODED CODE NEEDS TO BE FIXED
 ```
 
@@ -29,7 +29,9 @@ The code runs on two cores. One core handles the telemetry transfer, the other c
 ## Features
 
  - Pure Python (MicroPython) implementation of the Jeti Ex Bus protocol
- - Variometer functionality (via pressure sensors like [BME280](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/))
+ - Variometer functionality - currently following sensors are supported:
+   - [BME280](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/)
+   - [MS5611](https://www.amsys-sensor.com/products/pressure-sensor/ms5611-high-resolution-barometric-sensor-10-1200-mbar/)
  - Can be extended by any I2C capable sensor
  - Simple firmware/software update via USB-C
  - Easy logging of sensor data on the board
@@ -152,7 +154,7 @@ Below example shows how a [BME280](https://www.bosch-sensortec.com/products/envi
   </kbd>
 </p>
 <p align="center">
-    <i>Fig. 7: BME280 sensor at first connected to SDA, SCL. The sensor is then flipped down.</i>
+    <i>Fig. 3: BME280 sensor at first connected to SDA, SCL. The sensor is then flipped down.</i>
 </p>
 
 <br>
@@ -177,7 +179,7 @@ A resistor (2.4 k&Omega; up to a few k&Omega;s) needs to be soldered between the
   </kbd>
 </p>
 <p align="center">
-    <i>Fig. 9: Setup with a BME280 sensor. 3.3V (red) and GND (black) from board to sensor</i>
+    <i>Fig. 4: Setup with a BME280 sensor. 3.3V (red) and GND (black) from board to sensor</i>
 </p>
 
 <br>
@@ -188,7 +190,7 @@ A resistor (2.4 k&Omega; up to a few k&Omega;s) needs to be soldered between the
   </kbd>
 </p>
 <p align="center">
-    <i>Fig. 10: Data (SDA, yellow) and clock (SCL, green) connections for I2C bus</i>
+    <i>Fig. 5: Data (SDA, yellow) and clock (SCL, green) connections for I2C bus</i>
 </p>
 
 <br>
@@ -203,7 +205,18 @@ Figure 11 shows a USB-C plug connected to the microcontroller. The connection fr
   </kbd>
 </p>
 <p align="center">
-    <i>Fig. 11: Setup for software update and development</i>
+    <i>Fig. 6: Setup for software update and development</i>
+</p>
+
+<br>
+
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/setup_XIAO2040_JetiRex6_05.png" width="600" />
+  </kbd>
+</p>
+<p align="center">
+    <i>Fig. 7: Here an MS5611 sensor is attached</i>
 </p>
 
 <br>
@@ -220,7 +233,7 @@ Below figure depicts the JETI display for the receiver settings (German language
   </kbd>
 </p>
 <p align="center">
-    <i>Fig. 12: The receiver channel where the microcontroller is connected needs the <b>EX Bus</b> setting activated</i>
+    <i>Fig. 8: The receiver channel where the microcontroller is connected needs the <b>EX Bus</b> setting activated</i>
 </p>
 
 <br>
@@ -237,7 +250,7 @@ The data recorded are coming from the master (receiver) and show a duration of a
   </kbd>
 </p>
 <p align="center">
-    <i>Fig. 3: Jeti EX BUS protocol. Example shows channel data (i.e., transmitter controls) and then a telemtry request</i>
+    <i>Fig. 9: Jeti EX BUS protocol. Example shows channel data (i.e., transmitter controls) and then a telemtry request</i>
 </p>
 
 <br>
@@ -250,7 +263,7 @@ The time between two channel/telemetry request packages is approximately **6.2ms
 </kbd>
 </p>
 <p align="center">
-    <i>Fig. 4: Jeti EX BUS protocol. Example shows the waiting period allowed for answering with telemetry</i>
+    <i>Fig. 10: Jeti EX BUS protocol. Example shows the waiting period allowed for answering with telemetry</i>
 </p>
 
 <br>
@@ -266,7 +279,7 @@ The image below shows a detailed view of the beginning of a packet (digital and 
 </p>
 </p>
 <p align="center">
-    <i>Fig. 5: Jeti EX BUS protocol. Zoomed view (digital/analog data from the logic level analyzer).</i>
+    <i>Fig. 11: Jeti EX BUS protocol. Zoomed view (digital/analog data from the logic level analyzer).</i>
 </p>
 
 <br>
@@ -281,7 +294,7 @@ The next figure depicts a telemetry answer from the microcontroller/sensor (slav
   </kbd>
 </p>
 <p align="center">
-    <i>Fig. 6: Jeti EX BUS protocol. Example of Jeti MVario 2 telemetry answer.</i>
+    <i>Fig. 12: Jeti EX BUS protocol. Example of Jeti MVario 2 telemetry answer.</i>
 </p>
 
 <br>

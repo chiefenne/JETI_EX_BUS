@@ -371,15 +371,14 @@ class Ex:
             climbrate = 0.0
 
         # smoothing filter for the climb rate
-        climbrate = climbrate + self.vario_smoothing * \
-            (self.last_climbrate - climbrate)
+        self.last_climbrate = climbrate + \
+            self.vario_smoothing * (self.last_climbrate - climbrate)
 
         # store data for next iteration
         self.vario_time_old = self.vario_time
         self.last_altitude = self.current_sensor.relative_altitude
-        self.last_climbrate = climbrate
 
-        return climbrate, self.current_sensor.relative_altitude
+        return self.last_climbrate, self.current_sensor.relative_altitude
 
     def SimpleText(self, text):
         '''EX packet simple text (must be 34 bytes long).

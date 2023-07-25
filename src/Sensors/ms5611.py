@@ -11,6 +11,17 @@ MicroPython Driver for the TE MS5611 Pressure and Temperature Sensor
 * Author(s): Jose D. Montoya
 
 
+
+A. Ennemoser, 2023-07
+Modifications:
+    Initializations:
+        - initial altitude for relative altitude measurements
+    Added methods:
+        - calc_altitude
+        - read_jeti
+    Modified code/methods:
+        - import statement to reflect structure of the project
+
 """
 
 import time
@@ -137,6 +148,24 @@ class MS5611:
         self.temperature_oversample_rate = TEMP_OSR_4096
         self.pressure_oversample_rate = PRESS_OSR_4096
 
+        # store initial altitude for relative altitude measurements
+        # make an initial averaged measurement
+        self.initial_altitude = 0.0
+        _, pressure_hPa = self.measurements  # dummy measurement
+        time.sleep_ms(100)
+        num = 50
+        for _ in range(num):
+            _, pressure_hPa = self.measurements
+            self.initial_altitude += self.calc_altitude(pressure_hPa * 1000.0)
+            time.sleep_ms(20)
+        self.initial_altitude /= num
+
+        # pressure smoothing factor
+        self.pressure_smoothing = 0.85
+
+        # set initial smoothed pressure
+        self.pressure_smoothed = pressure_hPa * 1000.0
+
     @property
     def measurements(self) -> Tuple[float, float]:
         """
@@ -245,3 +274,36 @@ class MS5611:
             raise ValueError("Value must be a valid pressure_oversample_rate setting")
         self._pressure_oversample_rate = value
         self._pressure_command = pressure_command_values[value]
+
+    def calc_altitude(self, pressure):
+        '''The following variables are constants for a standard atmosphere
+        t0 = 288.15 # sea level standard temperature (K)
+        p0 = 101325.0 # sea level standard atmospheric pressure (Pa)
+        gamma = 6.5 / 1000.0 # temperature lapse rate (K / m)
+        g = 9.80665 # gravity constant (m / s^2)
+        R = 8.314462618 # mol gas constant (J / (mol * K))
+        Md = 28.96546e-3 # dry air molar mass (kg / mol)
+        Rd =  R / Md
+        return (t0 / gamma) * (1.0 - (pressure / p0)**(Rd * gamma / g))
+        '''
+        return 44330.76923 * (1.0 - (pressure / 101325.0)**0.19025954)
+
+    def read_jeti(self):
+        '''Read sensor data'''
+
+        temperature, pressure_hPa = self.measurements
+
+        # compile available sensor data
+        self.pressure = pressure_hPa * 1000.0
+
+        self.pressure_smoothed = self.pressure + \
+            self.pressure_smoothing * (self.pressure_smoothed - self.pressure)
+
+        self.temperature = temperature
+        self.altitude = self.calc_altitude(self.pressure_smoothed)
+        self.relative_altitude = self.altitude - self.initial_altitude
+
+        return self.pressure, \
+            self.temperature, \
+            self.altitude, \
+            self.relative_altitude
