@@ -146,6 +146,8 @@ The program logic consists of two parts. Those are the similar to the Arduino <b
 ### Setup used for develompent, testing and real application
 <br>
 
+Below example shows how a [BME280](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/) pressure sensor is soldered to a XIAO RP2040 board. In a similar way the VCC and GND connections between both boards are soldered as well (see figures 8, 9).
+
 <p align="center">
   <kbd> <!-- make a frame around the image -->
     <img src="docs/images/setup_XIAO2040_JetiRex6_04.png" width="600" />
@@ -157,25 +159,15 @@ The program logic consists of two parts. Those are the similar to the Arduino <b
 
 <br>
 
-A resistor (2.4 k&Omega; up to a few k&Omega;s) needs to be soldered between the TX and RX pins. On the XIAO RP2040 these are pins D6 and D7 respectively.
-<br>
-
-<p align="center">
-  <kbd> <!-- make a frame around the image -->
-    <img src="docs/images/JETI_TX_RX_resistor.png" width="400" />
-  </kbd>
-</p>
-<p align="center">
-    <i>Fig. 8: <a href="https://www.jetimodel.com/support/telemetry-protocol/">JETI half-duplex wiring</a> (resistor 2.4k&Omega; up to a few k&Omega;s)</i>
-</p>
-
-<br>
-
 The following images show the components and connections for a XIAO RP2040 board. For other boards the respective UART pins (TX, RX) have to be selected according the board specific pinout. After the pressure sensor is flipped down, the power and ground (GND) connections can be established. Double-sided adhesive tape or hot glue fix the board and the sensor to each other.
 
-The voltage requirements of the sensor have to be checked, the used [BME280](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/) sensor runs on 3.3V. The respective pin on the microcontroller has then to be connected to VIN on the sensor.
+The voltage requirements of the sensor have to be checked, the used [BME280](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/) sensor runs on 3.3V. The respective 3.3V pin on the microcontroller has then to be connected to VCC on the sensor.
 
-The servo cable (red, brown, orange) is soldered according to the image below. The servo signal cable (orange) goes to RX (pin D7). The VIN pin needs to work with 5V. If the board is connected to a USB-C cable then this pin outputs approximately 5V and powers the receiver if it is attached. If used in the RC plane then the power comes from the receiver to the board.
+The servo cable (red, brown, orange) is soldered according to the image below. The servo signal cable (orange) goes to RX (pin D7). The VIN pin (5V) is used for the power connection between receiver and board. If the board is connected to a USB-C cable then this pin outputs approximately 5V and powers the receiver if it is attached. If used in the RC plane then the power comes from the receiver to the board (of course no USB cable is attached then).
+
+
+A resistor (2.4 k&Omega; up to a few k&Omega;s) needs to be soldered between the TX and RX pins. On the XIAO RP2040 these are pins D6 and D7 respectively. The resitor enables the half-duplex communication which is triggered by the JETI receiver.
+<br>
 
 <!-- HTML syntax for image display allows to change the image size -->
 
