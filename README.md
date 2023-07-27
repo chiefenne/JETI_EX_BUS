@@ -2,28 +2,14 @@
 # JETI Ex Bus protocol (Python)
 [![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://en.wikipedia.org/wiki/MIT_License)
 
-
-<!--
-Trick for text coloring as its not implemented yet in Github flavored markdown
-```diff
-- text in red
-+ text in green
-! text in orange
-# text in gray
-@@ text in purple (and bold)@@
-```
--->
-```diff
-+ SENDING TELEMETRY WORKS
-+ VARIO WORKS, BUT IS CURRENTLY HARDCODED
-! HARDCODED CODE NEEDS TO BE FIXED
-```
-
+## Introduction
 
 A [JETI EX BUS protocol](http://www.jetimodel.com/en/Telemetry-Protocol/) implementation in Python or more specifically in [MicroPython](https://micropython.org/).
 This allows to use microcontrollers (aka boards) like Raspbery Pi, ESP32 or similar to act as a sensor hub for [Jeti RC receivers](http://www.jetimodel.com/en/katalog/Duplex-2-4-EX/Receivers-EX/) and to transmit telemetry data from the board to the receiver and back to the transmitter (i.e. RC controls like this [DC24](http://www.jetimodel.com/en/katalog/Transmitters/@produkt/DC-24/)).
 
-The code runs on two cores. One core handles the telemetry transfer, the other core prepares the telemetry based on data retrieved from sensors. [Raspberry Pi  RP2040](https://www.raspberrypi.com/products/rp2040/) based platforms were used for development.
+[Raspberry Pi  RP2040](https://www.raspberrypi.com/products/rp2040/) based platforms were used for development. The main application is to use the software on these boards together with a pressure sensor (see below) for a variometer. Nevertheless, multiple sensors can be attached.
+
+The code runs on two cores. One core handles the telemetry transfer, the other core prepares the telemetry based on data retrieved from sensors. 
 
 
 ## Features
@@ -63,7 +49,7 @@ The code runs on two cores. One core handles the telemetry transfer, the other c
 
 ## Installation
 
-After finishing board and sensors (see further down) the MicroPython firmware needs to be installed. The firmware then is the operating system where MicroPython code can run. After this the software in the [src folder](https://github.com/chiefenne/JETI_EX_BUS/tree/main/src) must be copied onto the board.
+After finishing board and sensors (see further down) the MicroPython firmware needs to be installed. The firmware then is the operating system where MicroPython code can run. After this the software must be copied onto the board.
 
 Following steps describe the process:
 1. Download the Micropython firmware for the specific board in use
@@ -72,11 +58,8 @@ Following steps describe the process:
 1. Press and hold the boot button (B) on the board, connect the USB-C cable and then release the button. This will put the board into the so called ***bootloader mode***. The board should now appear as USB drive on the computer
 1. Copy (drag) the firmware onto this USB drive
 1. Disconnect and re-connect the USB-C plug. The board is now ready to run MicroPython code
-1. Use one of the following tools to copy all files and folders from the [src folder](https://github.com/chiefenne/JETI_EX_BUS/tree/main/src) onto the board:
-
-   [mpremote](https://docs.micropython.org/en/latest/reference/mpremote.html?highlight=mpremote), [Thonny](https://thonny.org/), [rshell](https://github.com/dhylands/rshell), [tio](https://github.com/tio/tio), etc.
-   
-     The command line tool [mpremote](https://docs.micropython.org/en/latest/reference/mpremote.html?highlight=mpremote) is the recommended way, as it allows to copy all files at once.
+1. Use one of the following tools ([mpremote](https://docs.micropython.org/en/latest/reference/mpremote.html?highlight=mpremote), [Thonny](https://thonny.org/), [rshell](https://github.com/dhylands/rshell), [tio](https://github.com/tio/tio), etc.) to upload all files and folders to the board.
+     The command line tool `mpremote` is the recommended way, as it allows to copy all files at once. The following command installs all files from this repository onto the board:
      ```
      mpremote mip install --target=/ github:chiefenne/JETI_EX_BUS
      ```
@@ -104,7 +87,7 @@ Sooner or later ```mpremote``` will have an option to achieve this in a simpler 
 
  The flowchart (Fig. 1) describes the setup of the hardware and indicates the physical connections. The microcontroller is connected with the receiver via a serial asynchronous interface [UART](https://de.wikipedia.org/wiki/Universal_Asynchronous_Receiver_Transmitter). Physically the connection uses three wires (vcc, gnd, signal). Examples are shown in figures 9, 10 and 11.
 
- The Jeti telemetry runs via a half-duplex serial communication protocol. This means that there is a master (receiver) controlling the data flow and a slave (microcontroller/sensor) which is only allowed to answer upon request from the master. The master reserves a 4ms period for this to work. Measurments show approximately a 6ms period (see Fig. 4).
+ The Jeti telemetry runs via a half-duplex serial communication protocol. This means that there is a master (receiver) controlling the data flow and a slave (microcontroller/sensor) which is only allowed to answer upon request from the master. The master reserves a 4ms period for this to work. Measurments show approximately a 6ms period (see also figure 10).
 
  The connection between the board and the sensors is established via [I2C](https://de.wikipedia.org/wiki/I%C2%B2C). Four wires (vcc, gnd, sda, scl) are needed to connect each of the sensors.
 
@@ -141,12 +124,9 @@ The program logic consists of two parts. Those are the similar to the Arduino <b
 
 </br>
 
-## Connecting XIAO RP2040 and receiver with a BME280 sensor
+## Connecting board and sensor
 
-### Setup used for develompent, testing and real application
-<br>
-
-Below example shows how a [BME280](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/) pressure sensor is soldered to a XIAO RP2040 board. In a similar way the VCC and GND connections between both boards are soldered as well (see figures 8, 9).
+Below example shows how a [BME280](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/) pressure sensor is soldered to a XIAO RP2040 board. In a similar way the VCC and GND connections between both boards are soldered as well (see figures 4, 5, 7).
 
 <p align="center">
   <kbd> <!-- make a frame around the image -->
@@ -195,7 +175,7 @@ A resistor (2.4 k&Omega; up to a few k&Omega;s) needs to be soldered between the
 
 <br>
 
-Figure 11 shows a USB-C plug connected to the microcontroller. The connection from the microcontroller to the JETI receiver needs to be on a socket (here 6), which is set to run the EX BUS protocol (see also figure 12).
+Figure 6 shows a USB-C plug connected to the microcontroller. The connection from the microcontroller to the JETI receiver needs to be on a socket (here 6), which is set to run the EX BUS protocol (see figure 8).
 
 <br>
 
