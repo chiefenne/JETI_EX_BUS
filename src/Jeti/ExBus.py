@@ -30,8 +30,12 @@ class ExBus:
         self.serial = serial
         self.sensors = sensors
         self.ex = ex
-        self.old_packetID = b'\x00' # dummy value for initialization
         self.frame_count = 0
+        self.dlu = 0
+
+        # number of frames for initial device and label information
+        self.nframes = 100
+
         
         # lock object used to prevent other cores from accessing shared resources
         self.lock = lock
@@ -214,42 +218,28 @@ class ExBus:
         start = utime.ticks_us()
 
         # frame counter
-        if packetID == self.old_packetID:
-            self.frame_count += 1
-        else:
-            self.frame_count = 0
+        self.frame_count += 1
 
         # acquire lock to access the "ex" object" exclusively
         # core 1 cannot acquire the lock if core 0 has it
         self.lock.acquire()
 
-        # EX BUS packet (send data and text alternately)
-        # check if packet is available (set in main.py)
-        if self.ex.exbus_device_ready:
-        
-            # description of the device
-            telemetry = self.ex.exbus_device
-            self.ex.exbus_device_ready = False
+        if self.ex.exbus_device_ready and self.frame_count <= self.nframes:
+            # send device and label information repeatedly within the first
+            # self.nframes frames; the transmitter stores the information
+            # and associates later the labels with the telemetry data by their id
+            self.dlu += 1
+            telemetry = self.ex.dev_labels_units[self.dlu - 1]
 
-        elif self.ex.exbus_text1_ready and \
-            self.frame_count <= 6:
-        
-            # description and unit for first telemetry value
-            telemetry = self.ex.exbus_text1
-            self.ex.exbus_text1_ready = False
-
-        elif self.ex.exbus_text2_ready and \
-            self.frame_count <= 6:
-
-            # description and unit for second telemetry value
-            telemetry = self.ex.exbus_text2
-            self.ex.exbus_text2_ready = False
+            # reset counter for device and label information to reiterate
+            if self.dlu == len(self.ex.dev_labels_units):
+                self.dlu = 0
 
         elif self.ex.exbus_data_ready:
-
-            # send two telemetry values
+            # send telemetry values
             telemetry = self.ex.exbus_data
             self.ex.exbus_data_ready = False
+
         else:
             if self.lock.locked():
                 self.lock.release()

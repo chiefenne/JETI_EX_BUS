@@ -51,8 +51,7 @@ class Ex:
         # initialize the EX BUS packet 
         # needed for check in ExBus.py, set to 'True' in main.py
         self.exbus_data_ready = False
-        self.exbus_text1_ready = False
-        self.exbus_text2_ready = False
+        self.exbus_device_ready = False
 
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI EX')
@@ -79,10 +78,6 @@ class Ex:
 
         #
         device_sent = False
-        self.exbus_device_ready = False
-        self.exbus_data_ready = False
-        self.exbus_text1_ready = False
-        self.exbus_text2_ready = False
 
         while status.main_thread_running:
 
@@ -108,21 +103,24 @@ class Ex:
                 self.exbus_data, _ = self.exbus_frame(frametype='data',
                                                       data_1=telemetry_1,
                                                       data_2=telemetry_2)
-                self.exbus_text1, _ = self.exbus_frame(frametype='text',
-                                                       text=telemetry_1)
-                self.exbus_text2, _ = self.exbus_frame(frametype='text',
-                                                       text=telemetry_2)
 
                 self.exbus_data_ready = True
-                self.exbus_text1_ready = True
-                self.exbus_text2_ready = True
             else:
-                # send the device name first
-                self.exbus_device, _ = self.exbus_frame(frametype='text',
-                                                        text='DEVICE')
+                # device name and description/units of all available sensors
+                self.dev_labels_units = list()
+                device, _ = self.exbus_frame(frametype='text',
+                                             text='DEVICE')
+                self.dev_labels_units += device
+
+                for sensor in self.sensors.get_sensors():
+                    labels_units, _ = self.exbus_frame(frametype='text',
+                                                       text=sensor.name)
+                    self.dev_labels_units += labels_units
+
                 self.exbus_device_ready = True
                 device_sent = True
                 self.logger.log('info', 'DEVICE information prepared')
+                self.logger.log('info', 'LABELS and UNITS information prepared')
                 self.logger.log('info', 'Starting EX BUS telemetry')
 
             self.lock.release()
