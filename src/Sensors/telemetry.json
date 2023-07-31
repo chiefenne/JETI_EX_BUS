@@ -15,14 +15,14 @@
     },
     "ALTITUDE": {
         "id": 2,
-        "description": "Altitude",
+        "description": "Abs. Altitude",
         "unit": "m",
         "data_type": 1,
         "precision": 1
     },
     "REL_ALTITUDE": {
         "id": 3,
-        "description": "Hoehe",
+        "description": "Altitude",
         "unit": "m",
         "data_type": 1,
         "precision": 1
