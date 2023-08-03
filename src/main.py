@@ -115,21 +115,6 @@ def core0():
 
         _thread.exit()
     
-
-    # following code catches all exceptions, which is not useful for debugging
-
-    # # except Exception as e:
-    #     # Set the flag to indicate that the main thread is not running
-    #     status.main_thread_running = False
-    #     logger.log('error', '{}'.format(e))
-    # 
-    #     # switch off the green led
-    #     if rp2:
-    #         ledg.value(1)
-    # 
-    #     _thread.exit()
-
-
     # exit if the main thread is not running anymore
     _thread.exit()
 
@@ -142,9 +127,6 @@ def core1():
     # inform the user that the second thread is stopped
     logger.log('info', 'Stopping second thread on core 1')
  
-    # switch off the green led
-    ledg.value(1)
-
 
 # start the second thread on core 1
 logger.log('info', 'Starting second thread on core 1')

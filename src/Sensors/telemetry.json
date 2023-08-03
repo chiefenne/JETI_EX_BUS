@@ -3,7 +3,7 @@
         "id": 0,
         "description": "MHB",
         "unit": "",
-        "data_type": 1,
+        "data_type": 0,
         "precision": 0
     },
     "VOLTAGE": {
@@ -13,14 +13,14 @@
         "data_type": 1,
         "precision": 1
     },
-    "ALTITUDE": {
+    "ABS_ALTITUDE": {
         "id": 2,
         "description": "Abs. Altitude",
         "unit": "m",
         "data_type": 1,
         "precision": 1
     },
-    "REL_ALTITUDE": {
+    "ALTITUDE": {
         "id": 3,
         "description": "Altitude",
         "unit": "m",
@@ -29,7 +29,7 @@
     },
     "CLIMB": {
         "id": 4,
-        "description": "Variometer",
+        "description": "Vario",
         "unit": "m/s",
         "data_type": 1,
         "precision": 1
@@ -37,7 +37,7 @@
     "PRESSURE": {    
         "id": 5,
         "description": "Pressure",
-        "unit": "hPa",
+        "unit": "mbar",
         "data_type": 4,
         "precision": 1
     },
@@ -59,7 +59,7 @@
         "id": 8,
         "description": "RPM",
         "unit": "1/min",
-        "data_type": 1,
+        "data_type": 4,
         "precision": 1
     },
     "GPSLAT": {
@@ -94,7 +94,7 @@
         "id": 13,
         "description": "Satellites",
         "unit": "_",
-        "data_type": 1,
+        "data_type": 0,
         "precision": 0
     }
 }
