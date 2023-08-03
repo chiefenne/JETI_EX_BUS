@@ -51,7 +51,7 @@ The code runs on two cores. One core handles the telemetry transfer, the other c
 
 After finishing board and sensors (see further down) the MicroPython firmware needs to be installed. The firmware then is the operating system where MicroPython code can run. After this the software must be copied onto the board.
 
-Following steps describe the process:
+### Following steps describe the process:
 1. Download the Micropython firmware for the specific board in use
    - As an example, the [XAIO RP2040](https://www.seeedstudio.com/XIAO-RP2040-v1-0-p-5026.html) runs the [Raspberry Pi Pico](https://micropython.org/download/rp2-pico/)  firmware
    - The firmware typically comes in the [USB flashing format (UF2)](https://github.com/Microsoft/uf2), for example [rp2-pico-20230426-v1.20.0.uf2](https://micropython.org/resources/firmware/rp2-pico-20230426-v1.20.0.uf2)
@@ -71,9 +71,13 @@ Following steps describe the process:
 1. Unplug the USB-C cable and connect the board/sensor to the JETI receiver
 1. Ready to go!
 
+<br>
+
 > NOTE: From the MicroPython docs: "The exact procedure for these steps is highly dependent on the particular board and you will need to refer to its documentation for details." 
 
-> NOTE: If there is already an older release of [JETI Ex Bus protocol (Python)](https://github.com/chiefenne/JETI_EX_BUS) installed, and an upddate to a newer version is performed, it is highly recommended to delete at first all files from the board.
+> NOTE: If there is already an older release of [JETI Ex Bus protocol (Python)](https://github.com/chiefenne/JETI_EX_BUS) installed, and an upddate to a newer version is performed, it is highly recommended to delete at first all files from the board. See below how to do that.
+
+<br>
 
 Wiping the board, is at the time of this writing, not easily possible with ```mpremote```. The filesystem can be formatted with the following fancy command for RP2040 boards (copied from [here](https://forum.micropython.org/viewtopic.php?t=12674)):
         
@@ -91,7 +95,7 @@ Sooner or later ```mpremote``` will have an option to achieve this in a simpler 
 
  The connection between the board and the sensors is established via [I2C](https://de.wikipedia.org/wiki/I%C2%B2C). Four wires (vcc, gnd, sda, scl) are needed to connect each of the sensors.
 
-</br>
+<br>
 
 <p align="center">
   <kbd> <!-- make a frame around the image -->
@@ -102,7 +106,7 @@ Sooner or later ```mpremote``` will have an option to achieve this in a simpler 
     <i>Fig. 1: Data flow and physical connections</i>
 </p>
 
-</br>
+<br>
 
 ## Program Logic
 
@@ -111,7 +115,7 @@ The program logic consists of two parts. Those are the similar to the Arduino <b
   * In the beginning the communication channels (UART, I2C) are initialized. A serial connection (UART) is established between the microcontroller and the receiver. Additionally an I2C connection is setup between the microcontroller and the sensor(s).
   * After the setup of the communication, the two main (infinite) loops start, one infinite loop on each core. 
 
-</br>
+<br>
 
 <p align="center">
   <kbd> <!-- make a frame around the image -->
@@ -122,7 +126,7 @@ The program logic consists of two parts. Those are the similar to the Arduino <b
     <i>Fig. 2: Communication layer and multicore protocol handler</i>
 </p>
 
-</br>
+<br>
 
 ## Connecting board and sensor
 

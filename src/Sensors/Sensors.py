@@ -71,7 +71,7 @@ class Sensors:
             sensor.manufacturer = self.sensor_data[addr]['manufacturer']
             sensor.description = self.sensor_data[addr]['description']
             sensor.category = self.sensor_data[addr]['category']
-            sensor.subcategory = self.sensor_data[addr]['subcategory']
+            sensor.labels = self.sensor_data[addr]['labels']
 
             self.sensors.append(sensor)
  

@@ -6,7 +6,7 @@
         "module": "bme280_i2c",
         "class": "BME280_I2C",
         "category": "PRESSURE",
-        "subcategory": "TEMP"
+        "labels": ["PRESSURE", "TEMPERATURE", "CLIMB", "ALTITUDE"]
     },
     "0x77": {
         "name": "MS5611",
@@ -15,7 +15,7 @@
         "module": "ms5611",
         "class": "MS5611",
         "category": "PRESSURE",
-        "subcategory": "TEMP"
+        "labels": ["PRESSURE", "TEMPERATURE", "CLIMB", "ALTITUDE"]
     },
     "0x99": {
         "name": "DEMO",
@@ -24,6 +24,6 @@
         "module": "demo_sensor",
         "class": "DemoSensor",
         "category": "PRESSURE",
-        "subcategory": "TEMP"
+        "labels": ["PRESSURE"]
     }
 }

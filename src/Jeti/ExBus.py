@@ -17,9 +17,13 @@ from ubinascii import hexlify, unhexlify
 import utime
 import micropython
 from micropython import const
+from machine import WDT
 
 from Jeti import CRC16
 from Utils.Logger import Logger
+
+# enable the WDT with (1s is the minimum)
+wdt = WDT(timeout=5000)
 
 
 class ExBus:
@@ -30,8 +34,11 @@ class ExBus:
         self.serial = serial
         self.sensors = sensors
         self.ex = ex
-        self.old_packetID = b'\x00' # dummy value for initialization
-        self.frame_count = 0
+        self.frame_count = -1
+
+        # number of frames for sending initial device and label information
+        self.label_frames = 200
+
         
         # lock object used to prevent other cores from accessing shared resources
         self.lock = lock
@@ -40,19 +47,6 @@ class ExBus:
 
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI EXBUS')
-
-    def dummy(self):
-        '''Dummy function for checking lock.
-        Stay 3 seconds in the lock.
-        '''
-        self.logger.log('info', 'core 0: EX BUS trying to acquire lock')
-        start = utime.ticks_us()
-        self.lock.acquire()
-        utime.sleep_ms(3000)
-        self.lock.release()
-        end = utime.ticks_us()
-        diff = utime.ticks_diff(end, start)
-        self.logger.log('info', 'core 0: EX BUS lock released after {} us'.format(diff))
 
     def run_forever(self):
         '''This is the main loop and will run forever. This function is called
@@ -118,7 +112,6 @@ class ExBus:
 
                 # packet length (including header and CRC)
                 packet_length = buffer[2]
-                # print('Packet length', packet_length)
 
                 # check if packet length is valid
                 # 6 bytes header + max. 24*2 bytes data + 2 bytes CRC
@@ -147,12 +140,9 @@ class ExBus:
                 # check if packet is complete
                 if len(buffer) == packet_length:
                     
-                    # print('buffer', buffer)
-                    
                     # check CRC
                     if self.checkCRC(buffer):
                         # packet is complete and CRC is correct
-                        # print('Packet complete and CRC correct')
     
                         # NOTE: accessing the bytearray needs slicing in order
                         #       to return a byte and not an integer
@@ -187,6 +177,9 @@ class ExBus:
                     state = STATE_HEADER_1
                     continue
 
+            # feed watchdog
+            wdt.feed()
+
     def getChannelData(self, buffer, verbose=False):
         self.channel = dict()
         
@@ -214,80 +207,64 @@ class ExBus:
         start = utime.ticks_us()
 
         # frame counter
-        if packetID == self.old_packetID:
-            self.frame_count += 1
-        else:
-            self.frame_count = 0
+        self.frame_count += 1
 
         # acquire lock to access the "ex" object" exclusively
         # core 1 cannot acquire the lock if core 0 has it
         self.lock.acquire()
 
-        # EX BUS packet (send data and text alternately)
-        # check if packet is available (set in main.py)
-        if self.ex.exbus_device_ready:
-        
-            # description of the device
-            telemetry = self.ex.exbus_device
-            self.ex.exbus_device_ready = False
+        if self.ex.exbus_device_ready and self.frame_count <= self.label_frames:
+            # send device and label information repeatedly within the first
+            # self.label_frames frames; the transmitter stores the information
+            # and associates later the labels with the telemetry data by their id
+            n_labels = len(self.ex.dev_labels_units)
+            telemetry = self.ex.dev_labels_units[self.frame_count % n_labels]
+            # print('\nframe count {}'.format(self.frame_count))
+            # print('dev_labels_units {}'.format(self.ex.dev_labels_units))
 
-        elif self.ex.exbus_text1_ready and \
-            self.frame_count <= 6:
-        
-            # description and unit for first telemetry value
-            telemetry = self.ex.exbus_text1
-            self.ex.exbus_text1_ready = False
-
-        elif self.ex.exbus_text2_ready and \
-            self.frame_count <= 6:
-
-            # description and unit for second telemetry value
-            telemetry = self.ex.exbus_text2
-            self.ex.exbus_text2_ready = False
-
-        elif self.ex.exbus_data_ready:
-
-            # send two telemetry values
+        elif self.ex.exbus_data_ready and self.frame_count > self.label_frames:
+            # send telemetry values
             telemetry = self.ex.exbus_data
             self.ex.exbus_data_ready = False
-        else:
+
+        else: # no data available
             if self.lock.locked():
                 self.lock.release()
-            return 0 # no data available
+            return 0 
 
         if self.lock.locked():
             self.lock.release()
 
-
         # packet ID (answer with same ID as by the request)
         # slice assignment is required to write a byte to the bytearray
         # it does an implicit conversion from byte to integer
-        telemetry[3:4] = packetID
+        # telemetry[3:4] = packetID
+        new_bytes = telemetry[:3] + packetID + telemetry[4:]
+        # print(new_bytes)
 
         # calculate the crc for the packet (as the packet is complete now)
         # checksum for EX BUS starts at the 1st byte of the packet
         
         # use viper emitter code for crc calculation
-        crc16_int = self.crc16_viper(telemetry, len(telemetry))
+        crc16_int = self.crc16_viper(new_bytes, len(new_bytes))
 
         # convert crc to bytes with little endian
-        telemetry += crc16_int.to_bytes(2, 'little')
+        new_bytes1 = new_bytes + crc16_int.to_bytes(2, 'little')
+        # print(new_bytes1)
 
         # write packet to the EX bus stream
-        bytes_written = self.serial.write(telemetry)
+        # bytes_written = self.serial.write(telemetry)
+        bytes_written = self.serial.write(new_bytes1)
 
         end = utime.ticks_us()
 
-        # print how long it took to send the packet       
+        # time for answer
         diff = utime.ticks_diff(end, start)
 
         # self.logger.log('debug', 'Packet ID: {}'.format(packetID))
         # self.logger.log('debug', 'Bytes written: {}'.format(bytes_written))
-        # self.logger.log('debug', 'Time for answer: {} ms'.format(diff / 1000.))
+        self.logger.log('debug', 'Time for answer: {} ms'.format(diff / 1000.))
         # self.logger.log('debug', 'Frame counter: {}'.format(self.frame_count))
-        # self.logger.log('debug', 'CRC16 check: {}'.format(self.checkCRC(telemetry)))
-        # if not self.checkCRC(telemetry):
-        #     self.logger.log('debug', 'CRC16 WRONG, telemetry: {}'.format(telemetry))
 
         # save packet ID for next packet (to check if it is a new packet)
         self.old_packetID = packetID
@@ -297,6 +274,7 @@ class ExBus:
     def sendJetiBoxMenu(self):
         pass
 
+    # @micropython.native
     @micropython.viper
     def crc16_viper(self, frame:ptr8, length:int) -> int:
         '''CRC calculation with micropython viper code emitter. This is
@@ -315,9 +293,9 @@ class ExBus:
         '''Do a CRC check using CRC16-CCITT
 
         Args:
-            packet (bytearray): packet of Jeti Ex Bus including the checksum
-                                The last two bytes of the packet are LSB and
-                                MSB of the checksum. 
+            packet : packet of Jeti Ex Bus including the checksum
+                     The last two bytes of the packet are LSB and
+                     MSB of the checksum. 
 
         Returns:
             bool: True if the crc check is OK, False if NOT
@@ -333,10 +311,21 @@ class ExBus:
         # swap bytes in 2 byte crc value (LSB and MSB)
         crc = crc[2:4] + crc[0:2]
         
-        # print('crc', crc)
-        # print('crc_check', crc_check)
-        
         if crc == crc_check:
             return True
         else:
             return False
+
+    def dummy(self):
+        '''Dummy function for checking lock.
+        Stay 3 seconds in the lock.
+        '''
+        self.logger.log('info', 'core 0: EX BUS trying to acquire lock')
+        start = utime.ticks_us()
+        self.lock.acquire()
+        utime.sleep_ms(3000)
+        self.lock.release()
+        end = utime.ticks_us()
+        diff = utime.ticks_diff(end, start)
+        self.logger.log(
+            'info', 'core 0: EX BUS lock released after {} us'.format(diff))
