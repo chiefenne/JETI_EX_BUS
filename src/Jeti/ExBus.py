@@ -246,7 +246,7 @@ class ExBus:
         # checksum for EX BUS starts at the 1st byte of the packet
         
         # use viper emitter code for crc calculation
-        crc16_int = self.crc16_viper(new_bytes, len(new_bytes))
+        crc16_int = CRC16.crc16_ccitt(new_bytes, len(new_bytes))
 
         # convert crc to bytes with little endian
         new_bytes1 = new_bytes + crc16_int.to_bytes(2, 'little')
@@ -265,9 +265,6 @@ class ExBus:
         # self.logger.log('debug', 'Bytes written: {}'.format(bytes_written))
         self.logger.log('debug', 'Time for answer: {} ms'.format(diff / 1000.))
         # self.logger.log('debug', 'Frame counter: {}'.format(self.frame_count))
-
-        # save packet ID for next packet (to check if it is a new packet)
-        self.old_packetID = packetID
 
         return bytes_written
 
