@@ -28,7 +28,10 @@ class Sensors:
         with open('Sensors/sensors.json') as f:
             self.sensor_data = json.load(f)
 
-        # telemetry meta data
+        # telemetry meta data (16 fields per device including the device name)
+        # this means 15 fields are available for sensors
+        # a second device can be used for another 15 sensors
+        # another deviceID has to be set in this case
         with open('Sensors/telemetry.json') as f:
             self.meta = json.load(f)
 
@@ -43,6 +46,7 @@ class Sensors:
         # lower part of the serial number (unique for each sensor)
         # i.e., the microcontroller is here the sensor
         # LSB first, MSB last
+        # for more than 15 sensors a second deviceID has to be set
         self.deviceID = b'\x00' + b'\x01'
 
         # setup a logger for the REPL
