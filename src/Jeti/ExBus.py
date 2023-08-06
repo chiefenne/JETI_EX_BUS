@@ -212,6 +212,7 @@ class ExBus:
         # acquire lock to access the "ex" object" exclusively
         # core 1 cannot acquire the lock if core 0 has it
         self.lock.acquire()
+        lock_time = utime.ticks_us()
 
         if self.ex.exbus_device_ready and self.frame_count <= self.label_frames:
             # send device and label information repeatedly within the first
@@ -219,8 +220,6 @@ class ExBus:
             # and associates later the labels with the telemetry data by their id
             n_labels = len(self.ex.dev_labels_units)
             telemetry = self.ex.dev_labels_units[self.frame_count % n_labels]
-            # print('\nframe count {}'.format(self.frame_count))
-            # print('dev_labels_units {}'.format(self.ex.dev_labels_units))
 
         elif self.ex.exbus_data_ready and self.frame_count > self.label_frames:
             # send telemetry values
@@ -239,52 +238,35 @@ class ExBus:
         # slice assignment is required to write a byte to the bytearray
         # it does an implicit conversion from byte to integer
         # telemetry[3:4] = packetID
-        new_bytes = telemetry[:3] + packetID + telemetry[4:]
-        # print(new_bytes)
+        telemetry_ID = telemetry[:3] + packetID + telemetry[4:]
 
         # calculate the crc for the packet (as the packet is complete now)
         # checksum for EX BUS starts at the 1st byte of the packet
         
         # use viper emitter code for crc calculation
-        crc16_int = CRC16.crc16_ccitt(new_bytes, len(new_bytes))
+        crc16_int = CRC16.crc16_ccitt(telemetry_ID, len(telemetry_ID))
 
         # convert crc to bytes with little endian
-        new_bytes1 = new_bytes + crc16_int.to_bytes(2, 'little')
+        telemetry_ID_CRC16 = telemetry_ID + crc16_int.to_bytes(2, 'little')
         # print(new_bytes1)
 
         # write packet to the EX bus stream
         # bytes_written = self.serial.write(telemetry)
-        bytes_written = self.serial.write(new_bytes1)
+        bytes_written = self.serial.write(telemetry_ID_CRC16)
 
         end = utime.ticks_us()
 
         # time for answer
         diff = utime.ticks_diff(end, start)
+        diffl = utime.ticks_diff(lock_time, start)
 
         # self.logger.log('debug', 'Packet ID: {}'.format(packetID))
-        # self.logger.log('debug', 'Bytes written: {}'.format(bytes_written))
-        self.logger.log('debug', 'Time for answer: {} ms'.format(diff / 1000.))
-        # self.logger.log('debug', 'Frame counter: {}'.format(self.frame_count))
+        self.logger.log('debug', 'Time for answer and lock: {} ms {} ms'.format(diff / 1000., diffl / 1000.))
 
         return bytes_written
 
     def sendJetiBoxMenu(self):
         pass
-
-    # @micropython.native
-    @micropython.viper
-    def crc16_viper(self, frame:ptr8, length:int) -> int:
-        '''CRC calculation with micropython viper code emitter. This is
-        faster than the normal python code but slower than the assembler'''
-        crc16_int = 0
-        for i in range(length):
-            crc16_int ^= frame[i]
-            for _ in range(8):
-                if crc16_int & 1:
-                    crc16_int = (crc16_int >> 1) ^ 0x8408
-                else:
-                    crc16_int >>= 1
-        return crc16_int
 
     def checkCRC(self, packet):
         '''Do a CRC check using CRC16-CCITT
