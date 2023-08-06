@@ -23,11 +23,9 @@ from micropython import const
 from machine import WDT
 
 from Jeti import CRC8
-from Jeti import CRC16
 from Utils.Logger import Logger
 from Utils.round_robin import cycler
-from Utils import status, fir_py
-from Utils.moving_average import MovingAverageFilter
+from Utils import status
 
 
 class Ex:
@@ -133,7 +131,7 @@ class Ex:
     def exbus_frame(self, frametype=None, label=None, data=None):
         '''Prepare the EX BUS telemetry packet.
         It includes the EX packet and the EX BUS header.
-        CRC16 is added later in ExBus.py as it needs to include the packet id.
+         is added later in ExBus.py as it needs to include the packet id.
         '''
 
         # setup ex packet
