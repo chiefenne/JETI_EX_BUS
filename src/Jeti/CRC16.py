@@ -7,7 +7,6 @@ The checksum starts at the first byte of the message (0x3B for Slave packet).
 '''
 
 import micropython
-from micropython import const
 
 
 @micropython.viper
@@ -16,11 +15,11 @@ def crc16_ccitt(packet:ptr8, length: int) -> int:
     crc = 0
     for i in range(length):
         crc ^= packet[i]
-        for j in range(const(8)):
-            if (crc & const(1)) > const(0):
-                crc = (crc >> const(1)) ^ const(0x8408)
+        for j in range(8):
+            if (crc & 1) > 0:
+                crc = (crc >> 1) ^ 0x8408
             else:
-                crc = crc >> const(1)
+                crc = crc >> 1
 
     return crc
 
