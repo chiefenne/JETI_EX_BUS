@@ -204,15 +204,12 @@ class ExBus:
         The packet ID is required to answer the request with the same ID.
         '''
 
-        start = utime.ticks_us()
-
         # frame counter
         self.frame_count += 1
 
         # acquire lock to access the "ex" object" exclusively
         # core 1 cannot acquire the lock if core 0 has it
         self.lock.acquire()
-        lock_time = utime.ticks_us()
 
         if self.ex.exbus_device_ready and self.frame_count <= self.label_frames:
             # send device and label information repeatedly within the first
@@ -248,20 +245,10 @@ class ExBus:
 
         # convert crc to bytes with little endian
         telemetry_ID_CRC16 = telemetry_ID + crc16_int.to_bytes(2, 'little')
-        # print(new_bytes1)
 
         # write packet to the EX bus stream
         # bytes_written = self.serial.write(telemetry)
         bytes_written = self.serial.write(telemetry_ID_CRC16)
-
-        end = utime.ticks_us()
-
-        # time for answer
-        diff = utime.ticks_diff(end, start)
-        diffl = utime.ticks_diff(lock_time, start)
-
-        # self.logger.log('debug', 'Packet ID: {}'.format(packetID))
-        self.logger.log('debug', 'Time for answer and lock: {} ms {} ms'.format(diff / 1000., diffl / 1000.))
 
         return bytes_written
 
