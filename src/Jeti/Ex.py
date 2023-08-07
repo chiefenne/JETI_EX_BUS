@@ -45,7 +45,7 @@ class Ex:
         self.last_climbrate = 0
         self.vario_time_old = time.ticks_ms()
         self.vario_smoothing = 0.89
-        self.deadzone = 0.08
+        self.deadzone = 0.1
 
         # initialize the EX BUS packet 
         # needed for check in ExBus.py, set to 'True' in main.py

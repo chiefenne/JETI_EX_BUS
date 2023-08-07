@@ -215,6 +215,7 @@ class ExBus:
         # acquire lock to access the "ex" object" exclusively
         # core 1 cannot acquire the lock if core 0 has it
         self.lock.acquire()
+        t_lock = utime.ticks_us()
 
         if self.ex.exbus_device_ready and self.frame_count <= self.label_frames:
             # send device and label information repeatedly within the first
@@ -243,9 +244,6 @@ class ExBus:
         telemetry_ID = telemetry[:3] + packetID + telemetry[4:]
 
         # calculate the crc for the packet (as the packet is complete now)
-        # checksum for EX BUS starts at the 1st byte of the packet
-        
-        # use viper emitter code for crc calculation
         crc16_int = CRC16.crc16_ccitt(telemetry_ID, len(telemetry_ID))
 
         # convert crc to bytes with little endian
@@ -256,9 +254,12 @@ class ExBus:
         bytes_written = self.serial.write(telemetry_ID_CRC16)
 
         t_end = utime.ticks_us()
-        diff = utime.ticks_diff(t_end, t_start)
+        # log lock time
+        diff = utime.ticks_diff(t_lock, t_start)
+        # self.logger.log('info', 'EX BUS lock acquired in {} us'.format(diff))
         # log the time for sending the packet
-        self.logger.log('info', 'EX BUS telemetry sent in {} us'.format(diff))
+        diff = utime.ticks_diff(t_end, t_start)
+        # self.logger.log('info', 'EX BUS telemetry sent in {} us'.format(diff))
 
         return bytes_written
 
