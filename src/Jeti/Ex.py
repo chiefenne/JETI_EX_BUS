@@ -44,8 +44,8 @@ class Ex:
         self.last_altitude = 0
         self.last_climbrate = 0
         self.vario_time_old = time.ticks_ms()
-        self.vario_smoothing = const(0.85)
-        self.deadzone = 0.05
+        self.vario_smoothing = 0.88
+        self.deadzone = 0.06
 
         # initialize the EX BUS packet 
         # needed for check in ExBus.py, set to 'True' in main.py
@@ -123,7 +123,7 @@ class Ex:
                                 self.GPStoEX(current_sensor.latitude, longitude=False)}
 
             self.lock.acquire()
-            self.exbus_data = self.exbus_frame(frametype=1, data=data) # data
+            self.exbus_data = self.exbus_frame(frametype=const(1), data=data) # data
             self.exbus_data_ready = True
             self.lock.release()
 
@@ -147,7 +147,7 @@ class Ex:
         exbus_packet += b'\x3B\x01'
 
         # EX bus packet length in bytes including the header and CRC
-        exbus_packet += ustruct.pack('B', len_ex + 8)
+        exbus_packet += ustruct.pack('B', len_ex + const(8))
         
         # put dummy id here; will be replaced by packet id later
         exbus_packet += b'\x00'
@@ -163,23 +163,23 @@ class Ex:
 
         # checksum added later in ExBus.py as it needs to include the packet id
 
-        return bytes(exbus_packet) # return as bytes, to stay immutable!!!
+        # return as bytes, to stay immutable!!!
+        # bytearray caused troubles in ExBus.sendTelemetry
+        return bytes(exbus_packet)
 
     def ex_frame(self, frametype=None, data=None, label=None):
         '''Compile the EX telemetry packet (Header, data or text, etc.).'''
 
-        if frametype == 1: # data
+        if frametype == const(1): # data
             # put sensor data into ex frame
             data, length = self.Data(data=data)
-            t_data = time.ticks_us()
-        elif frametype == 0: # text
+        elif frametype == const(0): # text
             # put text data into ex frame
             data, length = self.Text(label=label)
-        elif frametype == 2: # message
+        elif frametype == const(2): # message
             # put message data into ex frame
             message = 'Greetings from chiefenne'
-            msg_class = 0
-            data, length = self.Message(message=message, msg_class=msg_class)
+            data, length = self.Message(message=message, msg_class=const(0))
 
         # compile header (types are 'text', 'data', 'message')
         header = self.Header(frametype, length)
@@ -195,8 +195,6 @@ class Ex:
 
         # add crc8 to the packet ('B' is unsigned byte 8-bit)
         ex_packet += ustruct.pack('B', crc8_int)
-
-        t_end = time.ticks_us()
 
         # compile simple text for JETI box (34 bytes)
         # message = 'Greetings from chiefenne'
@@ -217,7 +215,7 @@ class Ex:
 
         # 2 bits for packet type (0=text, 1=data, 2=message)
         # these are the two leftmost bits of 3rd byte; shift left by 6
-        telemetry_type = frametype << 6
+        telemetry_type = frametype << const(6)
 
         # telemetry_length (+4 for serial number,
         #                   +1 is for reserved 8th byte)
@@ -246,16 +244,17 @@ class Ex:
         meta = self.sensors.meta
 
         for telemetry, value in data.items():
-          # compile 9th byte onwards of EX data specification
-            id1 = meta[telemetry]['id'] << const(4)
-            data_type = meta[telemetry]['data_type']
+            meta_tele = meta[telemetry] # speed up object access
+            # compile 9th byte onwards of EX data specification
+            id = meta_tele['id'] << const(4)
+            data_type = meta_tele['data_type']
             # combine bits for id and data type
-            exdata += ustruct.pack('B', id1 | data_type)
+            exdata += ustruct.pack('B', id | data_type)
 
             # data of 1st telemetry value, converted to EX format
             exdata += self.EncodeValue(value,
-                                     meta[telemetry]['data_type'],
-                                     meta[telemetry]['precision'])
+                                     meta_tele['data_type'],
+                                     meta_tele['precision'])
 
         return exdata, len(exdata)
 
@@ -291,7 +290,7 @@ class Ex:
 
         return extext, len(extext)
 
-    def Message(self, message=None, msg_class=0):
+    def Message(self, message=None, msg_class=const(0)):
         '''This message type allows transmitting any textual information directly
         to the pilot. Additional semantics can be added to the message
         (alarm/status/warning).'''
@@ -308,7 +307,7 @@ class Ex:
         # 2: Warning (alarm, high vibrations, preflight conditions check, …)
         # 3: Recoverable error (loss of GPS position, erratic sensor data, …)
         # 4: Nonrecoverable error (peripheral failure, unexpected hardware fault, …)
-        message += ustruct.pack('B', msg_class << 5 | len(message))
+        message += ustruct.pack('B', msg_class << const(5) | len(message))
 
         # compile 11th+x bytes of EX message specification
         for c in message:
@@ -338,16 +337,20 @@ class Ex:
         # use ticks_diff to produce correct result (when timer overflows)
         self.vario_time = time.ticks_ms()
         dt = time.ticks_diff(self.vario_time, self.vario_time_old) / 1000.0
-        dz = self.current_sensor.relative_altitude - self.last_altitude
+        relative_altitude = self.current_sensor.relative_altitude # speed up object access
+        dz = relative_altitude - self.last_altitude
 
         # calculate the climbrate
         climbrate = dz / (dt + 1.e-9)
 
+        # preallocate for speed
+        deadzone = self.deadzone
+
         # deadzone filtering
-        if climbrate > self.deadzone:
-            climbrate -= self.deadzone
-        elif climbrate < -self.deadzone:
-            climbrate += self.deadzone
+        if climbrate > deadzone:
+            climbrate -= deadzone
+        elif climbrate < -deadzone:
+            climbrate += deadzone
         else:
             climbrate = 0.0
 
@@ -357,9 +360,9 @@ class Ex:
 
         # store data for next iteration
         self.vario_time_old = self.vario_time
-        self.last_altitude = self.current_sensor.relative_altitude
+        self.last_altitude = relative_altitude
 
-        return self.last_climbrate, self.current_sensor.relative_altitude
+        return self.last_climbrate, self.last_altitude
 
     def SimpleText(self, text):
         '''EX packet simple text (must be 34 bytes long).
@@ -402,45 +405,42 @@ class Ex:
             9     |   int30_t   |  Data type 30b (-536870911 ,536870911), GPS
         '''
 
-        # format for pack
-        fmt = {0: '<b', 1: '<h', 4: '<i', 5: '<i', 8: '<l', 9: '<l'} # signed
-
         # scale value based on precision and round it
-        mult = -1 if value < 0 else 1
-        value_scaled = int(value * 10**precision + mult * 0.5)
+        mult = const(-1) if value < const(0) else const(1)
+        value_scaled = int(value * const(10)**precision + mult * 0.5)
 
         # zero must be positive, otherwise wrong value is encoded
-        sign = 0x01 if value_scaled < 0 else 0x00
+        sign = const(0x01) if value_scaled < const(0) else const(0x00)
 
         # combine sign, precision and scaled value
-        if dataType == 0: # int6_t
-            lo_byte = (value_scaled & 0x1F) | (sign << 7) | (precision << 5)
+        if dataType == const(0): # int6_t
+            lo_byte = (value_scaled & const(0x1F)) | (sign << const(7)) | (precision << const(5))
             value_ex = ustruct.pack('b', lo_byte)
-        elif dataType == 1: # int14_t
-            lo_byte = value_scaled & 0xFF
-            hi_byte = ((value_scaled >> 8) & 0x1F) | (sign << 7) | (precision << 5)
+        elif dataType == const(1): # int14_t
+            lo_byte = value_scaled & const(0xFF)
+            hi_byte = ((value_scaled >> const(8)) & const(0x1F)) | (sign << const(7)) | (precision << const(5))
             value_ex = ustruct.pack('bb', lo_byte, hi_byte)
-        elif dataType == 4: # int22_t
-            lo_byte = value_scaled & 0xFF
-            mid_byte = ((value_scaled >> 8) & 0xFF)
-            hi_byte = ((value_scaled >> 16) & 0x1F) | (sign << 7) | (precision << 5)
+        elif dataType == const(4): # int22_t
+            lo_byte = value_scaled & const(0xFF)
+            mid_byte = ((value_scaled >> const(8)) & const(0xFF))
+            hi_byte = ((value_scaled >> const(16)) & const(0x1F)) | (sign << const(7)) | (precision << const(5))
             value_ex = ustruct.pack('bbb', lo_byte, mid_byte, hi_byte)
-        elif dataType == 5: # int22_t, time and date
-            lo_byte = value_scaled & 0xFF
-            mid_byte = ((value_scaled >> 8) & 0xFF)
-            hi_byte = ((value_scaled >> 16) & 0xFF) | (sign << 7)
+        elif dataType == const(5): # int22_t, time and date
+            lo_byte = value_scaled & const(0xFF)
+            mid_byte = ((value_scaled >> const(8)) & const(0xFF))
+            hi_byte = ((value_scaled >> const(16)) & const(0xFF)) | (sign << const(7))
             value_ex = ustruct.pack('bbb', lo_byte, mid_byte, hi_byte)
-        elif dataType == 8: # int30_t
-            lo_byte = value_scaled & 0xFF
-            mid_byte = ((value_scaled >> 8) & 0xFF)
-            hi_byte = ((value_scaled >> 16) & 0xFF)
-            ex_byte = ((value_scaled >> 24) & 0x1F) | (sign << 7) | (precision << 5)
+        elif dataType == const(8): # int30_t
+            lo_byte = value_scaled & const(0xFF)
+            mid_byte = ((value_scaled >> const(8)) & const(0xFF))
+            hi_byte = ((value_scaled >> const(16)) & const(0xFF))
+            ex_byte = ((value_scaled >> const(24)) & const(0x1F)) | (sign << const(7)) | (precision << const(5))
             value_ex = ustruct.pack('bbbb', lo_byte, mid_byte, hi_byte, ex_byte)
-        elif dataType == 9: # int30_t, GPS
-            lo_byte = value_scaled & 0xFF
-            mid_byte = ((value_scaled >> 8) & 0xFF)
-            hi_byte = ((value_scaled >> 16) & 0xFF)
-            ex_byte = ((value_scaled >> 24) & 0xFF)
+        elif dataType == const(9): # int30_t, GPS
+            lo_byte = value_scaled & const(0xFF)
+            mid_byte = ((value_scaled >> const(8)) & const(0xFF))
+            hi_byte = ((value_scaled >> const(16)) & const(0xFF))
+            ex_byte = ((value_scaled >> const(24)) & const(0xFF))
             value_ex = ustruct.pack('bbbb', lo_byte, mid_byte, hi_byte, ex_byte)
 
         # self.logger.log('debug',
