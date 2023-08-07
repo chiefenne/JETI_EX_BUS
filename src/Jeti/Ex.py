@@ -168,8 +168,6 @@ class Ex:
     def ex_frame(self, frametype=None, data=None, label=None):
         '''Compile the EX telemetry packet (Header, data or text, etc.).'''
 
-        t_start = time.ticks_us()
-
         if frametype == 1: # data
             # put sensor data into ex frame
             data, length = self.Data(data=data)
@@ -183,10 +181,8 @@ class Ex:
             msg_class = 0
             data, length = self.Message(message=message, msg_class=msg_class)
 
-        t_header1 = time.ticks_us()
         # compile header (types are 'text', 'data', 'message')
         header = self.Header(frametype, length)
-        t_header2 = time.ticks_us()
 
         # compile the complete EX packet
         ex_packet = bytearray()
@@ -195,25 +191,12 @@ class Ex:
 
         # crc for telemetry (8-bit crc)
         # counting begins at the length byte of a message (skipping the header)
-        t_crc1 = time.ticks_us()
-        crc8_int = CRC8.crc8(ex_packet[1:])
-        t_crc2 = time.ticks_us()
-        t_crc1v = time.ticks_us()
-        crc8_intv = CRC8.crc8_viper(ex_packet[1:])
-        t_crc2v = time.ticks_us()
+        crc8_int = CRC8.crc8_viper(ex_packet[1:], len(ex_packet[1:]))
 
         # add crc8 to the packet ('B' is unsigned byte 8-bit)
         ex_packet += ustruct.pack('B', crc8_int)
 
         t_end = time.ticks_us()
-
-        if frametype == 1: # data
-            self.logger.log('debug', 'EX frame: data: {}, header: {}, crc8: {}, crc8 viper: {}, total: {}'.
-                        format(time.ticks_diff(t_data, t_start),
-                               time.ticks_diff(t_header2, t_header1),
-                               time.ticks_diff(t_crc2, t_crc1),
-                               time.ticks_diff(t_crc2v, t_crc1v),
-                               time.ticks_diff(t_end, t_start)))
 
         # compile simple text for JETI box (34 bytes)
         # message = 'Greetings from chiefenne'
