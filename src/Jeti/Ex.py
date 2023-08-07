@@ -19,6 +19,7 @@ Date: 04-2021
 # are stripped down in MicroPython to be efficient on microcontrollers
 import utime as time
 import ustruct
+import micropython
 from micropython import const
 from machine import WDT
 
@@ -252,9 +253,32 @@ class Ex:
             exdata += ustruct.pack('B', id | data_type)
 
             # data of 1st telemetry value, converted to EX format
-            exdata += self.EncodeValue(value,
+            t_std1 = time.ticks_us()
+            exdata_std = self.EncodeValue(value,
                                      meta_tele['data_type'],
                                      meta_tele['precision'])
+            t_std2 = time.ticks_us()
+            
+            exdata += exdata_std
+
+            # scale value based on precision and round it
+            mult = -1 if value < 0 else 1
+            value_scaled = int(value * 10**meta_tele['precision'] + mult * 0.5)
+            t_viper1 = time.ticks_us()
+            exdata_viper = self.EncodeValueViper(value_scaled,
+                                     meta_tele['data_type'],
+                                     meta_tele['precision'])
+            t_viper2 = time.ticks_us()
+
+            self.logger.log('debug',
+                            'Value: {}, scaled: {}, exdata_std: {}, exdata_viper: {}'.
+                            format(value, value_scaled, exdata_std, exdata_viper))
+            
+            self.logger.log('debug',
+                            'Enc std {:6.3f}us, enc viper {:6.3f}us'.
+                            format(time.ticks_diff(t_std2, t_std1),
+                                   time.ticks_diff(t_viper2, t_viper1)))
+                            
 
         return exdata, len(exdata)
 
@@ -448,6 +472,61 @@ class Ex:
         #                 format(value, value_scaled, sign, lo_byte, hi_byte))
 
         # return the encoded value as bytes in little endian format
+        return value_ex
+
+    @micropython.viper
+    def EncodeValueViper(self, value_scaled: int, dataType: int, precision: int) -> bytes:
+        '''Encode telemetry value.
+
+        Returns:
+            value_ex : encoded value as bytes in little endian format
+        
+            
+        Data type | Description |  Note
+        ----------|-------------|---------------------------------------
+            0     |   int6_t    |  Data type  6b (-31 ,31)
+            1     |   int14_t   |  Data type 14b (-8191 ,8191)
+            4     |   int22_t   |  Data type 22b (-2097151 ,2097151)
+            5     |   int22_t   |  Data type 22b (-2097151 ,2097151), time and date
+            8     |   int30_t   |  Data type 30b (-536870911 ,536870911)
+            9     |   int30_t   |  Data type 30b (-536870911 ,536870911), GPS
+
+        '''
+
+        # zero must be positive, otherwise wrong value is encoded
+        sign = 0x01 if value_scaled < 0 else 0x00
+
+        # combine sign, precision and scaled value
+        if dataType == 0: # int6_t
+            lo_byte = (value_scaled & 0x1F) | sign << 7 | (precision << 5)
+            value_ex = ustruct.pack('b', lo_byte)
+        elif dataType == 1: # int14_t
+            lo_byte = value_scaled & 0xFF
+            hi_byte = ((value_scaled >> 8) & 0x1F) | (sign << 7) | (precision << 5)
+            value_ex = ustruct.pack('bb', lo_byte, hi_byte)
+        elif dataType == 4: # int22_t
+            lo_byte = value_scaled & 0xFF
+            mid_byte = ((value_scaled >> 8) & 0xFF)
+            hi_byte = ((value_scaled >> 16) & 0x1F) | (sign << 7) | (precision << 5)
+            value_ex = ustruct.pack('bbb', lo_byte, mid_byte, hi_byte)
+        elif dataType == 5: # int22_t, time and date
+            lo_byte = value_scaled & 0xFF
+            mid_byte = ((value_scaled >> 8) & 0xFF)
+            hi_byte = ((value_scaled >> 16) & 0xFF) | (sign << 7)
+            value_ex = ustruct.pack('bbb', lo_byte, mid_byte, hi_byte)
+        elif dataType == 8: # int30_t
+            lo_byte = value_scaled & 0xFF
+            mid_byte = ((value_scaled >> 8) & 0xFF)
+            hi_byte = ((value_scaled >> 16) & 0xFF)
+            ex_byte = ((value_scaled >> 24) & 0x1F) | (sign << 7) | (precision << 5)
+            value_ex = ustruct.pack('bbbb', lo_byte, mid_byte, hi_byte, ex_byte)
+        elif dataType == 9: # int30_t, GPS
+            lo_byte = value_scaled & 0xFF
+            mid_byte = ((value_scaled >> 8) & 0xFF)
+            hi_byte = ((value_scaled >> 16) & 0xFF)
+            ex_byte = ((value_scaled >> 24) & 0xFF)
+            value_ex = ustruct.pack('bbbb', lo_byte, mid_byte, hi_byte, ex_byte)
+
         return value_ex
 
     def GPStoEX(self, value, longitude=True):
