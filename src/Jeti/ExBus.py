@@ -204,8 +204,6 @@ class ExBus:
         The packet ID is required to answer the request with the same ID.
         '''
 
-        t_start = utime.ticks_us()
-
         # frame counter
         self.frame_count += 1
 
@@ -251,10 +249,6 @@ class ExBus:
         # write packet to the EX bus stream
         # bytes_written = self.serial.write(telemetry)
         bytes_written = self.serial.write(telemetry_ID_CRC16)
-
-        t_end = utime.ticks_us()
-        diff = utime.ticks_diff(t_end, t_start)
-        self.logger.log('info', 'EX BUS telemetry sent in {} us'.format(diff))
 
         return bytes_written
 
