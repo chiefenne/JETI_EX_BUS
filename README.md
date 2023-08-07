@@ -299,7 +299,17 @@ The receiver is the master and triggers the half-duplex communication. As an exa
 
 See [EX_Bus_stream.txt](https://github.com/chiefenne/JETI_EX_BUS/blob/main/docs/EX_Bus_stream.txt) for a 1 second recording of the bus (this feature can be activated in the code for debugging purposes).
 
+## Credits
 
+Apart from the JETI telemetry documentation, thev code of this repo has learned from many sources. 
+
+
+Following sources were most helpful:
+- [Sepp62](https://github.com/Sepp62/JetiExBus)
+- [nightflyer88](https://github.com/nightflyer88/Jeti_VarioGPS-Sensor)
+- [Pulsar07](https://github.com/Pulsar07/Jeti_VarioGPS-Sensor)
+- [Betaflight Jeti telemetry](https://github.com/betaflight/betaflight/blob/master/src/main/telemetry/jetiexbus.c)
+- [RC-Thoughts](https://github.com/RC-Thoughts)
 
 ## License
 

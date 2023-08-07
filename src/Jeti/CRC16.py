@@ -7,24 +7,14 @@ The checksum starts at the first byte of the message (0x3B for Slave packet).
 '''
 
 import micropython
-from micropython import const
 
 
 @micropython.viper
-def crc16_ccitt(data:ptr8, length: int) -> int:
-    '''Calculate the CRC16-CCITT value from data packet.
-    Args:
-        data (bytearray): Jeti EX bus packet
-    Returns:
-        int: CRC16-CCITT value
-
-    NOTE: removed offset (see link below) as we start from 1st byte
-
-    Credits: Mark Adler https://stackoverflow.com/a/67115933/2264936
-    '''
+def crc16_ccitt(packet:ptr8, length: int) -> int:
+    '''Calculate the CRC16-CCITT value from data packet.'''
     crc = 0
     for i in range(length):
-        crc ^= data[i]
+        crc ^= packet[i]
         for j in range(8):
             if (crc & 1) > 0:
                 crc = (crc >> 1) ^ 0x8408

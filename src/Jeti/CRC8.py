@@ -11,6 +11,8 @@ https://stackoverflow.com/a/11119660/2264936
 
 '''
 
+import micropython
+
 
 def update_crc(crc_element, crc_seed):
     
@@ -38,7 +40,30 @@ def crc8(packet):
     for i in range(0, len(packet)):
         crc_up = update_crc(packet[i], crc_up)
    
-    return hex(crc_up)[-2:], crc_up
+    return crc_up
+
+@micropython.viper
+def crc8_viper(packet: ptr8, length: int) -> int:
+    '''Calculate the CRC8 value from data packet.'''
+
+    crc_up = 0
+    POLY = 0x07
+
+    for i in range(length):
+        # crc_up = update_crc(packet[i], crc_up)
+
+        crc_u = packet[i]
+        crc_u ^= crc_up
+
+        for i in range(8):
+            crc_u = POLY ^ (crc_u << 1) if (crc_u & 0x80) else (crc_u << 1)
+
+            # mask crc_u to 8 bits
+            crc_u &= 0xFF
+
+        crc_up = crc_u
+
+    return crc_up
 
 
 if __name__ == '__main__':
