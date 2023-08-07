@@ -21,7 +21,6 @@ import utime as time
 import ustruct
 import micropython
 from micropython import const
-from machine import WDT
 
 from Jeti import CRC8
 from Utils.Logger import Logger
@@ -45,8 +44,8 @@ class Ex:
         self.last_altitude = 0
         self.last_climbrate = 0
         self.vario_time_old = time.ticks_ms()
-        self.vario_smoothing = 0.88
-        self.deadzone = 0.06
+        self.vario_smoothing = 0.89
+        self.deadzone = 0.08
 
         # initialize the EX BUS packet 
         # needed for check in ExBus.py, set to 'True' in main.py
@@ -56,6 +55,7 @@ class Ex:
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI EX')
 
+    @micropython.native
     def run_forever(self):
         '''Run the EX protocol forever.
         The EX BUS protocol is also prepared here.
@@ -130,6 +130,7 @@ class Ex:
 
         return
 
+    @micropython.native
     def exbus_frame(self, frametype=None, label=None, data=None):
         '''Prepare the EX BUS telemetry packet.
         It includes the EX packet and the EX BUS header.
@@ -168,6 +169,7 @@ class Ex:
         # bytearray caused troubles in ExBus.sendTelemetry
         return bytes(exbus_packet)
 
+    @micropython.native
     def ex_frame(self, frametype=None, data=None, label=None):
         '''Compile the EX telemetry packet (Header, data or text, etc.).'''
 
@@ -203,6 +205,7 @@ class Ex:
 
         return ex_packet, len(ex_packet)
 
+    @micropython.native
     def Header(self, frametype, length):
         '''EX packet message header.'''
 
@@ -236,6 +239,7 @@ class Ex:
 
         return header
 
+    @micropython.native
     def Data(self, data=None):
         '''EX data packet. Maximum length including the header and crc8 is 29 bytes.'''
 
@@ -253,35 +257,16 @@ class Ex:
             exdata += ustruct.pack('B', id | data_type)
 
             # data of 1st telemetry value, converted to EX format
-            t_std1 = time.ticks_us()
-            exdata_std = self.EncodeValue(value,
-                                     meta_tele['data_type'],
-                                     meta_tele['precision'])
-            t_std2 = time.ticks_us()
-            
-            exdata += exdata_std
-
             # scale value based on precision and round it
             mult = -1 if value < 0 else 1
             value_scaled = int(value * 10**meta_tele['precision'] + mult * 0.5)
-            t_viper1 = time.ticks_us()
-            exdata_viper = self.EncodeValueViper(value_scaled,
+            exdata += self.EncodeValue(value_scaled,
                                      meta_tele['data_type'],
                                      meta_tele['precision'])
-            t_viper2 = time.ticks_us()
-
-            self.logger.log('debug',
-                            'Value: {}, scaled: {}, exdata_std: {}, exdata_viper: {}'.
-                            format(value, value_scaled, exdata_std, exdata_viper))
-            
-            self.logger.log('debug',
-                            'Enc std {:6.3f}us, enc viper {:6.3f}us'.
-                            format(time.ticks_diff(t_std2, t_std1),
-                                   time.ticks_diff(t_viper2, t_viper1)))
-                            
 
         return exdata, len(exdata)
 
+    @micropython.native
     def Text(self, label=None):
         '''EX text packet. This transfers the sensor description and unit for
         one sensor value.
@@ -314,6 +299,7 @@ class Ex:
 
         return extext, len(extext)
 
+    @micropython.native
     def Message(self, message=None, msg_class=const(0)):
         '''This message type allows transmitting any textual information directly
         to the pilot. Additional semantics can be added to the message
@@ -339,6 +325,7 @@ class Ex:
 
         return message, len(message)
 
+    @micropython.native
     def Alarm(self, tone=False, code=None):
         '''EX packet alarm.'''
         alarm = bytearray()
@@ -354,6 +341,7 @@ class Ex:
 
         return alarm, len(alarm)
 
+    @micropython.native
     def variometer(self):
         '''Calculate the variometer value derived from the pressure sensor.'''
 
@@ -361,7 +349,7 @@ class Ex:
         # use ticks_diff to produce correct result (when timer overflows)
         self.vario_time = time.ticks_ms()
         dt = time.ticks_diff(self.vario_time, self.vario_time_old) / 1000.0
-        relative_altitude = self.current_sensor.relative_altitude # speed up object access
+        relative_altitude = self.current_sensor.relative_altitude # cache object
         dz = relative_altitude - self.last_altitude
 
         # calculate the climbrate
@@ -388,6 +376,7 @@ class Ex:
 
         return self.last_climbrate, self.last_altitude
 
+    @micropython.native
     def SimpleText(self, text):
         '''EX packet simple text (must be 34 bytes long).
         This text is shown on the Jetibox.
@@ -416,66 +405,8 @@ class Ex:
 
         return simple_text
 
-    def EncodeValue(self, value, dataType, precision):
-        '''Encode telemetry value.
-        
-        Data type | Description |  Note
-        ----------|-------------|---------------------------------------
-            0     |   int6_t    |  Data type  6b (-31 ,31)
-            1     |   int14_t   |  Data type 14b (-8191 ,8191)
-            4     |   int22_t   |  Data type 22b (-2097151 ,2097151)
-            5     |   int22_t   |  Data type 22b (-2097151 ,2097151), time and date
-            8     |   int30_t   |  Data type 30b (-536870911 ,536870911)
-            9     |   int30_t   |  Data type 30b (-536870911 ,536870911), GPS
-        '''
-
-        # scale value based on precision and round it
-        mult = const(-1) if value < const(0) else const(1)
-        value_scaled = int(value * const(10)**precision + mult * 0.5)
-
-        # zero must be positive, otherwise wrong value is encoded
-        sign = const(0x01) if value_scaled < const(0) else const(0x00)
-
-        # combine sign, precision and scaled value
-        if dataType == const(0): # int6_t
-            lo_byte = (value_scaled & const(0x1F)) | (sign << const(7)) | (precision << const(5))
-            value_ex = ustruct.pack('b', lo_byte)
-        elif dataType == const(1): # int14_t
-            lo_byte = value_scaled & const(0xFF)
-            hi_byte = ((value_scaled >> const(8)) & const(0x1F)) | (sign << const(7)) | (precision << const(5))
-            value_ex = ustruct.pack('bb', lo_byte, hi_byte)
-        elif dataType == const(4): # int22_t
-            lo_byte = value_scaled & const(0xFF)
-            mid_byte = ((value_scaled >> const(8)) & const(0xFF))
-            hi_byte = ((value_scaled >> const(16)) & const(0x1F)) | (sign << const(7)) | (precision << const(5))
-            value_ex = ustruct.pack('bbb', lo_byte, mid_byte, hi_byte)
-        elif dataType == const(5): # int22_t, time and date
-            lo_byte = value_scaled & const(0xFF)
-            mid_byte = ((value_scaled >> const(8)) & const(0xFF))
-            hi_byte = ((value_scaled >> const(16)) & const(0xFF)) | (sign << const(7))
-            value_ex = ustruct.pack('bbb', lo_byte, mid_byte, hi_byte)
-        elif dataType == const(8): # int30_t
-            lo_byte = value_scaled & const(0xFF)
-            mid_byte = ((value_scaled >> const(8)) & const(0xFF))
-            hi_byte = ((value_scaled >> const(16)) & const(0xFF))
-            ex_byte = ((value_scaled >> const(24)) & const(0x1F)) | (sign << const(7)) | (precision << const(5))
-            value_ex = ustruct.pack('bbbb', lo_byte, mid_byte, hi_byte, ex_byte)
-        elif dataType == const(9): # int30_t, GPS
-            lo_byte = value_scaled & const(0xFF)
-            mid_byte = ((value_scaled >> const(8)) & const(0xFF))
-            hi_byte = ((value_scaled >> const(16)) & const(0xFF))
-            ex_byte = ((value_scaled >> const(24)) & const(0xFF))
-            value_ex = ustruct.pack('bbbb', lo_byte, mid_byte, hi_byte, ex_byte)
-
-        # self.logger.log('debug',
-        #                 'Encoding value: {}, scaled: {}, sign: {}, lo: {}, hi: {}'.
-        #                 format(value, value_scaled, sign, lo_byte, hi_byte))
-
-        # return the encoded value as bytes in little endian format
-        return value_ex
-
     @micropython.viper
-    def EncodeValueViper(self, value_scaled: int, dataType: int, precision: int) -> bytes:
+    def EncodeValue(self, value_scaled: int, dataType: int, precision: int):
         '''Encode telemetry value.
 
         Returns:
@@ -529,6 +460,7 @@ class Ex:
 
         return value_ex
 
+    @micropython.native
     def GPStoEX(self, value, longitude=True):
         '''Convert GPS coordinates to EX format.
         The GPS coordinates are given in decimal format.

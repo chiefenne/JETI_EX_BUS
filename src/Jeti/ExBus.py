@@ -48,6 +48,7 @@ class ExBus:
         # setup a logger for the REPL
         self.logger = Logger(prestring='JETI EXBUS')
 
+    @micropython.native
     def run_forever(self):
         '''This is the main loop and will run forever. This function is called
         at the end of the function "main.py". It does exactly the same as the
@@ -180,6 +181,7 @@ class ExBus:
             # feed watchdog
             wdt.feed()
 
+    @micropython.native
     def getChannelData(self, buffer, verbose=False):
         self.channel = dict()
         
@@ -198,11 +200,14 @@ class ExBus:
                     ' Value: ' + str(int.from_bytes(self.channel[i], 'little') / 8000)
                                + ' ms')
     
+    @micropython.native
     def sendTelemetry(self, packetID, verbose=False):
         '''Send telemetry data back to the receiver (master).
 
         The packet ID is required to answer the request with the same ID.
         '''
+
+        t_start = utime.ticks_us()
 
         # frame counter
         self.frame_count += 1
@@ -250,11 +255,17 @@ class ExBus:
         # bytes_written = self.serial.write(telemetry)
         bytes_written = self.serial.write(telemetry_ID_CRC16)
 
+        t_end = utime.ticks_us()
+        diff = utime.ticks_diff(t_end, t_start)
+        # log the time for sending the packet
+        self.logger.log('info', 'EX BUS telemetry sent in {} us'.format(diff))
+
         return bytes_written
 
     def sendJetiBoxMenu(self):
         pass
 
+    @micropython.native
     def checkCRC(self, packet):
         '''Do a CRC check using CRC16-CCITT
 
