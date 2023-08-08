@@ -26,6 +26,7 @@ from Jeti import CRC8
 from Utils.Logger import Logger
 from Utils.round_robin import cycler
 from Utils import status
+from Utils.alpha_beta_filter import AlphaBetaFilter
 
 
 class Ex:
@@ -44,8 +45,17 @@ class Ex:
         self.last_altitude = 0
         self.last_climbrate = 0
         self.vario_time_old = time.ticks_ms()
-        self.vario_smoothing = 0.89
+
+        # exponential filter
+        self.vario_smoothing = 0.81
         self.deadzone = 0.1
+
+        # alpha-beta filter
+        self.vario_filter = AlphaBetaFilter(alpha=0.22,
+                                            beta=0.036,
+                                            initial_value=0,
+                                            initial_velocity=0,
+                                            delta_t=1)
 
         # initialize the EX BUS packet 
         # needed for check in ExBus.py, set to 'True' in main.py
@@ -355,7 +365,7 @@ class Ex:
         # calculate the climbrate
         climbrate = dz / (dt + 1.e-9)
 
-        # preallocate for speed
+        # cache for speed
         deadzone = self.deadzone
 
         # deadzone filtering
@@ -367,8 +377,11 @@ class Ex:
             climbrate = 0.0
 
         # smoothing filter for the climb rate
-        self.last_climbrate = climbrate + \
-            self.vario_smoothing * (self.last_climbrate - climbrate)
+        # self.last_climbrate = climbrate + \
+        #     self.vario_smoothing * (self.last_climbrate - climbrate)
+        
+        # alpha-beta filter for the climb rate
+        self.last_climbrate = self.vario_filter.update(climbrate)
 
         # store data for next iteration
         self.vario_time_old = self.vario_time
