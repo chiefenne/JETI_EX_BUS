@@ -48,7 +48,7 @@ class Ex:
 
         # exponential filter
         self.vario_smoothing = 0.81
-        self.deadzone = 0.1
+        self.deadzone = 0.05
 
         # alpha-beta filter
         self.vario_filter = AlphaBetaFilter(alpha=0.22,
