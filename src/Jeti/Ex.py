@@ -48,11 +48,15 @@ class Ex:
 
         # exponential filter
         self.vario_smoothing = 0.81
-        self.deadzone = 0.05
+
+        # deadzone for climb rate
+        self.deadzone = 0.1
 
         # alpha-beta filter
-        self.vario_filter = AlphaBetaFilter(alpha=0.22,
-                                            beta=0.036,
+        alpha = 0.14
+        beta = 0.09
+        self.vario_filter = AlphaBetaFilter(alpha=alpha,
+                                            beta=beta,
                                             initial_value=0,
                                             initial_velocity=0,
                                             delta_t=1)
@@ -129,9 +133,9 @@ class Ex:
                 pass
             elif category == 'GPS':
                 data = {'GPSLAT',
-                                self.GPStoEX(current_sensor.longitude, longitude=True),
-                                'GPSLON', 
-                                self.GPStoEX(current_sensor.latitude, longitude=False)}
+                        self.GPStoEX(current_sensor.longitude, longitude=True),
+                        'GPSLON', 
+                        self.GPStoEX(current_sensor.latitude, longitude=False)}
 
             self.lock.acquire()
             self.exbus_data = self.exbus_frame(frametype=const(1), data=data) # data
