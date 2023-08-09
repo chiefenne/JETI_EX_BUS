@@ -13,7 +13,7 @@ Date: 04-2021
 # modules starting with 'u' are Python standard libraries which
 # are stripped down in MicroPython to be efficient on microcontrollers
 
-from ubinascii import hexlify, unhexlify
+from ubinascii import hexlify
 import utime
 import micropython
 from micropython import const
