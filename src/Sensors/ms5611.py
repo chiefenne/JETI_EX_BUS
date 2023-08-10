@@ -161,10 +161,10 @@ class MS5611:
         self.initial_altitude /= num
 
         # pressure smoothing factor
-        self.pressure_smoothing = 0.85
+        self.pressure_smoothing = 0.9
 
         # set initial smoothed pressure
-        self.pressure_smoothed = pressure_hPa * 1000.0
+        self.pressure_smoothed = pressure_hPa * 100.0
 
     @property
     def measurements(self) -> Tuple[float, float]:
@@ -294,7 +294,7 @@ class MS5611:
         temperature, pressure_hPa = self.measurements
 
         # compile available sensor data
-        self.pressure = pressure_hPa * 1000.0
+        self.pressure = pressure_hPa * 100.0
 
         self.pressure_smoothed = self.pressure + \
             self.pressure_smoothing * (self.pressure_smoothed - self.pressure)
