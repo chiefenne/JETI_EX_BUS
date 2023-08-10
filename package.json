@@ -12,6 +12,7 @@
   [ "Sensors/__init__.py", "github:chiefenne/JETI_EX_BUS/src/Sensors/__init__.py" ],
   [ "Sensors/telemetry.json", "github:chiefenne/JETI_EX_BUS/src/Sensors/telemetry.json" ],
   [ "Sensors/demo_sensor.py", "github:chiefenne/JETI_EX_BUS/src/Sensors/demo_sensor.py" ],
+  [ "Utils/alpha_beta_filter.py", "github:chiefenne/JETI_EX_BUS/src/Utils/alpha_beta_filter.py" ],
   [ "Utils/fir_py.py", "github:chiefenne/JETI_EX_BUS/src/Utils/fir_py.py" ],
   [ "Utils/moving_average.py", "github:chiefenne/JETI_EX_BUS/src/Utils/moving_average.py" ],
   [ "Utils/__init__.py", "github:chiefenne/JETI_EX_BUS/src/Utils/__init__.py" ],
