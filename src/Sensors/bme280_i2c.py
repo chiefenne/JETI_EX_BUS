@@ -153,18 +153,12 @@ class BME280_I2C:
         self.initial_altitude = 0.0
         data = self.get_measurement() # dummy measurement to clear the register
         sleep_ms(100)
-        num = 50
+        num = 30
         for _ in range(num):
             data = self.get_measurement()
             self.initial_altitude += self.calc_altitude(data['pressure'])
             sleep_ms(20)
         self.initial_altitude /= num
-
-        # pressure smoothing factor
-        self.pressure_smoothing = 0.85
-
-        # set initial smoothed pressure
-        self.pressure_smoothed = data['pressure']
 
     def _read_chip_id(self):
         """
@@ -391,9 +385,6 @@ class BME280_I2C:
     def _read_uncompensated_data(self):
         # Read the uncompensated temperature, pressure, and humidity data
         mem = self.i2c.readfrom_mem(self.address, _BME280_DATA_ADDR, _BME280_P_T_H_DATA_LEN)
-
-        # keep timestamping the data (for vario gradient calculation)
-        self.timestamp = ticks_us()
 
         (press_msb, press_lsb, press_xlsb,
             temp_msb, temp_lsb, temp_xlsb,
@@ -653,19 +644,15 @@ class BME280_I2C:
         measurement = self.get_measurement()
 
         # compile available sensor data
-        self.pressure = measurement['pressure']
+        self.pressure = measurement['pressure'] # cache pressure variable
 
-        self.pressure_smoothed = self.pressure + \
-            self.pressure_smoothing * (self.pressure_smoothed - self.pressure)
-        
         self.temperature = measurement['temperature']
         self.humidity = measurement['humidity']
-        self.altitude = self.calc_altitude(self.pressure_smoothed)
+        self.altitude = self.calc_altitude(self.pressure)
         self.relative_altitude = self.altitude - self.initial_altitude
 
         return self.pressure, \
             self.temperature, \
             self.humidity, \
             self.altitude, \
-            self.relative_altitude, \
-            self.timestamp
+            self.relative_altitude
