@@ -23,7 +23,7 @@ from Jeti import CRC16
 from Utils.Logger import Logger
 
 # enable the WDT with (1s is the minimum)
-wdt = WDT(timeout=5000)
+# wdt = WDT(timeout=5000)
 
 
 class ExBus:
@@ -178,8 +178,8 @@ class ExBus:
                     state = STATE_HEADER_1
                     continue
 
-            # feed watchdog
-            wdt.feed()
+            # feed watchdog (comment out for debugging)
+            # wdt.feed()
 
     @micropython.native
     def getChannelData(self, buffer, verbose=False):
