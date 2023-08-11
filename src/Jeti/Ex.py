@@ -96,7 +96,7 @@ class Ex:
         self.dev_labels_units = list()
         for label in labels:
             # frames for device, labels and units
-            self.dev_labels_units.append(self.exbus_frame(frametype=0, label=label))
+            self.dev_labels_units.append(self.exbus_frame(frametype=const(0), label=label))
         self.exbus_device_ready = True
         self.lock.release()
 
@@ -287,31 +287,33 @@ class Ex:
         Maximum length including the header and crc8 is 29 bytes.
         '''
 
-        # speed up object access
-        meta = self.sensors.meta
-
-        extext = bytearray()
+        # cache object
+        meta_label = self.sensors.meta[label]
+        id = meta_label['id']
+        description = meta_label['description']
+        unit = meta_label['unit']
 
         # compile 9th byte of EX text specification (1 byte)
-        id = meta[label]['id']
         extext += ustruct.pack('B', id)
 
         # compile 10th byte of EX text specification (5bits + 3bits)
-        len_description = len(meta[label]['description'])
-        len_unit = len(meta[label]['unit'])
-        extext += ustruct.pack('B', len_description << 3 | len_unit)
+        extext += ustruct.pack('B', len(description) << 3 | len(unit))
 
         # compile 11th+x bytes of EX text specification
-        description = meta[label]['description']
-        for c in description:
-            extext += bytes([ord(c)])
+        extext += bytes([ord(c) for c in description])
 
         # compile 11+x+y bytes of EX text specification (y bytes)
-        unit = meta[label]['unit']
-        for c in unit:
-            extext += bytes([ord(c)])
+        extext += bytes([ord(c) for c in unit])
 
         return extext, len(extext)
+
+    def JetiBoxText(self, line1, line2):
+        '''Set the text on the JetiBox display.'''
+
+        box_text = line1[:16].ljust(16)
+        box_text += line2[:16].ljust(16)
+
+        return box_text
 
     @micropython.native
     def Message(self, message=None, msg_class=const(0)):
@@ -334,8 +336,7 @@ class Ex:
         message += ustruct.pack('B', msg_class << const(5) | len(message))
 
         # compile 11th+x bytes of EX message specification
-        for c in message:
-            message += bytes([ord(c)])
+        message += bytes([ord(c) for c in message])
 
         return message, len(message)
 
@@ -356,7 +357,7 @@ class Ex:
         return alarm, len(alarm)
 
     @micropython.native
-    def variometer(self):
+    def variometer(self, filter='alpha_beta'):
         '''Calculate the variometer value derived from the pressure sensor.'''
 
         # calculate delta's for gradient
@@ -367,31 +368,33 @@ class Ex:
         dz = relative_altitude - self.last_altitude
 
         # calculate the climbrate
-        climbrate = dz / (dt + 1.e-9)
+        climbrate_raw = dz / (dt + 1.e-9)
 
         # cache for speed
         deadzone = self.deadzone
 
         # deadzone filtering
-        if climbrate > deadzone:
-            climbrate -= deadzone
-        elif climbrate < -deadzone:
-            climbrate += deadzone
+        if climbrate_raw > deadzone:
+            climbrate_raw -= deadzone
+        elif climbrate_raw < -deadzone:
+            climbrate_raw += deadzone
         else:
-            climbrate = 0.0
+            climbrate_raw = 0.0
 
-        # smoothing filter for the climb rate
-        # self.last_climbrate = climbrate + \
-        #     self.vario_smoothing * (self.last_climbrate - climbrate)
-        
-        # alpha-beta filter for the climb rate
-        self.last_climbrate = self.vario_filter.update(climbrate)
+        if filter == 'exponential':
+            # smoothing filter for the climb rate
+            climbrate = climbrate_raw + \
+                self.vario_smoothing * (self.last_climbrate - climbrate_raw)
+        elif filter == 'alpha_beta':
+            # alpha-beta filter for the climb rate
+            climbrate = self.vario_filter.update(climbrate_raw)
 
         # store data for next iteration
         self.vario_time_old = self.vario_time
         self.last_altitude = relative_altitude
+        self.last_climbrate = climbrate
 
-        return self.last_climbrate, self.last_altitude
+        return climbrate, self.last_altitude
 
     @micropython.native
     def SimpleText(self, text):
