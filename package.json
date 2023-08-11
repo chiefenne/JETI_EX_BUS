@@ -1,33 +1,130 @@
 {
- "urls":[
-  [ "boot.py", "github:chiefenne/JETI_EX_BUS/src/boot.py" ],
-  [ "main.py", "github:chiefenne/JETI_EX_BUS/src/main.py" ],
-  [ "Sensors/bme280_float.py", "github:chiefenne/JETI_EX_BUS/src/Sensors/bme280_float.py" ],
-  [ "Sensors/Sensors.py", "github:chiefenne/JETI_EX_BUS/src/Sensors/Sensors.py" ],
-  [ "Sensors/bme280_i2c.py", "github:chiefenne/JETI_EX_BUS/src/Sensors/bme280_i2c.py" ],
-  [ "Sensors/sensors.json", "github:chiefenne/JETI_EX_BUS/src/Sensors/sensors.json" ],
-  [ "Sensors/I2C.py", "github:chiefenne/JETI_EX_BUS/src/Sensors/I2C.py" ],
-  [ "Sensors/ms5611.py", "github:chiefenne/JETI_EX_BUS/src/Sensors/ms5611.py" ],
-  [ "Sensors/i2c_helpers.py", "github:chiefenne/JETI_EX_BUS/src/Sensors/i2c_helpers.py" ],
-  [ "Sensors/__init__.py", "github:chiefenne/JETI_EX_BUS/src/Sensors/__init__.py" ],
-  [ "Sensors/telemetry.json", "github:chiefenne/JETI_EX_BUS/src/Sensors/telemetry.json" ],
-  [ "Sensors/demo_sensor.py", "github:chiefenne/JETI_EX_BUS/src/Sensors/demo_sensor.py" ],
-  [ "Utils/alpha_beta_filter.py", "github:chiefenne/JETI_EX_BUS/src/Utils/alpha_beta_filter.py" ],
-  [ "Utils/fir_py.py", "github:chiefenne/JETI_EX_BUS/src/Utils/fir_py.py" ],
-  [ "Utils/moving_average.py", "github:chiefenne/JETI_EX_BUS/src/Utils/moving_average.py" ],
-  [ "Utils/__init__.py", "github:chiefenne/JETI_EX_BUS/src/Utils/__init__.py" ],
-  [ "Utils/Logger.py", "github:chiefenne/JETI_EX_BUS/src/Utils/Logger.py" ],
-  [ "Utils/round_robin.py", "github:chiefenne/JETI_EX_BUS/src/Utils/round_robin.py" ],
-  [ "Utils/Streamrecorder.py", "github:chiefenne/JETI_EX_BUS/src/Utils/Streamrecorder.py" ],
-  [ "Utils/fir.py", "github:chiefenne/JETI_EX_BUS/src/Utils/fir.py" ],
-  [ "Utils/status.py", "github:chiefenne/JETI_EX_BUS/src/Utils/status.py" ],
-  [ "Jeti/CRC16.py", "github:chiefenne/JETI_EX_BUS/src/Jeti/CRC16.py" ],
-  [ "Jeti/__init__.py", "github:chiefenne/JETI_EX_BUS/src/Jeti/__init__.py" ],
-  [ "Jeti/CRC8.py", "github:chiefenne/JETI_EX_BUS/src/Jeti/CRC8.py" ],
-  [ "Jeti/ExBus.py", "github:chiefenne/JETI_EX_BUS/src/Jeti/ExBus.py" ],
-  [ "Jeti/Ex.py", "github:chiefenne/JETI_EX_BUS/src/Jeti/Ex.py" ],
-  [ "Jeti/Serial_UART.py", "github:chiefenne/JETI_EX_BUS/src/Jeti/Serial_UART.py" ]
- ],
- "deps":[],
- "version":"1.0"
+  "urls":[
+    [
+      "boot.py",
+      "github:chiefenne/JETI_EX_BUS/src/boot.py"
+    ],
+    [
+      "main.py",
+      "github:chiefenne/JETI_EX_BUS/src/main.py"
+    ],
+    [
+      "Sensors/bme280_float.py",
+      "github:chiefenne/JETI_EX_BUS/src/Sensors/bme280_float.py"
+    ],
+    [
+      "Sensors/i2c_helpers.py",
+      "github:chiefenne/JETI_EX_BUS/src/Sensors/i2c_helpers.py"
+    ],
+    [
+      "Sensors/Sensors.py",
+      "github:chiefenne/JETI_EX_BUS/src/Sensors/Sensors.py"
+    ],
+    [
+      "Sensors/bme280_i2c.py",
+      "github:chiefenne/JETI_EX_BUS/src/Sensors/bme280_i2c.py"
+    ],
+    [
+      "Sensors/sensors.json",
+      "github:chiefenne/JETI_EX_BUS/src/Sensors/sensors.json"
+    ],
+    [
+      "Sensors/I2C.py",
+      "github:chiefenne/JETI_EX_BUS/src/Sensors/I2C.py"
+    ],
+    [
+      "Sensors/ms5611.py",
+      "github:chiefenne/JETI_EX_BUS/src/Sensors/ms5611.py"
+    ],
+    [
+      "Sensors/__init__.py",
+      "github:chiefenne/JETI_EX_BUS/src/Sensors/__init__.py"
+    ],
+    [
+      "Sensors/telemetry.json",
+      "github:chiefenne/JETI_EX_BUS/src/Sensors/telemetry.json"
+    ],
+    [
+      "Sensors/demo_sensor.py",
+      "github:chiefenne/JETI_EX_BUS/src/Sensors/demo_sensor.py"
+    ],
+    [
+      "Utils/fir_py.py",
+      "github:chiefenne/JETI_EX_BUS/src/Utils/fir_py.py"
+    ],
+    [
+      "Utils/Vario.py",
+      "github:chiefenne/JETI_EX_BUS/src/Utils/Vario.py"
+    ],
+    [
+      "Utils/tachometer.py",
+      "github:chiefenne/JETI_EX_BUS/src/Utils/tachometer.py"
+    ],
+    [
+      "Utils/alpha_beta_filter.py",
+      "github:chiefenne/JETI_EX_BUS/src/Utils/alpha_beta_filter.py"
+    ],
+    [
+      "Utils/moving_average.py",
+      "github:chiefenne/JETI_EX_BUS/src/Utils/moving_average.py"
+    ],
+    [
+      "Utils/__init__.py",
+      "github:chiefenne/JETI_EX_BUS/src/Utils/__init__.py"
+    ],
+    [
+      "Utils/function_profiling.py",
+      "github:chiefenne/JETI_EX_BUS/src/Utils/function_profiling.py"
+    ],
+    [
+      "Utils/Logger.py",
+      "github:chiefenne/JETI_EX_BUS/src/Utils/Logger.py"
+    ],
+    [
+      "Utils/round_robin.py",
+      "github:chiefenne/JETI_EX_BUS/src/Utils/round_robin.py"
+    ],
+    [
+      "Utils/Streamrecorder.py",
+      "github:chiefenne/JETI_EX_BUS/src/Utils/Streamrecorder.py"
+    ],
+    [
+      "Utils/fir.py",
+      "github:chiefenne/JETI_EX_BUS/src/Utils/fir.py"
+    ],
+    [
+      "Utils/status.py",
+      "github:chiefenne/JETI_EX_BUS/src/Utils/status.py"
+    ],
+    [
+      "Jeti/CRC16.py",
+      "github:chiefenne/JETI_EX_BUS/src/Jeti/CRC16.py"
+    ],
+    [
+      "Jeti/__init__.py",
+      "github:chiefenne/JETI_EX_BUS/src/Jeti/__init__.py"
+    ],
+    [
+      "Jeti/CRC8.py",
+      "github:chiefenne/JETI_EX_BUS/src/Jeti/CRC8.py"
+    ],
+    [
+      "Jeti/JetiBox.py",
+      "github:chiefenne/JETI_EX_BUS/src/Jeti/JetiBox.py"
+    ],
+    [
+      "Jeti/ExBus.py",
+      "github:chiefenne/JETI_EX_BUS/src/Jeti/ExBus.py"
+    ],
+    [
+      "Jeti/Ex.py",
+      "github:chiefenne/JETI_EX_BUS/src/Jeti/Ex.py"
+    ],
+    [
+      "Jeti/Serial_UART.py",
+      "github:chiefenne/JETI_EX_BUS/src/Jeti/Serial_UART.py"
+    ]
+  ],
+  "deps":[],
+  "version":"0.3"
 }
