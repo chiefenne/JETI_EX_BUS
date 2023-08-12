@@ -50,7 +50,7 @@ class Ex:
         self.vario_smoothing = 0.81
 
         # deadzone for climb rate
-        self.deadzone = 0.1
+        self.deadzone = 0.06
 
         # alpha-beta filter
         alpha = 0.14
@@ -96,7 +96,7 @@ class Ex:
         self.dev_labels_units = list()
         for label in labels:
             # frames for device, labels and units
-            self.dev_labels_units.append(self.exbus_frame(frametype=const(0), label=label))
+            self.dev_labels_units.append(self.exbus_frame(frametype=0, label=label))
         self.exbus_device_ready = True
         self.lock.release()
 
@@ -111,14 +111,17 @@ class Ex:
             # collect data from currently selected sensor
             # the "read_jeti" method must be implemented sensor specific
             # see Sensors/bme280_i2c.py
-
             current_sensor.read_jeti()
 
             # update data frame (new sensor data)
             if category == 'PRESSURE':
                 pressure = current_sensor.pressure / 100.0
                 temperature = current_sensor.temperature
-                climb, altitude = self.variometer()
+                relative_altitude = current_sensor.relative_altitude
+                # variometer
+                climb, altitude = self.variometer(relative_altitude,
+                                                  self.deadzone,
+                                                  filter='alpha_beta')
                 data = {'PRESSURE': pressure,         # 3 bytes
                         'TEMPERATURE': temperature,   # 2 bytes
                         'CLIMB': climb,               # 2 bytes
@@ -133,9 +136,9 @@ class Ex:
                 pass
             elif category == 'GPS':
                 data = {'GPSLAT',
-                        self.GPStoEX(current_sensor.longitude, longitude=True),
-                        'GPSLON', 
-                        self.GPStoEX(current_sensor.latitude, longitude=False)}
+                                self.GPStoEX(current_sensor.longitude, longitude=True),
+                                'GPSLON', 
+                                self.GPStoEX(current_sensor.latitude, longitude=False)}
 
             self.lock.acquire()
             self.exbus_data = self.exbus_frame(frametype=const(1), data=data) # data
@@ -293,6 +296,9 @@ class Ex:
         description = meta_label['description']
         unit = meta_label['unit']
 
+        # initiliaze the EX BUS packet
+        extext = bytearray()
+
         # compile 9th byte of EX text specification (1 byte)
         extext += ustruct.pack('B', id)
 
@@ -306,14 +312,6 @@ class Ex:
         extext += bytes([ord(c) for c in unit])
 
         return extext, len(extext)
-
-    def JetiBoxText(self, line1, line2):
-        '''Set the text on the JetiBox display.'''
-
-        box_text = line1[:16].ljust(16)
-        box_text += line2[:16].ljust(16)
-
-        return box_text
 
     @micropython.native
     def Message(self, message=None, msg_class=const(0)):
@@ -357,21 +355,17 @@ class Ex:
         return alarm, len(alarm)
 
     @micropython.native
-    def variometer(self, filter='alpha_beta'):
+    def variometer(self, altitude, deadzone, filter='alpha_beta'):
         '''Calculate the variometer value derived from the pressure sensor.'''
 
         # calculate delta's for gradient
         # use ticks_diff to produce correct result (when timer overflows)
         self.vario_time = time.ticks_ms()
         dt = time.ticks_diff(self.vario_time, self.vario_time_old) / 1000.0
-        relative_altitude = self.current_sensor.relative_altitude # cache object
-        dz = relative_altitude - self.last_altitude
+        dz = altitude - self.last_altitude
 
         # calculate the climbrate
         climbrate_raw = dz / (dt + 1.e-9)
-
-        # cache for speed
-        deadzone = self.deadzone
 
         # deadzone filtering
         if climbrate_raw > deadzone:
@@ -388,10 +382,12 @@ class Ex:
         elif filter == 'alpha_beta':
             # alpha-beta filter for the climb rate
             climbrate = self.vario_filter.update(climbrate_raw)
+        else:
+            climbrate = climbrate_raw
 
         # store data for next iteration
         self.vario_time_old = self.vario_time
-        self.last_altitude = relative_altitude
+        self.last_altitude = altitude
         self.last_climbrate = climbrate
 
         return climbrate, self.last_altitude
