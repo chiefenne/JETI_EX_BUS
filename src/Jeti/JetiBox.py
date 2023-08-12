@@ -22,3 +22,11 @@ class JetiBox:
                 break
 
         return key
+
+    def setText(self, line1, line2):
+        '''Set the text for the JetiBox display.'''
+
+        box_text = line1[:16].ljust(16)
+        box_text += line2[:16].ljust(16)
+
+        return box_text
