@@ -151,12 +151,12 @@ class BME280_I2C:
         # store initial altitude for relative altitude measurements
         # make an initial averaged measurement
         self.initial_altitude = 0.0
-        data = self.get_measurement() # dummy measurement to clear the register
+        measurement = self.get_measurement() # dummy measurement to clear the register
         sleep_ms(100)
         num = 30
         for _ in range(num):
-            data = self.get_measurement()
-            self.initial_altitude += self.calc_altitude(data['pressure'])
+            measurement = self.get_measurement()
+            self.initial_altitude += self.calc_altitude(measurement['pressure'])
             sleep_ms(20)
         self.initial_altitude /= num
 
@@ -644,10 +644,11 @@ class BME280_I2C:
         measurement = self.get_measurement()
 
         # compile available sensor data
-        self.pressure = measurement['pressure'] # cache pressure variable
-
+        self.pressure = measurement['pressure']
         self.temperature = measurement['temperature']
         self.humidity = measurement['humidity']
+
+        # calculate altitude
         self.altitude = self.calc_altitude(self.pressure)
         self.relative_altitude = self.altitude - self.initial_altitude
 
