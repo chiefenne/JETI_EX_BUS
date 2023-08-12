@@ -151,11 +151,11 @@ class MS5611:
         # store initial altitude for relative altitude measurements
         # make an initial averaged measurement
         self.initial_altitude = 0.0
-        _, pressure = self.measurements  # dummy measurement
+        dummy, pressure = self.measurements  # dummy measurement
         time.sleep_ms(100)
         num = 30
         for _ in range(num):
-            _, pressure = self.measurements
+            dummy, pressure = self.measurements
             self.initial_altitude += self.calc_altitude(pressure)
             time.sleep_ms(20)
         self.initial_altitude /= num
@@ -285,7 +285,7 @@ class MS5611:
     def read_jeti(self):
         '''Read sensor data'''
 
-        self.temperature, self.pressure = self.measurements # cache pressure variable
+        self.temperature, self.pressure = self.measurements
 
         self.altitude = self.calc_altitude(self.pressure)
         self.relative_altitude = self.altitude - self.initial_altitude
