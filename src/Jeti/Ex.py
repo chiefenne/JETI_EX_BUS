@@ -17,6 +17,7 @@ Date: 04-2021
 
 # modules starting with 'u' are Python standard libraries which
 # are stripped down in MicroPython to be efficient on microcontrollers
+
 import utime as time
 import ustruct
 import micropython
@@ -53,8 +54,8 @@ class Ex:
         self.deadzone = 0.06
 
         # alpha-beta filter
-        alpha = 0.14
-        beta = 0.09
+        alpha = 0.06
+        beta = 0.015
         self.vario_filter = AlphaBetaFilter(alpha=alpha,
                                             beta=beta,
                                             initial_value=0,
@@ -121,7 +122,8 @@ class Ex:
                 # variometer
                 climb, altitude = self.variometer(relative_altitude,
                                                   self.deadzone,
-                                                  filter='alpha_beta')
+                                                  filter='no')
+                
                 data = {'PRESSURE': pressure,         # 3 bytes
                         'TEMPERATURE': temperature,   # 2 bytes
                         'CLIMB': climb,               # 2 bytes
