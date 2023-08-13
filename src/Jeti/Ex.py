@@ -50,12 +50,9 @@ class Ex:
         # exponential filter
         self.vario_smoothing = 0.81
 
-        # deadzone for climb rate
-        self.deadzone = 0.06
-
         # alpha-beta filter
-        alpha = 0.06
-        beta = 0.015
+        alpha = 0.02
+        beta = 0.005
         self.vario_filter = AlphaBetaFilter(alpha=alpha,
                                             beta=beta,
                                             initial_value=0,
@@ -121,8 +118,7 @@ class Ex:
                 relative_altitude = current_sensor.relative_altitude
                 # variometer
                 climb, altitude = self.variometer(relative_altitude,
-                                                  self.deadzone,
-                                                  filter='no')
+                                                  filter='alpha_beta')
                 
                 data = {'PRESSURE': pressure,         # 3 bytes
                         'TEMPERATURE': temperature,   # 2 bytes
@@ -357,7 +353,7 @@ class Ex:
         return alarm, len(alarm)
 
     @micropython.native
-    def variometer(self, altitude, deadzone, filter='alpha_beta'):
+    def variometer(self, altitude, filter='alpha_beta'):
         '''Calculate the variometer value derived from the pressure sensor.'''
 
         # calculate delta's for gradient
@@ -368,14 +364,6 @@ class Ex:
 
         # calculate the climbrate
         climbrate_raw = dz / (dt + 1.e-9)
-
-        # deadzone filtering
-        if climbrate_raw > deadzone:
-            climbrate_raw -= deadzone
-        elif climbrate_raw < -deadzone:
-            climbrate_raw += deadzone
-        else:
-            climbrate_raw = 0.0
 
         if filter == 'exponential':
             # smoothing filter for the climb rate
