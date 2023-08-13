@@ -21,19 +21,18 @@ Modifications:
           gaming: 0.3Pa/2.5cm RMS (faster)
         - set_power_mode to normal mode
         - initial altitude for relative altitude measurements
+        - alpha beta filter for pressure signal smoothing
 
     Added methods:
         - calc_altitude
         - read_jeti
 
-    Modified methods:
-        - get_measurement_settings (make a timestamp at the time of the measurement)
-          this is used downstream in the vario gradient calculation
 '''
 
 from micropython import const
 from ustruct import unpack, unpack_from
 from utime import sleep_ms, ticks_us
+from Utils.alpha_beta_filter import AlphaBetaFilter
 
 
 # BME280 default address
@@ -150,15 +149,26 @@ class BME280_I2C:
 
         # store initial altitude for relative altitude measurements
         # make an initial averaged measurement
-        self.initial_altitude = 0.0
-        measurement = self.get_measurement() # dummy measurement to clear the register
-        sleep_ms(100)
+        measurement = self.get_measurement()
         num = 30
+        self.initial_altitude = 0.0
+        self.initial_pressure = 0.0
         for _ in range(num):
             measurement = self.get_measurement()
+            self.initial_pressure += measurement['pressure']
             self.initial_altitude += self.calc_altitude(measurement['pressure'])
             sleep_ms(20)
+        self.initial_pressure /= num
         self.initial_altitude /= num
+
+        # signal filter
+        alpha = 0.06
+        beta = 0.015
+        self.pressure_filter = AlphaBetaFilter(alpha=alpha,
+                                               beta=beta,
+                                               initial_value=self.initial_pressure,
+                                               initial_velocity=0,
+                                               delta_t=1)
 
     def _read_chip_id(self):
         """
@@ -644,7 +654,8 @@ class BME280_I2C:
         measurement = self.get_measurement()
 
         # compile available sensor data
-        self.pressure = measurement['pressure']
+        pressure = measurement['pressure']
+        self.pressure = self.pressure_filter.update(pressure) # filter the pressure signal
         self.temperature = measurement['temperature']
         self.humidity = measurement['humidity']
 
