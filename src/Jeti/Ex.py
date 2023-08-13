@@ -17,6 +17,7 @@ Date: 04-2021
 
 # modules starting with 'u' are Python standard libraries which
 # are stripped down in MicroPython to be efficient on microcontrollers
+
 import utime as time
 import ustruct
 import micropython
@@ -48,11 +49,12 @@ class Ex:
 
         # exponential filter
         self.vario_smoothing = 0.81
-        self.deadzone = 0.05
 
         # alpha-beta filter
-        self.vario_filter = AlphaBetaFilter(alpha=0.22,
-                                            beta=0.036,
+        alpha = 0.02
+        beta = 0.005
+        self.vario_filter = AlphaBetaFilter(alpha=alpha,
+                                            beta=beta,
                                             initial_value=0,
                                             initial_velocity=0,
                                             delta_t=1)
@@ -107,14 +109,17 @@ class Ex:
             # collect data from currently selected sensor
             # the "read_jeti" method must be implemented sensor specific
             # see Sensors/bme280_i2c.py
-
             current_sensor.read_jeti()
 
             # update data frame (new sensor data)
             if category == 'PRESSURE':
                 pressure = current_sensor.pressure / 100.0
                 temperature = current_sensor.temperature
-                climb, altitude = self.variometer()
+                relative_altitude = current_sensor.relative_altitude
+                # variometer
+                climb, altitude = self.variometer(relative_altitude,
+                                                  filter='alpha_beta')
+                
                 data = {'PRESSURE': pressure,         # 3 bytes
                         'TEMPERATURE': temperature,   # 2 bytes
                         'CLIMB': climb,               # 2 bytes
@@ -283,29 +288,26 @@ class Ex:
         Maximum length including the header and crc8 is 29 bytes.
         '''
 
-        # speed up object access
-        meta = self.sensors.meta
+        # cache object
+        meta_label = self.sensors.meta[label]
+        id = meta_label['id']
+        description = meta_label['description']
+        unit = meta_label['unit']
 
+        # initiliaze the EX BUS packet
         extext = bytearray()
 
         # compile 9th byte of EX text specification (1 byte)
-        id = meta[label]['id']
         extext += ustruct.pack('B', id)
 
         # compile 10th byte of EX text specification (5bits + 3bits)
-        len_description = len(meta[label]['description'])
-        len_unit = len(meta[label]['unit'])
-        extext += ustruct.pack('B', len_description << 3 | len_unit)
+        extext += ustruct.pack('B', len(description) << 3 | len(unit))
 
         # compile 11th+x bytes of EX text specification
-        description = meta[label]['description']
-        for c in description:
-            extext += bytes([ord(c)])
+        extext += bytes([ord(c) for c in description])
 
         # compile 11+x+y bytes of EX text specification (y bytes)
-        unit = meta[label]['unit']
-        for c in unit:
-            extext += bytes([ord(c)])
+        extext += bytes([ord(c) for c in unit])
 
         return extext, len(extext)
 
@@ -330,8 +332,7 @@ class Ex:
         message += ustruct.pack('B', msg_class << const(5) | len(message))
 
         # compile 11th+x bytes of EX message specification
-        for c in message:
-            message += bytes([ord(c)])
+        message += bytes([ord(c) for c in message])
 
         return message, len(message)
 
@@ -352,42 +353,34 @@ class Ex:
         return alarm, len(alarm)
 
     @micropython.native
-    def variometer(self):
+    def variometer(self, altitude, filter='alpha_beta'):
         '''Calculate the variometer value derived from the pressure sensor.'''
 
         # calculate delta's for gradient
         # use ticks_diff to produce correct result (when timer overflows)
         self.vario_time = time.ticks_ms()
         dt = time.ticks_diff(self.vario_time, self.vario_time_old) / 1000.0
-        relative_altitude = self.current_sensor.relative_altitude # cache object
-        dz = relative_altitude - self.last_altitude
+        dz = altitude - self.last_altitude
 
         # calculate the climbrate
-        climbrate = dz / (dt + 1.e-9)
+        climbrate_raw = dz / (dt + 1.e-9)
 
-        # cache for speed
-        deadzone = self.deadzone
-
-        # deadzone filtering
-        if climbrate > deadzone:
-            climbrate -= deadzone
-        elif climbrate < -deadzone:
-            climbrate += deadzone
+        if filter == 'exponential':
+            # smoothing filter for the climb rate
+            climbrate = climbrate_raw + \
+                self.vario_smoothing * (self.last_climbrate - climbrate_raw)
+        elif filter == 'alpha_beta':
+            # alpha-beta filter for the climb rate
+            climbrate = self.vario_filter.update(climbrate_raw)
         else:
-            climbrate = 0.0
-
-        # smoothing filter for the climb rate
-        # self.last_climbrate = climbrate + \
-        #     self.vario_smoothing * (self.last_climbrate - climbrate)
-        
-        # alpha-beta filter for the climb rate
-        self.last_climbrate = self.vario_filter.update(climbrate)
+            climbrate = climbrate_raw
 
         # store data for next iteration
         self.vario_time_old = self.vario_time
-        self.last_altitude = relative_altitude
+        self.last_altitude = altitude
+        self.last_climbrate = climbrate
 
-        return self.last_climbrate, self.last_altitude
+        return climbrate, self.last_altitude
 
     @micropython.native
     def SimpleText(self, text):

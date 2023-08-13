@@ -16,11 +16,11 @@ A. Ennemoser, 2023-07
 Modifications:
     Initializations:
         - initial altitude for relative altitude measurements
+        - alpha beta filter for pressure signal smoothing
+
     Added methods:
         - calc_altitude
         - read_jeti
-    Modified code/methods:
-        - import statement to reflect structure of the project
 
 """
 
@@ -28,6 +28,8 @@ import time
 from micropython import const
 # from micropython_ms5611.i2c_helpers import CBits, RegisterStruct
 from Sensors.i2c_helpers import CBits, RegisterStruct
+
+from Utils.alpha_beta_filter import AlphaBetaFilter
 
 try:
     from typing import Tuple
@@ -150,21 +152,34 @@ class MS5611:
 
         # store initial altitude for relative altitude measurements
         # make an initial averaged measurement
-        self.initial_altitude = 0.0
-        _, pressure_hPa = self.measurements  # dummy measurement
+        dummy, pressure = self.measurements  # dummy measurement
         time.sleep_ms(100)
-        num = 50
+        num = 30
+        self.initial_altitude = 0.0
+        self.initial_pressure = 0.0
         for _ in range(num):
-            _, pressure_hPa = self.measurements
-            self.initial_altitude += self.calc_altitude(pressure_hPa * 1000.0)
+            dummy, pressure = self.measurements
+            self.initial_pressure += pressure
+            self.initial_altitude += self.calc_altitude(pressure)
             time.sleep_ms(20)
+        self.initial_pressure /= num
         self.initial_altitude /= num
 
-        # pressure smoothing factor
-        self.pressure_smoothing = 0.85
-
-        # set initial smoothed pressure
-        self.pressure_smoothed = pressure_hPa * 1000.0
+        # signal filter
+        alpha = 0.08
+        beta = 0.003
+        self.pressure_filter = AlphaBetaFilter(alpha=alpha,
+                                               beta=beta,
+                                               initial_value=self.initial_pressure,
+                                               initial_velocity=0,
+                                               delta_t=1)
+        alpha = 0.15
+        beta = 0.001
+        self.altitude_filter = AlphaBetaFilter(alpha=alpha,
+                                               beta=beta,
+                                               initial_value=self.calc_altitude(self.initial_pressure),
+                                               initial_velocity=0,
+                                               delta_t=1)
 
     @property
     def measurements(self) -> Tuple[float, float]:
@@ -201,7 +216,7 @@ class MS5611:
 
         P = (SENS * D1 / 2**21.0 - OFF) / 2**15.0
 
-        return TEMP / 100, P / 1000
+        return TEMP / 100, P
 
     @property
     def temperature_oversample_rate(self) -> str:
@@ -291,16 +306,12 @@ class MS5611:
     def read_jeti(self):
         '''Read sensor data'''
 
-        temperature, pressure_hPa = self.measurements
+        self.temperature, pressure = self.measurements
+        self.pressure = self.pressure_filter.update(pressure)  # filter the pressure signal
 
-        # compile available sensor data
-        self.pressure = pressure_hPa * 100.0
+        self.altitude = self.calc_altitude(self.pressure)
+        self.altitude = self.altitude_filter.update(self.altitude)  # filter the altitude signal
 
-        self.pressure_smoothed = self.pressure + \
-            self.pressure_smoothing * (self.pressure_smoothed - self.pressure)
-
-        self.temperature = temperature
-        self.altitude = self.calc_altitude(self.pressure_smoothed)
         self.relative_altitude = self.altitude - self.initial_altitude
 
         return self.pressure, \

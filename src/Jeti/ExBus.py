@@ -13,7 +13,7 @@ Date: 04-2021
 # modules starting with 'u' are Python standard libraries which
 # are stripped down in MicroPython to be efficient on microcontrollers
 
-from ubinascii import hexlify, unhexlify
+from ubinascii import hexlify
 import utime
 import micropython
 from micropython import const
@@ -23,7 +23,7 @@ from Jeti import CRC16
 from Utils.Logger import Logger
 
 # enable the WDT with (1s is the minimum)
-wdt = WDT(timeout=5000)
+# wdt = WDT(timeout=5000)
 
 
 class ExBus:
@@ -178,8 +178,8 @@ class ExBus:
                     state = STATE_HEADER_1
                     continue
 
-            # feed watchdog
-            wdt.feed()
+            # feed watchdog (comment out for debugging)
+            # wdt.feed()
 
     @micropython.native
     def getChannelData(self, buffer, verbose=False):

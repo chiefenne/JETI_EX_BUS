@@ -16,14 +16,12 @@ class AlphaBetaFilter:
     @micropython.native
     def update(self, measurement):
         
-        estimate = self.estimate # cache variable
-        
         # Predict
-        estimate += self.velocity * self.delta_t
+        self.estimate += self.velocity * self.delta_t
 
         # Update based on measurement
-        error = measurement - estimate
-        estimate += self.alpha * error
+        error = measurement - self.estimate
+        self.estimate += self.alpha * error
         self.velocity += (self.beta / self.delta_t) * error
 
-        return estimate
+        return self.estimate

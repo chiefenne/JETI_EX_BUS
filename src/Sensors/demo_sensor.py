@@ -16,9 +16,9 @@ class DemoSensor:
             self.sign = -1 * self.sign
 
         # compile all available sensor data
-        self.pressure = 977.34 + self.counter * 2 * self.sign
+        self.pressure = 97734.0 + self.counter * 2 * self.sign
         self.temperature = 29.37 + self.counter * 0.1 * self.sign
-        self.humidity = 45.67 + self.counter * 0.2 * self.sign
+        self.humidity = 45.67 + self.counter * 0.5 * self.sign
         self.altitude = 1234.5 + self.counter * 10 * self.sign
 
         return self.pressure, self.temperature, self.humidity, self.altitude
