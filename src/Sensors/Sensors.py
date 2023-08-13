@@ -78,6 +78,9 @@ class Sensors:
             sensor.labels = self.sensor_data[addr]['labels']
 
             self.sensors.append(sensor)
+
+            message = 'Found sensor: {}'.format(sensor.name)
+            self.logger.log('info', message)
  
         # number of sensors attached
         message = 'Number of sensors attached: {}'.format(len(self.sensors))
