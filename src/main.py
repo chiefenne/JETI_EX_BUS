@@ -50,12 +50,6 @@ from Utils.Streamrecorder import saveStream
 # setup a logger for the REPL
 logger = Logger(prestring='JETI MAIN')
 
-# setup the led
-rp2 = False
-if 'rp2' in sys.platform:
-    rp2 = True
-    ledg = Pin(19, Pin.OUT)
-
 # lock object used to prevent other cores from accessing shared resources
 lock = _thread.allocate_lock()
 
@@ -94,29 +88,8 @@ exbus = ExBus(serial, sensors, ex, lock)
 # function which is run on core 0
 def core0():
 
-    try:
-        if rp2:
-            ledg.value(0)
-
-        # run the main loop on core 0
-        exbus.run_forever()
-    
-    except KeyboardInterrupt:
-        # Set the flag to indicate that the main thread is not running
-        status.main_thread_running = False
-
-        # inform the user
-        logger.log('info', 'Keyboard interrupt occurred')
-        logger.log('info', 'Stopping main thread on core 0')    
-
-        # switch off the green led
-        if rp2:
-            ledg.value(1)
-
-        _thread.exit()
-    
-    # exit if the main thread is not running anymore
-    _thread.exit()
+    # run the main loop on core 0
+    exbus.run_forever()
 
 # function which is run on core 1
 def core1():
@@ -127,11 +100,17 @@ def core1():
     # inform the user that the second thread is stopped
     logger.log('info', 'Stopping second thread on core 1')
  
-
 # start the second thread on core 1
 logger.log('info', 'Starting second thread on core 1')
-second_thread = _thread.start_new_thread(core1, ())
+second_thread = _thread.start_new_thread(core1, ())    
 
-# run the main loop on core 0
-logger.log('info', 'Starting main loop on core 0')
-core0()
+try:
+    # run the main loop on core 0
+    logger.log('info', 'Starting main loop on core 0')
+    core0()
+except KeyboardInterrupt:
+    status.main_thread_running = False
+    logger.log('info', 'Keyboard interrupt occurred')
+    logger.log('info', 'Stopping main thread on core 0')
+    # stop the main thread
+    _thread.exit()
