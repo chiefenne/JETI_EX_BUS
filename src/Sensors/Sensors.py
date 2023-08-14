@@ -58,7 +58,7 @@ class Sensors:
         return
 
     def arm(self):
-        '''Arm the sensors.'''
+        '''Arm the I2C sensors.'''
 
         for address in self.addresses:
 
