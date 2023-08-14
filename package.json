@@ -57,10 +57,6 @@
       "github:chiefenne/JETI_EX_BUS/src/Utils/Vario.py"
     ],
     [
-      "Utils/tachometer.py",
-      "github:chiefenne/JETI_EX_BUS/src/Utils/tachometer.py"
-    ],
-    [
       "Utils/alpha_beta_filter.py",
       "github:chiefenne/JETI_EX_BUS/src/Utils/alpha_beta_filter.py"
     ],
@@ -95,6 +91,10 @@
     [
       "Utils/status.py",
       "github:chiefenne/JETI_EX_BUS/src/Utils/status.py"
+    ],
+    [
+      "Utils/frequency_counter.py.py",
+      "github:chiefenne/JETI_EX_BUS/src/Utils/frequency_counter.py.py"
     ],
     [
       "Jeti/CRC16.py",
