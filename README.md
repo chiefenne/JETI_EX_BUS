@@ -203,6 +203,17 @@ Figure 6 shows a USB-C plug connected to the microcontroller. The connection fro
     <i>Fig. 7: Here an MS5611 sensor is attached</i>
 </p>
 
+a<br>
+
+<p align="center">
+  <kbd> <!-- make a frame around the image -->
+    <img src="docs/images/comparison_to_MVario2.png" width="600" />
+  </kbd>
+</p>
+<p align="center">
+    <i>Fig. 7a: Compare altitude readings of MS5611 sensor to Jeti MVario2</i>
+</p>
+
 <br>
 
 ### Channel setup in the device manager of the transmitter
