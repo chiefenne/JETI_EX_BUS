@@ -12,7 +12,7 @@ import utime as time
 # check platform
 print('JETI BOOT - INFO: Platform:', sys.platform)
 print('JETI BOOT - INFO: Operating system:', sys.version)
-print('JETI BOOT - INFO: Vendor:', sys.implementation._machine)
+print('JETI BOOT - INFO: Underlying machine:', sys.implementation._machine)
 
 
 # blink led 's' seconds with frequency 'hz'
