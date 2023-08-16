@@ -6,7 +6,7 @@
         "module": "bme280_i2c",
         "class": "BME280_I2C",
         "category": "PRESSURE",
-        "labels": ["PRESSURE", "TEMPERATURE", "CLIMB", "ALTITUDE"]
+        "labels": ["PRESSURE", "TEMPERATURE", "CLIMB", "ALTITUDE", "MAX_ALTITUDE", "MAX_CLIMB"]
     },
     "0x77": {
         "name": "MS5611",
@@ -15,15 +15,24 @@
         "module": "ms5611",
         "class": "MS5611",
         "category": "PRESSURE",
-        "labels": ["PRESSURE", "TEMPERATURE", "CLIMB", "ALTITUDE"]
+        "labels": ["PRESSURE", "TEMPERATURE", "CLIMB", "ALTITUDE", "MAX_ALTITUDE", "MAX_CLIMB"]
     },
     "0x99": {
         "name": "DEMO",
         "manufacturer": "chiefenne",
-        "description": "High resolution precision barometer",
+        "description": "Demo sensor for RC geeks",
         "module": "demo_sensor",
         "class": "DemoSensor",
         "category": "PRESSURE",
         "labels": ["PRESSURE"]
+    },
+    "Pin26": {
+        "name": "Pin 26, XIAO RP2040",
+        "manufacturer": "Seeed Studio",
+        "description": "Frequency counter for rpm measurement",
+        "module": "rpm_demo",
+        "class": "RPMDemo",
+        "category": "RPM",
+        "labels": ["RPM"]
     }
 }
