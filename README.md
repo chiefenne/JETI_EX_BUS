@@ -7,7 +7,8 @@
 A [JETI EX BUS protocol](http://www.jetimodel.com/en/Telemetry-Protocol/) implementation in Python or more specifically in [MicroPython](https://micropython.org/).
 This allows to use microcontrollers (aka boards) like Raspbery Pi, ESP32 or similar to act as a sensor hub for [Jeti RC receivers](http://www.jetimodel.com/en/katalog/Duplex-2-4-EX/Receivers-EX/) and to transmit telemetry data from the board to the receiver and back to the transmitter (i.e. RC controls like this [DC24](http://www.jetimodel.com/en/katalog/Transmitters/@produkt/DC-24/)).
 
-[Raspberry Pi  RP2040](https://www.raspberrypi.com/products/rp2040/) based platforms were used for development. The main application is to use the software on these boards together with a pressure sensor (see below) for a variometer. Nevertheless, multiple sensors can be attached.
+[Raspberry Pi  RP2040](https://www.raspberrypi.com/products/rp2040/) based platforms were used for development. The main application is to use the software on these boards together with one or more sensors attached to it. The main sensor interface is based on the [I2C protocol](https://en.wikipedia.org/wiki/I%C2%B2C). So all sensors using this interafce can be easiliy integrated, some are already predifined (see section features).
+
 
 The code runs on two cores. One core handles the telemetry transfer, the other core prepares the telemetry based on data retrieved from sensors. 
 
@@ -15,12 +16,12 @@ The code runs on two cores. One core handles the telemetry transfer, the other c
 ## Features
 
  - Pure Python (MicroPython) implementation of the Jeti Ex Bus protocol
- - Variometer functionality - currently following sensors are supported:
-   - [BME280](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/)
+ - Variometer functionality - currently following pressure sensors are supported:
    - [MS5611](https://www.amsys-sensor.com/products/pressure-sensor/ms5611-high-resolution-barometric-sensor-10-1200-mbar/)
+   - [BME280](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/)
  - Can be extended by any I2C capable sensor
  - Simple firmware/software update via USB-C
- - Easy logging of sensor data on the board
+ - Easy logging of sensor data
  - Runs on boards which are supported by MicroPython (see [forum](https://forum.micropython.org/viewforum.php?f=10) or [code repository](https://github.com/micropython/micropython/tree/master/ports))
  - Two core implementation
    - Core-0 handles the transfer of JETI telemetry data via UART
@@ -30,18 +31,12 @@ The code runs on two cores. One core handles the telemetry transfer, the other c
 
 ## Boards
 
- #### Tested
- - [Pimoroni TINY 2040](https://shop.pimoroni.com/products/tiny-2040) (22.9 x 18.2 mm)
-   - 2x Cortex-M0+ (133 MHz)
-   - 8MB QSPI flash
-- [Seeed Studio XIAO RP2040](https://www.seeedstudio.com/XIAO-RP2040-v1-0-p-5026.html) (21 x 17.5 mm)
-   - 2x Cortex-M0+ (133 MHz)
-   - 8MB QSPI flash
- #### Planned
- - [ESP32](https://en.wikipedia.org/wiki/ESP32)
-   - 160 MHz - 240 MHz
-   - up to 16 Mb flash memory
-   - Wi-Fi
+ Raspberry Pi RP2040 based boards are the main platform for this software. Other boards featuring two cores and running on MicroPython will be checked in the future.
+
+ - [Raspberry Pi Pico series](https://www.raspberrypi.com/products/raspberry-pi-pico/)
+ - [Pimoroni TINY 2040](https://shop.pimoroni.com/products/tiny-2040), small form factor (22.9 x 18.2 mm)
+ - [Seeed Studio XIAO RP2040](https://www.seeedstudio.com/XIAO-RP2040-v1-0-p-5026.html), small form factor (21 x 17.5 mm)
+
 
 ## Dependencies
 
