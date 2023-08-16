@@ -22,7 +22,7 @@
     },
     "MAX_ALTITUDE": {
         "id": 3,
-        "description": "Temperature",
+        "description": "Max. Altitude",
         "unit": "m",
         "data_type": 1,
         "precision": 1
@@ -36,7 +36,7 @@
     },
     "MAX_CLIMB": {
         "id": 5,
-        "description": "Maximum climb",
+        "description": "Max. Climb Rate",
         "unit": "m/s",
         "data_type": 1,
         "precision": 1
