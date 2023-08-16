@@ -45,6 +45,8 @@ class Ex:
         # remember values for the variometer
         self.last_altitude = 0
         self.last_climbrate = 0
+        self.max_altitude = 0
+        self.max_climb = 0
         self.vario_time_old = time.ticks_ms()
 
         # exponential filter
@@ -119,11 +121,15 @@ class Ex:
                 # variometer
                 climb, altitude = self.variometer(relative_altitude,
                                                   filter='alpha_beta')
+                self.max_altitude = max(self.max_altitude, altitude)
+                self.max_climb = max(self.max_climb, climb)
                 
-                data = {'PRESSURE': pressure,         # 3 bytes
-                        'TEMPERATURE': temperature,   # 2 bytes
-                        'CLIMB': climb,               # 2 bytes
-                        'ALTITUDE': altitude}         # 2 bytes
+                data = {'PRESSURE': pressure,              # 3 bytes
+                        'TEMPERATURE': temperature,        # 2 bytes
+                        'CLIMB': climb,                    # 2 bytes
+                        'MAX_CLIMB': self.max_climb,       # 2 bytes
+                        'ALTITUDE': altitude,              # 2 bytes
+                        'MAX_ALTITUDE': self.max_altitude} # 2 bytes
             elif category == 'VOLTAGE':
                 pass
             elif category == 'CURRENT':
