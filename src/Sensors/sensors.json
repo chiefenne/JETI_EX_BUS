@@ -27,7 +27,7 @@
         "labels": ["PRESSURE"]
     },
     "Pin26": {
-        "name": "Pin 26, XIAO RP2040",
+        "name": "Demo RPM sensor at pin 26",
         "manufacturer": "Seeed Studio",
         "description": "Frequency counter for rpm measurement",
         "module": "rpm_demo",

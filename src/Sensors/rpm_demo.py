@@ -1,26 +1,28 @@
 
 from machine import Pin, PWM
-
-from frequency_rpm_counter import FrequencyCounter
+import utime as time
+from Utils.frequency_rpm_counter import FrequencyCounter
 
 
 class RPMDemo:
 
-    def __init__(self, GPIO_pin) -> None:
-         
-        # Set up a PWM
-        pwm_pin = PWM(Pin(GPIO_pin))
-        pwm_pin.freq(1000)  # Set frequency to 1kHz
-        pwm_pin.duty_u16(32768)  # 50% duty cycle
+    def __init__(self, pinstr) -> None:
+        
+        # extract pin number from string
+        GPIO_pin = int(pinstr[3:])
 
-        # Configure the same pin as input (just for testing)
+        # setup a frequency counter
         read_per_second = 10
-        self.freq_counter = FrequencyCounter(
-            GPIO_pin, readout=read_per_second)
-
+        self.fc = FrequencyCounter(GPIO_pin, readout=read_per_second)
+        
     def read_jeti(self):
 
-        self.rpm = self.freq_counter.counter
+        # self.rpm = self.fc.get_frequency()
 
+        # simulate rpm
+        ramp = 5
+        rpm = 13000
+        self.rpm = int(rpm * (time.time() % ramp) / ramp)
+        
         return self.rpm
 

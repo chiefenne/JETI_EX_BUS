@@ -57,6 +57,10 @@ class Sensors:
 
         # test GPIO, rpm counter
         self.test()
+ 
+        # number of sensors attached
+        message = 'Number of sensors attached: {}'.format(len(self.sensors))
+        self.logger.log('info', message)
 
         return
 
@@ -84,10 +88,6 @@ class Sensors:
 
             message = 'Found sensor: {}'.format(sensor.name)
             self.logger.log('info', message)
- 
-        # number of sensors attached
-        message = 'Number of sensors attached: {}'.format(len(self.sensors))
-        self.logger.log('info', message)
 
         return
 
@@ -113,3 +113,6 @@ class Sensors:
         sensor.labels = self.sensor_data[addr]['labels']
 
         self.sensors.append(sensor)
+
+        message = 'Found sensor: {}'.format(sensor.name)
+        self.logger.log('info', message)

@@ -3,6 +3,7 @@ import machine
 import time
 from machine import Pin, Timer
 from rp2 import asm_pio, PIO, StateMachine
+import _thread
 
 
 class FrequencyCounter:
@@ -14,24 +15,31 @@ class FrequencyCounter:
             readout (int, optional): Frequency readout interval in ms.
         
         '''
-        self.pin = Pin(GPIO_PIN, Pin.IN, Pin.PULL_DOWN)
-        self.timer = Timer()
-        self.timer.init(freq=readout,
+        self.read_frequency = readout
+        period = int(1000 / readout)  # in ms
+
+        # start a timer which periodically reads the counter
+        timer = Timer(-1)
+        timer.init(period=period,
                         mode=Timer.PERIODIC,
                         callback=self.timer_callback)
         self.counter = 0
 
         # Setup interrupt for rising edges
+        self.pin = Pin(GPIO_PIN, Pin.IN, Pin.PULL_DOWN)
         self.pin.irq(trigger=Pin.IRQ_RISING, handler=self.irq_handler)
 
     def irq_handler(self, pin):
         self.counter += 1
 
-
     def timer_callback(self, timer):
-        # frequency = counts / (timer period in ms) / 1000
-        self.frequency = self.counter / timer.period() / 1000
+        # frequency in Hz
+        self.frequency = self.counter * self.read_frequency
         self.counter = 0
+
+    def get_frequency(self):
+        frequency = self.frequency.copy()
+        return frequency
 
 
 class RPMCounter:
