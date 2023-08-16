@@ -131,7 +131,8 @@ class Ex:
             elif category == 'CAPACITY':
                 pass
             elif category == 'RPM':
-                pass
+                rpm = current_sensor.rpm
+                data = {'RPM': rpm}
             elif category == 'GPS':
                 data = {'GPSLAT',
                                 self.GPStoEX(current_sensor.longitude, longitude=True),
