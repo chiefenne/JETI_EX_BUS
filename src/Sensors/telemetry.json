@@ -15,14 +15,14 @@
     },
     "ALTITUDE": {
         "id": 2,
-        "description": "Altitude",
+        "description": "Rel. altit",
         "unit": "m",
         "data_type": 1,
         "precision": 1
     },
     "MAX_ALTITUDE": {
         "id": 3,
-        "description": "Temperature",
+        "description": "Max. altitude",
         "unit": "m",
         "data_type": 1,
         "precision": 1
@@ -36,7 +36,7 @@
     },
     "MAX_CLIMB": {
         "id": 5,
-        "description": "Maximum climb",
+        "description": "Max. climb",
         "unit": "m/s",
         "data_type": 1,
         "precision": 1
@@ -65,7 +65,7 @@
     "RPM": {
         "id": 9,
         "description": "RPM",
-        "unit": "1/min",
+        "unit": "rpm",
         "data_type": 4,
         "precision": 1
     },

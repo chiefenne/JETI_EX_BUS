@@ -41,6 +41,10 @@
       "github:chiefenne/JETI_EX_BUS/src/Sensors/__init__.py"
     ],
     [
+      "Sensors/rpm_demo.py",
+      "github:chiefenne/JETI_EX_BUS/src/Sensors/rpm_demo.py"
+    ],
+    [
       "Sensors/telemetry.json",
       "github:chiefenne/JETI_EX_BUS/src/Sensors/telemetry.json"
     ],
@@ -81,6 +85,10 @@
       "github:chiefenne/JETI_EX_BUS/src/Utils/round_robin.py"
     ],
     [
+      "Utils/frequency_rpm_counter.py",
+      "github:chiefenne/JETI_EX_BUS/src/Utils/frequency_rpm_counter.py"
+    ],
+    [
       "Utils/Streamrecorder.py",
       "github:chiefenne/JETI_EX_BUS/src/Utils/Streamrecorder.py"
     ],
@@ -91,10 +99,6 @@
     [
       "Utils/status.py",
       "github:chiefenne/JETI_EX_BUS/src/Utils/status.py"
-    ],
-    [
-      "Utils/frequency_counter.py.py",
-      "github:chiefenne/JETI_EX_BUS/src/Utils/frequency_counter.py.py"
     ],
     [
       "Jeti/CRC16.py",
