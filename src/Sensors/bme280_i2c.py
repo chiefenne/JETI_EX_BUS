@@ -668,7 +668,7 @@ class BME280_I2C:
 
         # calculate altitude
         self.altitude = self.calc_altitude(self.pressure)
-        self.altitude = self.altitude_filter.update(self.altitude)  # filter the altitude signal
+        # self.altitude = self.altitude_filter.update(self.altitude)  # filter the altitude signal
         self.relative_altitude = self.altitude - self.initial_altitude
 
         return self.pressure, \
