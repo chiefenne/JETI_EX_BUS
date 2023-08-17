@@ -56,7 +56,7 @@ class Sensors:
         self.arm()
 
         # test GPIO, rpm counter
-        self.test()
+        # self.test()
  
         # number of sensors attached
         message = 'Number of sensors attached: {}'.format(len(self.sensors))
