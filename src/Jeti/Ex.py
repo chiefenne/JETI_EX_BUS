@@ -97,6 +97,7 @@ class Ex:
         for label in labels:
             # frames for device, labels and units
             self.dev_labels_units.append(self.exbus_frame(frametype=0, label=label))
+        self.n_labels = len(labels)
         self.exbus_device_ready = True
         self.lock.release()
 
