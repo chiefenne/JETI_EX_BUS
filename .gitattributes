@@ -1,0 +1,2 @@
+# reclassify Jupyter notebooks as Python for the repo language detection
+*.ipynb linguist-language=Python
