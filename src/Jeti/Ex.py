@@ -97,25 +97,23 @@ class Ex:
         for label in labels:
             # frames for device, labels and units
             self.dev_labels_units.append(self.exbus_frame(frametype=0, label=label))
+        self.n_labels = len(labels)
         self.exbus_device_ready = True
         self.lock.release()
 
         # acquire sensor data and prepare EX BUS telemetry
-        while status.main_thread_running:
+        while True:
 
             # cycle infinitely through all sensors
-            self.current_sensor = next(cycle_sensors)
-            current_sensor = self.current_sensor # speed up object access
-            category = current_sensor.category # speed up object access
+            current_sensor = next(cycle_sensors)
+            category = current_sensor.category # cache variable
 
             # collect data from currently selected sensor
-            # the "read_jeti" method must be implemented sensor specific
-            # see Sensors/bme280_i2c.py
             current_sensor.read_jeti()
 
             # update data frame (new sensor data)
             if category == 'PRESSURE':
-                pressure = current_sensor.pressure / 100.0
+                pressure = current_sensor.pressure / 100.0 # convert to hPa (mbar)
                 temperature = current_sensor.temperature
                 relative_altitude = current_sensor.relative_altitude
                 # variometer
@@ -149,8 +147,6 @@ class Ex:
             self.exbus_data = self.exbus_frame(frametype=const(1), data=data) # data
             self.exbus_data_ready = True
             self.lock.release()
-
-        return
 
     @micropython.native
     def exbus_frame(self, frametype=None, label=None, data=None):
@@ -365,8 +361,8 @@ class Ex:
 
         # calculate delta's for gradient
         # use ticks_diff to produce correct result (when timer overflows)
-        self.vario_time = time.ticks_ms()
-        dt = time.ticks_diff(self.vario_time, self.vario_time_old) / 1000.0
+        vario_time = time.ticks_ms()
+        dt = time.ticks_diff(vario_time, self.vario_time_old) / 1000.0
         dz = altitude - self.last_altitude
 
         # calculate the climbrate
@@ -383,7 +379,7 @@ class Ex:
             climbrate = climbrate_raw
 
         # store data for next iteration
-        self.vario_time_old = self.vario_time
+        self.vario_time_old = vario_time
         self.last_altitude = altitude
         self.last_climbrate = climbrate
 

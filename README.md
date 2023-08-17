@@ -307,11 +307,14 @@ See [EX_Bus_stream.txt](https://github.com/chiefenne/JETI_EX_BUS/blob/main/docs/
 
 ## Credits
 
-Apart from the JETI telemetry documentation, thev code of this repo has learned from many sources. 
+Apart from the JETI telemetry documentation, the code of this repo has learned from many sources. 
 
 
-Following sources were most helpful:
+Following sources were most helpful (without those I couldn't have done this at all):
+- [MicroPython docs](https://docs.micropython.org/en/v1.20.0/)
+- [MicroPython forum](https://github.com/orgs/micropython/discussions)
 - [Sepp62](https://github.com/Sepp62/JetiExBus)
+- [nichtgedacht](https://github.com/nichtgedacht/JetiExBus)
 - [nightflyer88](https://github.com/nightflyer88/Jeti_VarioGPS-Sensor)
 - [Pulsar07](https://github.com/Pulsar07/Jeti_VarioGPS-Sensor)
 - [Betaflight Jeti telemetry](https://github.com/betaflight/betaflight/blob/master/src/main/telemetry/jetiexbus.c)

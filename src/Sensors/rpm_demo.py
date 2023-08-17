@@ -5,6 +5,16 @@ from Utils.frequency_rpm_counter import FrequencyCounter
 
 
 class RPMDemo:
+    """
+    A class that simulates RPM readings from a frequency counter.
+
+    Args:
+    pinstr (str): A string representing the GPIO pin number.
+
+    Attributes:
+    fc (FrequencyCounter): A frequency counter object.
+    rpm (int): The simulated RPM value.
+    """
 
     def __init__(self, pinstr) -> None:
         
@@ -16,6 +26,12 @@ class RPMDemo:
         self.fc = FrequencyCounter(GPIO_pin, readout=read_per_second)
         
     def read_jeti(self):
+        """
+        Simulates RPM readings from a frequency counter.
+
+        Returns:
+        int: The simulated RPM value.
+        """
 
         # self.rpm = self.fc.get_frequency()
 

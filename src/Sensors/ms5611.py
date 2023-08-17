@@ -310,7 +310,7 @@ class MS5611:
         self.pressure = self.pressure_filter.update(pressure)  # filter the pressure signal
 
         self.altitude = self.calc_altitude(self.pressure)
-        self.altitude = self.altitude_filter.update(self.altitude)  # filter the altitude signal
+        # self.altitude = self.altitude_filter.update(self.altitude)  # filter the altitude signal
 
         self.relative_altitude = self.altitude - self.initial_altitude
 
