@@ -101,7 +101,9 @@ class BME280_I2C:
             raise ValueError('A configured I2C object is required.')
         self.i2c = i2c
 
-        self.__sealevel = 101325.0
+        # for initial relative altitude calibration
+        self.first = True
+        self.counter = 0
 
         # self._read_chip_id()
         self._soft_reset()
@@ -138,7 +140,7 @@ class BME280_I2C:
         vario = {
             'filter': BME280_FILTER_COEFF_16,
             'standby_time': BME280_STANDBY_TIME_500_US,
-            'osr_p': BME280_OVERSAMPLING_8X,
+            'osr_p': BME280_OVERSAMPLING_16X,
             'osr_t': BME280_OVERSAMPLING_1X,
             'osr_h': BME280_NO_OVERSAMPLING}
 
@@ -149,28 +151,25 @@ class BME280_I2C:
 
         # store initial altitude for relative altitude measurements
         # make an initial averaged measurement
-        measurement = self.get_measurement()
-        num = 30
-        self.initial_altitude = 0.0
+        measurement = self.get_measurement()  # dummy measurement
+        num = 100
         self.initial_pressure = 0.0
         for _ in range(num):
             measurement = self.get_measurement()
             self.initial_pressure += measurement['pressure']
-            self.initial_altitude += self.calc_altitude(measurement['pressure'])
-            sleep_ms(20)
+            sleep_ms(30)
         self.initial_pressure /= num
-        self.initial_altitude /= num
 
         # signal filter
-        alpha = 0.08
+        alpha = 0.05
         beta = 0.003
         self.pressure_filter = AlphaBetaFilter(alpha=alpha,
                                                beta=beta,
                                                initial_value=self.initial_pressure,
                                                initial_velocity=0,
                                                delta_t=1)
-        alpha = 0.15
-        beta = 0.001
+        alpha = 0.05
+        beta = 0.003
         self.altitude_filter = AlphaBetaFilter(alpha=alpha,
                                                beta=beta,
                                                initial_value=self.calc_altitude(self.initial_pressure),
@@ -668,7 +667,16 @@ class BME280_I2C:
 
         # calculate altitude
         self.altitude = self.calc_altitude(self.pressure)
-        # self.altitude = self.altitude_filter.update(self.altitude)  # filter the altitude signal
+        self.altitude = self.altitude_filter.update(self.altitude)  # filter the altitude signal
+
+        # set initial altitude
+        if self.first:
+            if self.counter < 200:
+                self.initial_altitude = self.altitude
+                self.counter += 1
+            else:
+                self.first = False
+
         self.relative_altitude = self.altitude - self.initial_altitude
 
         return self.pressure, \
