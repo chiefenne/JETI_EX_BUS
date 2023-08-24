@@ -58,7 +58,7 @@ class CBits:
         self.bit_mask = ((1 << num_bits) - 1) << start_bit
         self.register = register_address
         self.star_bit = start_bit
-        self.lenght = register_width
+        self.length = register_width
         self.lsb_first = lsb_first
 
     def __get__(
@@ -66,7 +66,7 @@ class CBits:
         obj,
         objtype=None,
     ) -> int:
-        mem_value = obj._i2c.readfrom_mem(obj._address, self.register, self.lenght)
+        mem_value = obj._i2c.readfrom_mem(obj._address, self.register, self.length)
 
         reg = 0
         order = range(len(mem_value) - 1, -1, -1)
@@ -80,7 +80,7 @@ class CBits:
         return reg
 
     def __set__(self, obj, value: int) -> None:
-        memory_value = obj._i2c.readfrom_mem(obj._address, self.register, self.lenght)
+        memory_value = obj._i2c.readfrom_mem(obj._address, self.register, self.length)
 
         reg = 0
         order = range(len(memory_value) - 1, -1, -1)
@@ -92,7 +92,7 @@ class CBits:
 
         value <<= self.star_bit
         reg |= value
-        reg = reg.to_bytes(self.lenght, "big")
+        reg = reg.to_bytes(self.length, "big")
 
         obj._i2c.writeto_mem(obj._address, self.register, reg)
 
@@ -105,25 +105,25 @@ class RegisterStruct:
     def __init__(self, register_address: int, form: str) -> None:
         self.format = form
         self.register = register_address
-        self.lenght = struct.calcsize(form)
+        self.length = struct.calcsize(form)
 
     def __get__(
         self,
         obj,
         objtype=None,
     ):
-        if self.lenght <= 2:
+        if self.length <= 2:
             value = struct.unpack(
                 self.format,
                 memoryview(
-                    obj._i2c.readfrom_mem(obj._address, self.register, self.lenght)
+                    obj._i2c.readfrom_mem(obj._address, self.register, self.length)
                 ),
             )[0]
         else:
             value = struct.unpack(
                 self.format,
                 memoryview(
-                    obj._i2c.readfrom_mem(obj._address, self.register, self.lenght)
+                    obj._i2c.readfrom_mem(obj._address, self.register, self.length)
                 ),
             )
         return value
