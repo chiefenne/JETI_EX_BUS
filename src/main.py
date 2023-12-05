@@ -34,6 +34,7 @@ Date: 04-2021
 # are stripped down in MicroPython to be efficient on microcontrollers
 import usys as sys
 import uos as os
+import machine
 from machine import Pin
 import _thread
 
@@ -49,6 +50,9 @@ from Utils.Streamrecorder import saveStream
 
 # setup a logger for the REPL
 logger = Logger(prestring='JETI MAIN')
+
+# overclock the microcontroller (default is 125 MHz)
+# machine.freq(250000000)
 
 # lock object used to prevent other cores from accessing shared resources
 lock = _thread.allocate_lock()
