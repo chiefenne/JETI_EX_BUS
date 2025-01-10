@@ -21,7 +21,7 @@ if 'rp2' in sys.platform:
 elif 'esp32' in sys.platform:
     overclock = True
 elif 'samd' in sys.platform:
-    freq(48_000_000)
+    pass
 else:
     print(f'JETI BOOT - INFO: Unknown platform: {sys.platform}')
 
