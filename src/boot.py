@@ -14,26 +14,23 @@ print('JETI BOOT - INFO: Platform:', sys.platform)
 print('JETI BOOT - INFO: Operating system:', sys.version)
 print('JETI BOOT - INFO: Underlying machine:', sys.implementation._machine)
 
-# overclock the CPU
 overclock = False
 
-# frequency of the CPU
 if 'rp2' in sys.platform:
-    freq(125_000_000)
     overclock = True
-if 'esp32' in sys.platform:
-    freq(160_000_000)
+elif 'esp32' in sys.platform:
     overclock = True
-if 'samd' in sys.platform:
+elif 'samd' in sys.platform:
     freq(48_000_000)
-print('JETI BOOT - INFO: CPU frequency (MHz):', freq() / 1_000_000)
+else:
+    print(f'JETI BOOT - INFO: Unknown platform: {sys.platform}')
+
+print(f'JETI BOOT - INFO: CPU frequency (MHz): {freq() / 1_000_000}')
 
 if overclock:
-    if 'rp2' in sys.platform:
+    if 'rp2' in sys.platform or 'esp32' in sys.platform:
         freq(240_000_000)
-    if 'esp32' in sys.platform:
-        freq(240_000_000)
-    print('JETI BOOT - INFO: CPU overclocked frequency (MHz):', freq() / 1_000_000)
+        print(f'JETI BOOT - INFO: CPU overclocked frequency (MHz): {freq() / 1_000_000}')
 
 # blink led 's' seconds with frequency 'hz'
 def blink(led, s, hz):
