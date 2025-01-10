@@ -32,46 +32,41 @@ if overclock:
         freq(240_000_000)
         print(f'JETI BOOT - INFO: CPU overclocked frequency (MHz): {freq() / 1_000_000}')
 
-# blink led 's' seconds with frequency 'hz'
-def blink(led, s, hz):
-    for i in range(s*hz):
-        led.value(not led.value()) # toggle led
-        time.sleep(1/hz)
-     
-    # mak sure led is off
-    led.value(1)
+def blink(led, seconds, hz):
+    """
+    Blink LED for 'seconds' and 'hz' frequency.
+    """
+    if hz <= 0 or seconds <= 0:
+        return
+    interval = 1 / hz
+    for _ in range(int(seconds * hz)):
+        led.value(not led.value())
+        time.sleep(interval)
+    led.value(1)  # ensure LED is off
 
-# switch off leds on TINY 2040 (they are on by default)
+# attempt to switch off and blink LEDs; pin assignments may differ across rp2 boards
 if 'rp2' in sys.platform:
+    # define defaults, override externally if needed
+    rp2_led_pins = {'r': 18, 'g': 19, 'b': 20}
     try:
-        ledr = Pin(18, Pin.OUT)
-        ledg = Pin(19, Pin.OUT)
-        ledb = Pin(20, Pin.OUT)
-        ledr.value(1)
-        ledg.value(1)
-        ledb.value(1)
-
-        # blink led to show we are booting
+        ledr = Pin(rp2_led_pins['r'], Pin.OUT)
+        ledg = Pin(rp2_led_pins['g'], Pin.OUT)
+        ledb = Pin(rp2_led_pins['b'], Pin.OUT)
+        for led in (ledr, ledg, ledb):
+            led.value(1)
         blink(ledr, 3, 10)
-
-        # switch on green led to show we are active
-        ledg.value(0)
+        ledg.value(0)  # indicate active
     except:
-        print('JETI BOOT - ERROR: No LED found on RP2040 board')
+        print("JETI BOOT - ERROR: LED setup failed on RP2040")
 
-if 'esp32' in sys.platform:
-
+elif 'esp32' in sys.platform:
     try:
-        # ESP32 has a built-in led at pin
+        # default built-in LED on some boards is GPIO2, others vary
         led = Pin(21, Pin.OUT)
-
-        # blink  led to show we are booting
         blink(led, 5, 4)
-
-        # switch on led to show we are active
-        led.value(0)
+        led.value(0)  # indicate active
     except:
-        print('JETI BOOT - ERROR: No LED found on ESP32 board')
+        print("JETI BOOT - ERROR: LED setup failed on ESP32")
 
 # main script to run after this one
 # if not specified "main.py" will be executed
