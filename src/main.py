@@ -51,15 +51,22 @@ from Utils.Streamrecorder import saveStream
 # setup a logger for the REPL
 logger = Logger(prestring='JETI MAIN')
 
-# overclock the microcontroller (default is 125 MHz)
-# machine.freq(250000000)
-
 # lock object used to prevent other cores from accessing shared resources
 lock = _thread.allocate_lock()
 
 # Serial connection bewtween Jeti receiver and microcontroller
 # defaults: baudrate=125000, 8-N-1
-s = Serial(port=0, baudrate=125000, bits=8, parity=None, stop=1)
+#    TINY2040 board: port=0
+#    ESP32 board: port=1
+if 'rp2' in sys.platform:
+    port = 0
+if 'esp32' in sys.platform:
+    port = 1
+
+# log message to inform the user about the serial port
+logger.log('info', 'Connecting serial on port: {}'.format(port))
+
+s = Serial(port=port, baudrate=125000, bits=8, parity=None, stop=1)
 serial = s.connect()
 
 # write 3 seconds of the serial stream to a text file for debugging purposes
@@ -71,14 +78,14 @@ if DEBUG:
 
 # setup the I2C bus (pins are board specific)
 #    TINY2040 board: GPIO6, GPIO7 at port 1 (id=1)
-i2c = I2C_bus(1, scl=Pin(7), sda=Pin(6), freq=400000)
-
-# offer a demo sensor if no sensor is attached to the microcontroller
-# works if a file named 'demo.txt' is present
-demo = 'demo.txt' in os.listdir()
+#    ESP32 board: GPIO5, GPIO6 at port ??
+if 'rp2' in sys.platform:
+    i2c = I2C_bus(1, scl=Pin(7), sda=Pin(6), freq=400000)
+if 'esp32' in sys.platform:
+    i2c = I2C_bus(1, scl=Pin(6), sda=Pin(5), freq=400000)
 
 # scan the I2C bus for sensors
-addresses = i2c.scan(demo=demo)
+addresses = i2c.scan()
 
 # check for sensors attached to the microcontroller
 sensors = Sensors(addresses, i2c.i2c)
