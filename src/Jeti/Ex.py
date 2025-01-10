@@ -488,16 +488,3 @@ class Ex:
         value_ex = ustruct.pack('bbbb', lo_byte, mid_byte, hi_byte, ex_byte)
 
         return value_ex
-
-    def dummy(self):
-        '''Dummy function for checking the lock.
-        Stay locked for 5 seconds.'''
-        self.logger.log('debug', 'core 1: EX, trying to acquire lock')
-        start = time.ticks_us()
-        self.lock.acquire()
-        time.sleep_ms(5000)
-        self.lock.release()
-        end = time.ticks_us()
-        diff = time.ticks_diff(end, start)
-        self.logger.log(
-            'debug', 'core 1: EX, lock released after {} us'.format(diff))
