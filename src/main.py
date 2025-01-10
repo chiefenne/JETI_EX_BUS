@@ -56,10 +56,10 @@ lock = _thread.allocate_lock()
 
 # Serial connection bewtween Jeti receiver and microcontroller
 # defaults: baudrate=125000, 8-N-1
-#    TINY2040 board: port=0
-#    ESP32 board: port=1
-if 'rp2' in sys.platform:
-    port = 0
+# Default to port 0 (e.g., for RP2040-based boards)
+port = 0
+
+# Override for other platforms if needed, for example ESP32
 if 'esp32' in sys.platform:
     port = 1
 
