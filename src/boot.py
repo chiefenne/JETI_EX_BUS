@@ -46,15 +46,16 @@ def blink(led, seconds, hz):
 
 # attempt to switch off and blink LEDs; pin assignments may differ across rp2 boards
 if 'rp2' in sys.platform:
-    # define defaults, override externally if needed
-    rp2_led_pins = {'r': 18, 'g': 19, 'b': 20}
+    # SEEED XIA RP2040 RGB pins; NeoPixel LED is 11 (power) and 12 (data)
+    rp2_led_pins = {'r': 17, 'g': 16, 'b': 25}
     try:
         ledr = Pin(rp2_led_pins['r'], Pin.OUT)
         ledg = Pin(rp2_led_pins['g'], Pin.OUT)
         ledb = Pin(rp2_led_pins['b'], Pin.OUT)
         for led in (ledr, ledg, ledb):
             led.value(1)
-        blink(ledr, 3, 10)
+        blink(ledr, 4, 10)
+        blink(ledg, 4, 5)
         ledg.value(0)  # indicate active
     except:
         print("JETI BOOT - ERROR: LED setup failed on RP2040")
