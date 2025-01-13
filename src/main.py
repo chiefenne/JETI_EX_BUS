@@ -8,13 +8,13 @@ Source code and documentation:
 
 
 JETI Ex Bus and JETI Ex specification:
-    http://www.jetimodel.com/en/Telemetry-Protocol/   
+    http://www.jetimodel.com/en/Telemetry-Protocol/
     EX_Bus_protokol_v121_EN.pdf
     JETI_Telem_protocol_EN_V1.07.pdf
 
 MicroPython:
    https://micropython.org/
-   https://github.com/micropython/micropython    
+   https://github.com/micropython/micropython
 
 
 This module holds the overall program logic. It initializes the serial connection
@@ -26,7 +26,8 @@ After that it starts an endless loop to handle all data streams between the devi
 
 
 Author: Dipl.-Ing. A. Ennemoser
-Date: 04-2021
+Date: 01-2025
+Version: 1.0 dev
 
 '''
 
@@ -110,10 +111,10 @@ def core1():
 
     # inform the user that the second thread is stopped
     logger.log('info', 'Stopping second thread on core 1')
- 
+
 # start the second thread on core 1
 logger.log('info', 'Starting second thread on core 1')
-second_thread = _thread.start_new_thread(core1, ())    
+second_thread = _thread.start_new_thread(core1, ())
 
 try:
     # run the main loop on core 0
