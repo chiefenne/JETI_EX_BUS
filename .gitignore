@@ -1,6 +1,7 @@
 #
 .DS_Store
 .micropico
+.vscode
 Diverses
 Fritzing
 howto_connect_to_Pyboard_REPL.txt
