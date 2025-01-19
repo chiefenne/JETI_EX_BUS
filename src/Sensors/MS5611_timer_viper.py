@@ -220,10 +220,6 @@ class MS5611:
         return temp, press
 
     @micropython.native
-    def _calc_altitude(self, pressure):
-        return 44330.76923 * (1.0 - (pressure / 101325.0)**0.19025954)
-
-    @micropython.native
     def read_jeti(self):
         '''Read sensor data'''
         temperature, pressure = self._read_raw_measurements()
