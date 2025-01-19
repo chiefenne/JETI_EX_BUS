@@ -155,14 +155,14 @@ class MS5611:
         # store initial altitude for relative altitude measurements
         # make an initial averaged measurement
         dummy, pressure = self.measurements # dummy measurement
-        num = 30
+        num = 10
         self.initial_altitude = 0.0
         self.initial_pressure = 0.0
         for _ in range(num):
             dummy, pressure = self.measurements
             self.initial_pressure += pressure
             self.initial_altitude += self.calc_altitude(pressure)
-            time.sleep_ms(20)
+            time.sleep_ms(10)
         self.initial_pressure /= num
         self.initial_altitude /= num
 
