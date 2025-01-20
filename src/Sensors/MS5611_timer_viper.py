@@ -37,13 +37,11 @@ class MS5611:
         self.c4 = self._c4
         self.c5 = self._c5
         self.c6 = self._c6
-        self._temp_command = temp_command_values[temperature_oversample_rate]
-        self._pressure_command = pressure_command_values[pressure_oversample_rate]
+        self._temp_command = msc.temp_command_values[temperature_oversample_rate]
+        self._pressure_command = msc.pressure_command_values[pressure_oversample_rate]
 
-        self._temp_osr = temperature_oversample_rate
-        self._press_osr = pressure_oversample_rate
-        self.conversion_time_temp = conversion_times[temperature_oversample_rate]
-        self.conversion_time_press = conversion_times[pressure_oversample_rate]
+        self.conversion_time_temp = msc.conversion_times[temperature_oversample_rate]
+        self.conversion_time_press = msc.conversion_times[pressure_oversample_rate]
 
         # Circular buffer for storing results
         self.buffer_size = 5
@@ -53,7 +51,8 @@ class MS5611:
 
         # Timer setup
         self.timer = machine.Timer()
-        self.timer_period = (self.conversion_time_temp + self.conversion_time_press) # Total period in milliseconds
+        self.timer_period = (self.conversion_time_temp +
+                             self.conversion_time_press)
         self.timer.init(period=self.timer_period, mode=machine.Timer.PERIODIC, callback=self._timer_callback)
 
         self.state = 0 # 0 for temperature, 1 for pressure
