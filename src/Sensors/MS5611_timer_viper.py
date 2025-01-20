@@ -2,7 +2,6 @@ import _thread
 import micropython
 from micropython import const
 import struct
-from Sensors.i2c_helpers import CBits, RegisterStruct
 import machine
 
 try:
@@ -10,84 +9,25 @@ try:
 except ImportError:
     pass
 
+from Sensors.i2c_helpers import CBits, RegisterStruct
+import MS5611_constants as msc
 
-_CAL_DATA_C1 = const(0xA2)
-_CAL_DATA_C2 = const(0xA4)
-_CAL_DATA_C3 = const(0xA6)
-_CAL_DATA_C4 = const(0xA8)
-_CAL_DATA_C5 = const(0xAA)
-_CAL_DATA_C6 = const(0xAC)
-_DATA = const(0x00)
-
-TEMP_OSR_256 = const(0)
-TEMP_OSR_512 = const(1)
-TEMP_OSR_1024 = const(2)
-TEMP_OSR_2048 = const(3)
-TEMP_OSR_4096 = const(4)
-temperature_oversample_rate_values = (
-    TEMP_OSR_256,
-    TEMP_OSR_512,
-    TEMP_OSR_1024,
-    TEMP_OSR_2048,
-    TEMP_OSR_4096,
-)
-temp_command_values = {
-    TEMP_OSR_256: 0x50,
-    TEMP_OSR_512: 0x52,
-    TEMP_OSR_1024: 0x54,
-    TEMP_OSR_2048: 0x56,
-    TEMP_OSR_4096: 0x58,
-}
-
-PRESS_OSR_256 = const(0)
-PRESS_OSR_512 = const(1)
-PRESS_OSR_1024 = const(2)
-PRESS_OSR_2048 = const(3)
-PRESS_OSR_4096 = const(4)
-pressure_oversample_rate_values = (
-    PRESS_OSR_256,
-    PRESS_OSR_512,
-    PRESS_OSR_1024,
-    PRESS_OSR_2048,
-    PRESS_OSR_4096,
-)
-pressure_command_values = {
-    PRESS_OSR_256: 0x40,
-    PRESS_OSR_512: 0x42,
-    PRESS_OSR_1024: 0x44,
-    PRESS_OSR_2048: 0x46,
-    PRESS_OSR_4096: 0x48,
-}
-
-# Conversion times for each oversampling rate (in milliseconds)
-conversion_times = {
-    TEMP_OSR_256: 1,
-    TEMP_OSR_512: 2,
-    TEMP_OSR_1024: 3,
-    TEMP_OSR_2048: 5,
-    TEMP_OSR_4096: 10,
-    PRESS_OSR_256: 1,
-    PRESS_OSR_512: 2,
-    PRESS_OSR_1024: 3,
-    PRESS_OSR_2048: 5,
-    PRESS_OSR_4096: 10,
-}
 
 _POW_2_31 = 2147483648.0
 _POW_2_21 = 2097152.0
 
 
 class MS5611:
-    _c1 = RegisterStruct(_CAL_DATA_C1, ">H")
-    _c2 = RegisterStruct(_CAL_DATA_C2, ">H")
-    _c3 = RegisterStruct(_CAL_DATA_C3, ">H")
-    _c4 = RegisterStruct(_CAL_DATA_C4, ">H")
-    _c5 = RegisterStruct(_CAL_DATA_C5, ">H")
-    _c6 = RegisterStruct(_CAL_DATA_C6, ">H")
+    _c1 = RegisterStruct(msc._CAL_DATA_C1, ">H")
+    _c2 = RegisterStruct(msc._CAL_DATA_C2, ">H")
+    _c3 = RegisterStruct(msc._CAL_DATA_C3, ">H")
+    _c4 = RegisterStruct(msc._CAL_DATA_C4, ">H")
+    _c5 = RegisterStruct(msc._CAL_DATA_C5, ">H")
+    _c6 = RegisterStruct(msc._CAL_DATA_C6, ">H")
 
     def __init__(self, i2c, address: int = 0x77,
-                 temperature_oversample_rate=TEMP_OSR_4096,
-                 pressure_oversample_rate=PRESS_OSR_4096) -> None:
+                 temperature_oversample_rate=msc.TEMP_OSR_4096,
+                 pressure_oversample_rate=msc.PRESS_OSR_4096) -> None:
         self._i2c = i2c
         self._address = address
 
@@ -128,7 +68,7 @@ class MS5611:
         elif self.state == 1:
             # Read temperature
             temp_buf = bytearray(3)
-            self._i2c.readfrom_mem_into(self._address, _DATA, temp_buf)
+            self._i2c.readfrom_mem_into(self._address, msc._DATA, temp_buf)
             self.d2 = struct.unpack(">I", b'\x00' + temp_buf)[0]
             # Start pressure conversion
             self._i2c.writeto(self._address, bytes([self._pressure_command]))
@@ -136,7 +76,7 @@ class MS5611:
         elif self.state == 2:
             # Read pressure
             press_buf = bytearray(3)
-            self._i2c.readfrom_mem_into(self._address, _DATA, press_buf)
+            self._i2c.readfrom_mem_into(self._address, msc._DATA, press_buf)
             self.d1 = struct.unpack(">I", b'\x00' + press_buf)[0]
             self._calculate_and_store()
             self.state = 0
