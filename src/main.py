@@ -47,9 +47,6 @@ from Utils import status
 from Utils.Streamrecorder import saveStream
 
 
-# setup a status object to control the threads
-status = Status()
-
 # setup a logger for the REPL
 logger = Logger(prestring='JETI MAIN')
 
