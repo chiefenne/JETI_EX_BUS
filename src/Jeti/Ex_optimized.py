@@ -195,10 +195,10 @@ class Ex:
 
         if frametype == const(1): # data
             # put sensor data into ex frame
-            data, length = self.Data(data=data)
+            data, length = self.Data(data)
         elif frametype == const(0): # text
             # put text data into ex frame
-            data, length = self.Text(label=label)
+            data, length = self.Text(label)
         elif frametype == const(2): # message
             # put message data into ex frame
             message = 'Greetings from chiefenne'
@@ -260,41 +260,41 @@ class Ex:
         return header
 
     @micropython.native
-    def Data(self, data=None):
+    def Data(self, data):
         '''EX data packet. Maximum length including the header and crc8 is 29 bytes.'''
 
         exdata = bytearray()
 
-        # speed up obejct access
-        meta = self.sensors.meta
+        # speed up object access (cache object)
+        telemetry_metadata = self.sensors.telemetry_metadata
 
         for telemetry, value in data.items():
-            meta_tele = meta[telemetry] # speed up object access
+            telemetry_info = telemetry_metadata[telemetry] # speed up object access
             # compile 9th byte onwards of EX data specification
-            id = meta_tele['id'] << const(4)
-            data_type = meta_tele['data_type']
+            id = telemetry_info['id'] << const(4)
+            data_type = telemetry_info['data_type']
             # combine bits for id and data type
             exdata += ustruct.pack('B', id | data_type)
 
             # data of 1st telemetry value, converted to EX format
             # scale value based on precision and round it
             mult = -1 if value < 0 else 1
-            value_scaled = int(value * 10**meta_tele['precision'] + mult * 0.5)
+            value_scaled = int(value * 10**telemetry_info['precision'] + mult * 0.5)
             exdata += self.EncodeValue(value_scaled,
-                                     meta_tele['data_type'],
-                                     meta_tele['precision'])
+                                     telemetry_info['data_type'],
+                                     telemetry_info['precision'])
 
         return exdata, len(exdata)
 
     @micropython.native
-    def Text(self, label=None):
+    def Text(self, label):
         '''EX text packet. This transfers the sensor description and unit for
         one sensor value.
         Maximum length including the header and crc8 is 29 bytes.
         '''
 
-        # cache object
-        meta_label = self.sensors.meta[label]
+        # speed up object access (cache object)
+        meta_label = self.sensors.telemetry_metadata[label]
         id = meta_label['id']
         description = meta_label['description']
         unit = meta_label['unit']
