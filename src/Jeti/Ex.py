@@ -31,7 +31,7 @@ from Utils.alpha_beta_filter import AlphaBetaFilter
 
 
 class Ex:
-    '''Jeti EX protocol handler. 
+    '''Jeti EX protocol handler.
     '''
 
     def __init__(self, sensors, lock):
@@ -61,7 +61,7 @@ class Ex:
                                             initial_velocity=0,
                                             delta_t=1)
 
-        # initialize the EX BUS packet 
+        # initialize the EX BUS packet
         # needed for check in ExBus.py, set to 'True' in main.py
         self.exbus_data_ready = False
         self.exbus_device_ready = False
@@ -121,7 +121,7 @@ class Ex:
                                                   filter='alpha_beta')
                 self.max_altitude = max(self.max_altitude, altitude)
                 self.max_climb = max(self.max_climb, climb)
-                
+
                 data = {'PRESSURE': pressure,              # 3 bytes
                         'TEMPERATURE': temperature,        # 2 bytes
                         'CLIMB': climb,                    # 2 bytes
@@ -140,7 +140,7 @@ class Ex:
             elif category == 'GPS':
                 data = {'GPSLAT',
                                 self.GPStoEX(current_sensor.longitude, longitude=True),
-                                'GPSLON', 
+                                'GPSLON',
                                 self.GPStoEX(current_sensor.latitude, longitude=False)}
 
             self.lock.acquire()
@@ -168,7 +168,7 @@ class Ex:
 
         # EX bus packet length in bytes including the header and CRC
         exbus_packet += ustruct.pack('B', len_ex + const(8))
-        
+
         # put dummy id here; will be replaced by packet id later
         exbus_packet += b'\x00'
 
@@ -355,6 +355,28 @@ class Ex:
 
         return alarm, len(alarm)
 
+    def process_ms5611_data(realPressure_1, referencePressure_1, alfa_1, r_altitude0_1, r_altitude_1, factor, climb_1):
+        relativeAltitude_1 = ms5611_getAltitude(realPressure_1, referencePressure_1)
+
+        r_altitude0_1_new = r_altitude0_1 - alfa_1 * (r_altitude0_1 - relativeAltitude_1)
+        r_altitude_1_new = r_altitude_1 - alfa_1 * (r_altitude_1 - relativeAltitude_1)
+
+        climb0_1_new = (r_altitude0_1_new - r_altitude_1_new) * factor
+
+        dyn_alfa_1 = abs((climb_1 - climb0_1_new) / 0.4)
+        if dyn_alfa_1 >= 1:
+            dyn_alfa_1 = 1
+        climb_1_new = climb_1 - dyn_alfa_1 * (climb_1 - climb0_1_new)
+
+        SetSensorValue(ID_VARIOM, round(climb_1_new * 100), True)
+        SetSensorValue(ID_ALTITU, round(r_altitude0_1_new * 10), True)
+
+        return r_altitude0_1_new, r_altitude_1_new, climb_1_new
+
+    @micropython.native
+    def calc_altitude(self, pressure):
+        return 44330.76923 * (1.0 - (pressure / 101325.0)**0.19025954)
+
     @micropython.native
     def variometer(self, altitude, filter='alpha_beta'):
         '''Calculate the variometer value derived from the pressure sensor.'''
@@ -420,8 +442,8 @@ class Ex:
 
         Returns:
             value_ex : encoded value as bytes in little endian format
-        
-            
+
+
         Data type | Description |  Note
         ----------|-------------|---------------------------------------
             0     |   int6_t    |  Data type  6b (-31 ,31)
