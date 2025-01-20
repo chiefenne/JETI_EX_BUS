@@ -25,7 +25,6 @@ from micropython import const
 from Jeti import CRC8
 from Utils.Logger import Logger
 from Utils.round_robin import cycler
-from Utils import status
 from Utils.alpha_beta_filter_integer import AlphaBetaFilter
 
 class Ex:
