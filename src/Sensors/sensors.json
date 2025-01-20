@@ -28,7 +28,7 @@
     },
     "Pin26": {
         "name": "Demo RPM sensor at pin 26",
-        "manufacturer": "Seeed Studio",
+        "manufacturer": "EnneSoft by chiefenne",
         "description": "Frequency counter for rpm measurement",
         "module": "rpm_demo",
         "class": "RPMDemo",
