@@ -103,7 +103,7 @@ def core0():
         exbus.run_forever()
     except KeyboardInterrupt:
         logger.log('info', 'Keyboard interrupt on core 0')
-        logger.log('info', 'Stopping main thread on core 0')
+        logger.log('info', 'Exit program')
 
 # function which is run on core 1
 def core1():
@@ -113,7 +113,7 @@ def core1():
         ex.run_forever()
     except KeyboardInterrupt:
         logger.log('info', 'Keyboard interrupt on core 1')
-        logger.log('info', 'Stopping second thread on core 1')
+        logger.log('info', 'Exit program')
 
 # start the second thread on core 1
 logger.log('info', 'Starting second thread on core 1')
