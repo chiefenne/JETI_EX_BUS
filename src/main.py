@@ -34,8 +34,6 @@ Version: 1.0 dev
 # modules starting with 'u' are Python standard libraries which
 # are stripped down in MicroPython to be efficient on microcontrollers
 import usys as sys
-import uos as os
-import machine
 from machine import Pin
 import _thread
 
@@ -48,6 +46,9 @@ from Utils.Logger import Logger
 from Utils import status
 from Utils.Streamrecorder import saveStream
 
+
+# setup a status object to control the threads
+status = Status()
 
 # setup a logger for the REPL
 logger = Logger(prestring='JETI MAIN')
@@ -100,29 +101,27 @@ exbus = ExBus(serial, sensors, ex, lock)
 # function which is run on core 0
 def core0():
 
-    # run the main loop on core 0
-    exbus.run_forever()
+    try:
+        # run the main loop on core 0
+        exbus.run_forever()
+    except KeyboardInterrupt:
+        logger.log('info', 'Keyboard interrupt on core 0')
+        logger.log('info', 'Stopping main thread on core 0')
 
 # function which is run on core 1
 def core1():
 
-    # run the second thread on core 1
-    ex.run_forever()
-
-    # inform the user that the second thread is stopped
-    logger.log('info', 'Stopping second thread on core 1')
+    try:
+        # run the second thread on core 1
+        ex.run_forever()
+    except KeyboardInterrupt:
+        logger.log('info', 'Keyboard interrupt on core 1')
+        logger.log('info', 'Stopping second thread on core 1')
 
 # start the second thread on core 1
 logger.log('info', 'Starting second thread on core 1')
 second_thread = _thread.start_new_thread(core1, ())
 
-try:
-    # run the main loop on core 0
-    logger.log('info', 'Starting main loop on core 0')
-    core0()
-except KeyboardInterrupt:
-    status.main_thread_running = False
-    logger.log('info', 'Keyboard interrupt occurred')
-    logger.log('info', 'Stopping main thread on core 0')
-    # stop the main thread
-    _thread.exit()
+# run the main loop on core 0
+logger.log('info', 'Starting main loop on core 0')
+core0()
