@@ -95,24 +95,17 @@ ex = Ex(sensors, lock)
 # setup the JETI EX BUS protocol
 exbus = ExBus(serial, sensors, ex, lock)
 
-# function which is run on core 0
 def core0():
+    run_with_interrupt_handling(exbus, 'core 0')
 
-    try:
-        # run the main loop on core 0
-        exbus.run_forever()
-    except KeyboardInterrupt:
-        logger.log('info', 'Keyboard interrupt on core 0')
-        logger.log('info', 'Exit program')
-
-# function which is run on core 1
 def core1():
+    run_with_interrupt_handling(ex, 'core 1')
 
+def run_with_interrupt_handling(target, core_name):
     try:
-        # run the second thread on core 1
-        ex.run_forever()
+        target.run_forever()
     except KeyboardInterrupt:
-        logger.log('info', 'Keyboard interrupt on core 1')
+        logger.log('info', f'Keyboard interrupt on {core_name}')
         logger.log('info', 'Exit program')
 
 # start the second thread on core 1
