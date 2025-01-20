@@ -15,7 +15,7 @@ from Utils.Logger import Logger
 
 class Sensors:
     '''This class represents all sensors attached via I2C.
-    
+
     Sensors are connected with their 'default' I2C address. The addresses
     are stored in a dictionary. The dictionary key is the name of the sensor
     and the value is the I2C address.
@@ -33,7 +33,7 @@ class Sensors:
         # a second device can be used for another 15 sensors
         # another deviceID has to be set in this case
         with open('Sensors/telemetry.json') as f:
-            self.meta = json.load(f)
+            self.telemetry_metadata = json.load(f)
 
         self.sensors = list()
         self.addresses = addresses
@@ -57,7 +57,7 @@ class Sensors:
 
         # test GPIO, rpm counter
         # self.test()
- 
+
         # number of sensors attached
         message = 'Number of sensors attached: {}'.format(len(self.sensors))
         self.logger.log('info', message)
