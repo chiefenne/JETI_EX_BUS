@@ -1,9 +1,8 @@
-import time
+import _thread
 import micropython
 from micropython import const
 import struct
 from Sensors.i2c_helpers import CBits, RegisterStruct
-from Utils.alpha_beta_filter import AlphaBetaFilter
 import machine
 
 try:
@@ -112,36 +111,6 @@ class MS5611:
         self.buffer_index = 0
         self.buffer_lock = _thread.allocate_lock()
 
-        # Initial calibration and filtering setup...
-        dummy, pressure = self._read_raw_measurements()
-        time.sleep_ms(100)
-        num = 10
-        initial_altitude = 0.0
-        initial_pressure = 0.0
-        for _ in range(num):
-            dummy, pressure = self._read_raw_measurements()
-            initial_pressure += pressure
-            initial_altitude += self._calc_altitude(pressure)
-            time.sleep_ms(10)
-        initial_pressure /= num
-        initial_altitude /= num
-
-        alpha = 0.08
-        beta = 0.003
-        self.pressure_filter = AlphaBetaFilter(alpha=alpha,
-                                               beta=beta,
-                                               initial_value=initial_pressure,
-                                               initial_velocity=0,
-                                               delta_t=0.02)
-        alpha = 0.15
-        beta = 0.001
-        self.altitude_filter = AlphaBetaFilter(alpha=alpha,
-                                               beta=beta,
-                                               initial_value=self._calc_altitude(initial_pressure),
-                                               initial_velocity=0,
-                                               delta_t=0.02)
-        self.initial_altitude = initial_altitude
-
         # Timer setup
         self.timer = machine.Timer()
         self.timer_period = (self.conversion_time_temp + self.conversion_time_press) # Total period in milliseconds
@@ -221,4 +190,4 @@ class MS5611:
     def read_jeti(self):
         '''Read sensor data'''
         temperature, pressure = self._read_raw_measurements()
-        return pressure, temperature, self.initial_altitude
+        return pressure, temperature
