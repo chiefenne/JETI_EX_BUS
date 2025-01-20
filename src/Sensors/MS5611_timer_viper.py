@@ -11,8 +11,6 @@ try:
 except ImportError:
     pass
 
-__version__ = "0.0.0+auto.0"
-__repo__ = "https://github.com/jposada202020/MicroPython_MS5611.git"
 
 _CAL_DATA_C1 = const(0xA2)
 _CAL_DATA_C2 = const(0xA4)
@@ -94,12 +92,12 @@ class MS5611:
         self._i2c = i2c
         self._address = address
 
-        self._c1 = self._c1
-        self._c2 = self._c2
-        self._c3 = self._c3
-        self._c4 = self._c4
-        self._c5 = self._c5
-        self._c6 = self._c6
+        self.c1 = self._c1
+        self.c2 = self._c2
+        self.c3 = self._c3
+        self.c4 = self._c4
+        self.c5 = self._c5
+        self.c6 = self._c6
         self._temp_command = temp_command_values[temperature_oversample_rate]
         self._pressure_command = pressure_command_values[pressure_oversample_rate]
 
@@ -178,12 +176,12 @@ class MS5611:
     def _calculate_and_store(self) -> None:
         d1: int = self.d1
         d2: int = self.d2
-        c1: int = self._c1
-        c2: int = self._c2
-        c3: int = self._c3
-        c4: int = self._c4
-        c5: int = self._c5
-        c6: int = self._c6
+        c1: int = self.c1
+        c2: int = self.c2
+        c3: int = self.c3
+        c4: int = self.c4
+        c5: int = self.c5
+        c6: int = self.c6
         buffer_index: int = self.buffer_index
         buffer_size: int = self.buffer_size
 
