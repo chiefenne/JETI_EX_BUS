@@ -10,7 +10,7 @@ except ImportError:
     pass
 
 from Sensors.i2c_helpers import CBits, RegisterStruct
-import MS5611_constants as msc
+import ms5611_constants as msc
 
 
 _POW_2_31 = 2147483648.0
