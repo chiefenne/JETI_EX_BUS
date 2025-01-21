@@ -25,7 +25,8 @@ from micropython import const
 from Jeti import CRC8
 from Utils.Logger import Logger
 from Utils.round_robin import cycler
-from Utils.alpha_beta_filter_integer import AlphaBetaFilter
+from Utils.Filter import SignalFilter
+
 
 class Ex:
     '''Jeti EX protocol handler.
@@ -45,22 +46,12 @@ class Ex:
 
         # remember values for the variometer (integers now)
         self.last_altitude = 0
-        self.last_climbrate = 0
+        self.last_climbrate_cms = 0
         self.max_altitude = 0
         self.max_climb = 0
         self.vario_time_old = time.ticks_ms()
 
-        # exponential filter
-        self.vario_smoothing = 0.81
-
-        # alpha-beta filter
-        alpha = 0.0935 # OLD 0.02
-        beta = 0.001 # OLD 0.005
-        self.vario_filter = AlphaBetaFilter(alpha=alpha,
-                                            beta=beta,
-                                            initial_value=0,
-                                            initial_velocity=0,
-                                            delta_t=1)
+        self.filter = SignalFilter()
 
         # initialize the EX BUS packet
         # needed for check in ExBus.py, set to 'True' in main.py
@@ -117,10 +108,8 @@ class Ex:
             if category == 'PRESSURE':
                 pressure = current_sensor.pressure / 100.0 # convert to hPa (mbar)
                 temperature = current_sensor.temperature
-                relative_altitude = current_sensor.relative_altitude
                 # variometer
-                climb, altitude = self.variometer(relative_altitude,
-                                                  filter='alpha_beta')
+                climb, altitude = self.variometer(pressure)
                 self.max_altitude = max(self.max_altitude, altitude)
                 self.max_climb = max(self.max_climb, climb)
 
@@ -358,9 +347,11 @@ class Ex:
         return alarm, len(alarm)
 
     @micropython.native
-    def variometer(self, altitude_m, filter='alpha_beta'):
+    def variometer(self, pressure):
         '''Calculate the variometer value derived from the pressure sensor using integer arithmetic.'''
 
+        # get altitude from pressure
+        altitude_m = self.calc_altitude(pressure)
         altitude_cm = int(altitude_m * self.ALTITUDE_SCALE)
 
         # calculate delta's for gradient
@@ -376,22 +367,37 @@ class Ex:
         else:
             climbrate_raw_cms = 0
 
-        if filter == 'exponential':
-            # Smoothing filter for the climb rate (integer approximation)
-            climbrate_cms = climbrate_raw_cms + int(self.vario_smoothing * (self.last_climbrate - climbrate_raw_cms))
-        elif filter == 'alpha_beta':
-            # Adapt alpha-beta filter to work with integer climb rate
-            climbrate_cms = self.vario_filter.update(climbrate_raw_cms)
-        else:
-            climbrate_cms = climbrate_raw_cms
+        # Filter the climb rate
+        climbrate_cms = self.filter.double_exponential_filter(
+            altitude_cm,
+            0.1,
+            self.last_altitude,
+            self.last_climbrate_cms,
+            0.1,
+            climbrate_raw_cms,
+        )
 
         # Store data for next iteration
         self.vario_time_old = vario_time
         self.last_altitude = altitude_cm
-        self.last_climbrate = climbrate_cms
+        self.last_climbrate_cms = climbrate_cms
 
         # Return climb rate in m/s and altitude in meters (scaled back)
         return climbrate_cms / self.CLIMBRATE_SCALE, altitude_cm / self.ALTITUDE_SCALE
+
+    @micropython.native
+    def calc_altitude(self, pressure):
+        '''The following variables are constants for a standard atmosphere
+        t0 = 288.15 # sea level standard temperature (K)
+        p0 = 101325.0 # sea level standard atmospheric pressure (Pa)
+        gamma = 6.5 / 1000.0 # temperature lapse rate (K / m)
+        g = 9.80665 # gravity constant (m / s^2)
+        R = 8.314462618 # mol gas constant (J / (mol * K))
+        Md = 28.96546e-3 # dry air molar mass (kg / mol)
+        Rd =  R / Md
+        return (t0 / gamma) * (1.0 - (pressure / p0)**(Rd * gamma / g))
+        '''
+        return 44330.76923 * (1.0 - (pressure / 101325.0)**0.19025954)
 
     @micropython.native
     def SimpleText(self, text):
