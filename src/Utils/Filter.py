@@ -24,14 +24,14 @@ class SignalFilter:
         self.value = value + smoothing_factor * (self.value - value)
         return self.value
 
-    @micropython.native
+    @micropython.viper
     def double_exponential_filter(self,
-                                  altitude,
-                                  old_altitude_1,
-                                  old_altitude_2,
-                                  old_climb_rate,
-                                  tau_1, tau_2, dyn_alpha_divisor,
-                                  delta_t):
+                                        altitude: float,
+                                        old_altitude_1: float,
+                                        old_altitude_2: float,
+                                        old_climb_rate: float,
+                                        tau_1: float, tau_2: float, dyn_alpha_divisor: float,
+                                        dt_us: float) -> tuple[float, float, float]:
         """Applies a double exponential filter with dynamic smoothing to an input value.
         The altitude is smoothed using two exponential filters with different time constants.
         The difference between the two smoothed values divided by the difference in time constants
@@ -40,40 +40,13 @@ class SignalFilter:
         Source: https://github.com/nichtgedacht/Arduino-MS5611-Interrupt/blob/master/MS5611.cpp
         """
 
-        alfa_1 = delta_t / (tau_1 + delta_t)
-        alfa_2 = delta_t / (tau_2 + delta_t)
-
-        smoothed_altitude_1 = old_altitude_1 - alfa_1 * (old_altitude_1 - altitude)
-        smoothed_altitude_2 = old_altitude_2 - alfa_2 * (old_altitude_2 - altitude)
-
-        # calculate climb rate using gain derived from time constants
-        gain = 1 / (tau_2 - tau_1 + 1.e-9)
-        climb_rate = (smoothed_altitude_1 - smoothed_altitude_2) * gain
-
-        dyn_alpha = abs((old_climb_rate - climb_rate) / dyn_alpha_divisor)
-        dyn_alpha = min(dyn_alpha, 1.0)
-
-        smoothed_climb_rate = old_climb_rate - dyn_alpha * (old_climb_rate - climb_rate)
-
-        return smoothed_altitude_1, smoothed_altitude_2, smoothed_climb_rate
-
-    @micropython.viper
-    def double_exponential_filter_viper(self,
-                                        altitude: float,
-                                        old_altitude_1: float,
-                                        old_altitude_2: float,
-                                        old_climb_rate: float,
-                                        tau_1: float, tau_2: float, dyn_alpha_divisor: float,
-                                        delta_t: float) -> tuple[float, float, float]:
-        """Viper optimized double exponential filter."""
-
-        alfa_1: float = delta_t / (tau_1 + delta_t)
-        alfa_2: float = delta_t / (tau_2 + delta_t)
+        alfa_1: float = dt_us / (tau_1 + dt_us)
+        alfa_2: float = dt_us / (tau_2 + dt_us)
 
         smoothed_altitude_1: float = old_altitude_1 - alfa_1 * (old_altitude_1 - altitude)
         smoothed_altitude_2: float = old_altitude_2 - alfa_2 * (old_altitude_2 - altitude)
 
-        gain: float = 1.0 / (tau_2 - tau_1 + 1.0e-9)  # Use 1.0 for float literal
+        gain: float = 1_000_000.0 / (tau_2 - tau_1 + 1.0e-9)
         climb_rate: float = (smoothed_altitude_1 - smoothed_altitude_2) * gain
 
         dyn_alpha: float = abs((old_climb_rate - climb_rate) / dyn_alpha_divisor)
