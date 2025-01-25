@@ -27,14 +27,12 @@ from Utils.Logger import Logger
 from Utils.round_robin import cycler
 from Utils.Filter import SignalFilter
 
+FILTER_TAU_1 = 100000.0
+FILTER_TAU_2 = 150920.76
+FILTER_DYN_ALPHA_DIVISOR = 0.8407
 
 class Ex:
-    '''Jeti EX protocol handler.
-    '''
-
-    # Define scaling factors for integer arithmetic
-    ALTITUDE_SCALE = 100  # Scale altitude to centimeters
-    CLIMBRATE_SCALE = 100 # Scale climb rate to cm/s
+    """Jeti EX protocol handler."""
 
     def __init__(self, sensors, lock):
 
@@ -44,13 +42,14 @@ class Ex:
         # lock object used to prevent other cores from accessing shared resources
         self.lock = lock
 
-        # remember values for the variometer (integers now)
+        # remember values for the variometer
         self.last_altitude = 0
-        self.last_climbrate_cms = 0
+        self.last_climbrate = 0
         self.max_altitude = 0
         self.max_climb = 0
-        self.vario_time_old = time.ticks_ms()
+        self.vario_time_old = time.ticks_us() # microseconds
 
+        # initialize the filter
         self.filter = SignalFilter()
 
         # initialize the EX BUS packet
@@ -106,10 +105,12 @@ class Ex:
             data = None
             # update data frame (new sensor data)
             if category == 'PRESSURE':
-                pressure = current_sensor.pressure / 100.0 # convert to hPa (mbar)
+                pressure = current_sensor.pressure / 100.0 # convert to mbar (hPa)
                 temperature = current_sensor.temperature
+
                 # variometer
                 climb, altitude = self.variometer(pressure)
+
                 self.max_altitude = max(self.max_altitude, altitude)
                 self.max_climb = max(self.max_climb, climb)
 
@@ -119,6 +120,7 @@ class Ex:
                         'MAX_CLIMB': self.max_climb,       # 2 bytes
                         'ALTITUDE': altitude,              # 2 bytes
                         'MAX_ALTITUDE': self.max_altitude} # 2 bytes
+
             elif category == 'VOLTAGE':
                 pass
             elif category == 'CURRENT':
@@ -348,42 +350,35 @@ class Ex:
 
     @micropython.native
     def variometer(self, pressure):
-        '''Calculate the variometer value derived from the pressure sensor using integer arithmetic.'''
+        '''Calculate the variometer value derived from pressure.'''
 
         # get altitude from pressure
-        altitude_m = self.calc_altitude(pressure)
-        altitude_cm = int(altitude_m * self.ALTITUDE_SCALE)
+        altitude = self.calc_altitude(pressure)
 
         # calculate delta's for gradient
-        vario_time = time.ticks_ms()
-        dt_ms = time.ticks_diff(vario_time, self.vario_time_old)
+        vario_time = time.ticks_us() # microseconds
+        dt_us = time.ticks_diff(vario_time, self.vario_time_old)
 
-        # Calculate change in altitude in centimeters
-        dz_cm = altitude_cm - self.last_altitude
-
-        # Calculate raw climb rate in cm/s (integer division)
-        if dt_ms > 0:
-            climbrate_raw_cms = dz_cm * 1000 // dt_ms
-        else:
-            climbrate_raw_cms = 0
-
-        # Filter the climb rate
-        climbrate_cms = self.filter.double_exponential_filter(
-            altitude_cm,
-            0.1,
-            self.last_altitude,
-            self.last_climbrate_cms,
-            0.1,
-            climbrate_raw_cms,
-        )
+        # Filter the pressure data and derive the climb rate
+        self.last_altitude_1, self.last_altitude_2, self.climbrate = \
+            self.filter.double_exponential_filter(
+                altitude,
+                self.last_altitude_1,
+                self.last_altitude_2,
+                self.last_climbrate,
+                tau_1=FILTER_TAU_1,
+                tau_2=FILTER_TAU_2,
+                dyn_alpha_divisor=FILTER_DYN_ALPHA_DIVISOR,
+                delta_t=dt_us
+            )
 
         # Store data for next iteration
         self.vario_time_old = vario_time
-        self.last_altitude = altitude_cm
-        self.last_climbrate_cms = climbrate_cms
+        self.last_altitude = altitude
+        self.last_climbrate = self.climbrate
 
-        # Return climb rate in m/s and altitude in meters (scaled back)
-        return climbrate_cms / self.CLIMBRATE_SCALE, altitude_cm / self.ALTITUDE_SCALE
+        # Return climb rate and altitude (altitude filtered using tau_1)
+        return self.climbrate, self.last_altitude_1
 
     @micropython.native
     def calc_altitude(self, pressure):
