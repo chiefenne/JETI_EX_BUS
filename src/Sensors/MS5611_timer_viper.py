@@ -26,7 +26,7 @@ class MS5611:
     _c6 = RegisterStruct(msc._CAL_DATA_C6, ">H")
 
     def __init__(self, i2c, address: int = 0x77,
-                 temperature_oversample_rate=msc.TEMP_OSR_4096,
+                 temperature_oversample_rate=msc.TEMP_OSR_1024,
                  pressure_oversample_rate=msc.PRESS_OSR_4096) -> None:
         self._i2c = i2c
         self._address = address
