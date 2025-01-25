@@ -25,12 +25,13 @@ class SignalFilter:
         return self.value
 
     @micropython.native
-    def double_exponential_filter(altitude,
-                                old_altitude_1,
-                                old_altitude_2,
-                                old_climb_rate,
-                                tau_1, tau_2, dyn_alpha_divisor,
-                                delta_t):
+    def double_exponential_filter(self,
+                                  altitude,
+                                  old_altitude_1,
+                                  old_altitude_2,
+                                  old_climb_rate,
+                                  tau_1, tau_2, dyn_alpha_divisor,
+                                  delta_t):
         """Applies a double exponential filter with dynamic smoothing to an input value.
 
         Args:
@@ -62,7 +63,8 @@ class SignalFilter:
         return smoothed_altitude_1, smoothed_altitude_2, smoothed_climb_rate
 
     @micropython.viper
-    def double_exponential_filter_viper(altitude: float,
+    def double_exponential_filter_viper(self,
+                                        altitude: float,
                                         old_altitude_1: float,
                                         old_altitude_2: float,
                                         old_climb_rate: float,
