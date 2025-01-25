@@ -33,16 +33,11 @@ class SignalFilter:
                                   tau_1, tau_2, dyn_alpha_divisor,
                                   delta_t):
         """Applies a double exponential filter with dynamic smoothing to an input value.
-
-        Args:
-            input_value (float): The raw, noisy input value to be filtered.
-            prev_output (float): The previous smoothed output value.
-            ref_init (float): A slower-moving reference value.
-            ref_curr (float): A faster-moving reference value.
-            alpha (float): The smoothing factor (0 to 1).
-
-        Returns:
-            tuple[float, float, float]: The updated ref_init, ref_curr, and the new filtered output value.
+        The altitude is smoothed using two exponential filters with different time constants.
+        The difference between the two smoothed values divided by the difference in time constants
+        is used to calculate the climb rate. The climb rate is then smoothed using an
+        additional exponential filter with a dynamic smoothing factor.
+        Source: https://github.com/nichtgedacht/Arduino-MS5611-Interrupt/blob/master/MS5611.cpp
         """
 
         alfa_1 = delta_t / (tau_1 + delta_t)
