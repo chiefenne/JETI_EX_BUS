@@ -22,7 +22,10 @@ class Sensors:
 
     '''
 
-    def __init__(self, addresses, i2c):
+    def __init__(self, addresses, i2c, lock):
+
+        # lock object used to prevent other cores from accessing shared resources
+        self.lock = lock
 
         # sensor data (ordered by I2C address)
         with open('Sensors/sensors.json') as f:
@@ -75,7 +78,7 @@ class Sensors:
             # import the module for the I2C sensor dynamically from sensors.json
             sensor_defs = __import__('Sensors/' + self.sensor_data[addr]['module'])
             sensor_class = getattr(sensor_defs, self.sensor_data[addr]['class'])
-            sensor = sensor_class(address=address, i2c=self.i2c)
+            sensor = sensor_class(self.lock, self.i2c, address)
 
             sensor.address = address
             sensor.name = self.sensor_data[addr]['name']
