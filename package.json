@@ -93,14 +93,6 @@
       "github:chiefenne/JETI_EX_BUS/src/Utils/Streamrecorder.py"
     ],
     [
-      "Utils/fir.py",
-      "github:chiefenne/JETI_EX_BUS/src/Utils/fir.py"
-    ],
-    [
-      "Utils/status.py",
-      "github:chiefenne/JETI_EX_BUS/src/Utils/status.py"
-    ],
-    [
       "Jeti/CRC16.py",
       "github:chiefenne/JETI_EX_BUS/src/Jeti/CRC16.py"
     ],
