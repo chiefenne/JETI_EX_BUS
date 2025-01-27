@@ -46,12 +46,9 @@ class Ex:
         self.lock = lock
 
         # remember values for the variometer filter
-        self.last_altitude_1 = 0
-        self.last_altitude_2 = 0
-        self.last_climbrate = 0
         self.max_altitude = 0
         self.max_climb = 0
-        self.vario_time_old = time.ticks_us() # microseconds
+        self.last_climbrate = 0
 
         # initialize the filter
         self.filter = SignalFilter()
@@ -66,6 +63,23 @@ class Ex:
 
         # make a generator out of the list of sensors
         self.cycle_sensors = cycler(active_sensors)
+
+        # initialize reference height for variometer
+        for s in active_sensors:
+            if s.category == 'PRESSURE':
+
+                reference_pressure = 0.0
+                samples = 50
+                for i in range(samples):
+                    s.read_jeti()
+                    reference_pressure += s.pressure / 100.0
+                reference_pressure /= samples
+
+                self.reference_altitude = self.calc_altitude(reference_pressure)
+                self.last_altitude_1 = self.reference_altitude
+                self.last_altitude_2 = self.reference_altitude
+                self.vario_time_old = time.ticks_us() # microseconds
+                break
 
         # device name and description/units of all available sensors
         # this can be send once (or a few times) at the beginning of the telemetry
@@ -95,6 +109,9 @@ class Ex:
         The EX BUS protocol is also prepared here.
         '''
 
+        # cache reference altitude
+        reference_altitude = self.reference_altitude
+
         # cache the generator
         cycle_sensors = self.cycle_sensors
 
@@ -118,6 +135,7 @@ class Ex:
 
                 # variometer
                 climb, altitude = self.variometer(pressure)
+                altitude -= reference_altitude
 
                 self.max_altitude = max(self.max_altitude, altitude)
                 self.max_climb = max(self.max_climb, climb)
