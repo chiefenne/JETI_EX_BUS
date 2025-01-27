@@ -23,6 +23,7 @@ class ExBus:
     '''
 
     def __init__(self, serial, sensors, ex, lock):
+
         self.serial = serial
         self.sensors = sensors
         self.ex = ex
@@ -74,11 +75,11 @@ class ExBus:
 
                 elif state == STATE_HEADER_2:
                     if c in [b'\x01', b'\x03']:
-                        buffer += c
+                        buffer += bytearray(c)
                         state = STATE_LENGTH
 
                 elif state == STATE_LENGTH:
-                    buffer += c
+                    buffer += bytearray(c)
                     packet_length = buffer[2]
                     if packet_length > 60:
                         state = STATE_HEADER_1
@@ -90,7 +91,7 @@ class ExBus:
                         state = STATE_HEADER_1
                         continue
 
-                    buffer += c
+                    buffer += bytearray(c)
                     if len(buffer) == packet_length:
                         if self.checkCRC(buffer):
                             if buffer[0:1] == b'\x3e' and buffer[4:5] == b'\x31':
@@ -118,15 +119,10 @@ class ExBus:
         '''
         self.frame_count += 1
 
-        # Optimization: Read ex properties once before the lock
-        exbus_device_ready = self.ex.exbus_device_ready
-        exbus_data_ready = self.ex.exbus_data_ready
-        n_labels = self.ex.n_labels
-
         with self.lock:
-            if exbus_device_ready and self.frame_count <= self.label_frames:
-                telemetry = self.ex.dev_labels_units[self.frame_count % n_labels]
-            elif exbus_data_ready and self.frame_count > self.label_frames:
+            if self.ex.exbus_device_ready and self.frame_count <= self.label_frames:
+                telemetry = self.ex.dev_labels_units[self.frame_count % self.ex.n_labels]
+            elif self.ex.exbus_data_ready and self.frame_count > self.label_frames:
                 telemetry = self.ex.exbus_data
                 self.ex.exbus_data_ready = False
             else:
