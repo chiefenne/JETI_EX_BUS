@@ -8,7 +8,7 @@ except ImportError:
     pass
 
 from Sensors.i2c_helpers import CBits, RegisterStruct
-import ms5611_constants as msc
+import Sensors.ms5611_constants as msc
 
 
 _POW_2_31 = 2147483648.0
@@ -78,22 +78,26 @@ class MS5611:
                 self.data = self._calculate_and_store(d1, d2)
                 state = 0
 
-    @micropython.viper
-    def _calculate_and_store(self, d1, d2) -> None:
+    @micropython.native
+    def _calculate_and_store_native(self, d1: int, d2: int) -> None:
+        """
+        Calculates temperature and pressure from raw sensor readings and stores them in the buffer.
+        Optimized with @micropython.native decorator.
+        """
         c1: int = self.c1
         c2: int = self.c2
         c3: int = self.c3
         c4: int = self.c4
         c5: int = self.c5
         c6: int = self.c6
-        buffer_index: int = self.buffer_index
+        buffer_index: int = self.buffer_index # Keep type hints for index and size
         buffer_size: int = self.buffer_size
-        lock = self.lock
+        lock = self.lock # lock is a standard Python object, no type hint needed
 
-        dT: float = d2 - c5 * 256.0
-        TEMP: float = 2000.0 + dT * c6 / 8388608.0
-        OFF: float = c2 * 65536.0 + dT * c4 / 128.0
-        SENS: float = c1 * 32768.0 + dT * c3 / 256.0
+        dT: float = float(d2 - c5 * 256) # Explicitly cast to float to ensure float arithmetic. Corrected calculation to use c5
+        TEMP: float = 2000.0 + dT * c6 / 8388608.0 # Keep float type hint for TEMP and other float variables
+        OFF: float = float(c2 * 65536 + dT * c4 / 128.0) # Explicit cast and corrected calculation to use c2
+        SENS: float = float(c1 * 32768 + dT * c3 / 256.0) # Explicit cast and corrected calculation to use c1
 
         if TEMP < 2000.0:
             T2: float = dT * dT / _POW_2_31
