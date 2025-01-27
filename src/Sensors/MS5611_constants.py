@@ -1,12 +1,12 @@
 from micropython import const
 
-_CAL_DATA_C1 = const(0xA2)
-_CAL_DATA_C2 = const(0xA4)
-_CAL_DATA_C3 = const(0xA6)
-_CAL_DATA_C4 = const(0xA8)
-_CAL_DATA_C5 = const(0xAA)
-_CAL_DATA_C6 = const(0xAC)
-_DATA = const(0x00)
+CAL_DATA_C1 = const(0xA2)
+CAL_DATA_C2 = const(0xA4)
+CAL_DATA_C3 = const(0xA6)
+CAL_DATA_C4 = const(0xA8)
+CAL_DATA_C5 = const(0xAA)
+CAL_DATA_C6 = const(0xAC)
+DATA = const(0x00)
 
 TEMP_OSR_256 = const(0)
 TEMP_OSR_512 = const(1)
