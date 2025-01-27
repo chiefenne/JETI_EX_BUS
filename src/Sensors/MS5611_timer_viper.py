@@ -29,6 +29,9 @@ class MS5611:
         self._i2c = i2c
         self._address = address
 
+        # initialize the lock (later fetched from the Ex class)
+        self.lock = None
+
         self.c1 = self._c1
         self.c2 = self._c2
         self.c3 = self._c3
