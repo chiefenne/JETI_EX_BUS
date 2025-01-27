@@ -1,8 +1,6 @@
-import _thread
 import micropython
-from micropython import const
+import time
 import struct
-import machine
 
 try:
     from typing import Tuple
@@ -39,51 +37,49 @@ class MS5611:
         self.c6 = self._c6
         self._temp_command = msc.temp_command_values[temperature_oversample_rate]
         self._pressure_command = msc.pressure_command_values[pressure_oversample_rate]
-
         self.conversion_time_temp = msc.conversion_times[temperature_oversample_rate]
         self.conversion_time_press = msc.conversion_times[pressure_oversample_rate]
 
-        # Circular buffer for storing results
-        self.buffer_size = 5
+        self.buffer_size = 10
         self.buffer = [(0.0, 0.0)] * self.buffer_size
         self.buffer_index = 0
-        self.buffer_lock = _thread.allocate_lock()
 
-        # Timer setup
-        self.timer = machine.Timer()
-        self.timer_period = (self.conversion_time_temp +
-                             self.conversion_time_press)
-        self.timer.init(period=self.timer_period, mode=machine.Timer.PERIODIC, callback=self._timer_callback)
+        self._periodic_sensor_reading() # Start the periodic task
 
-        self.state = 0 # 0 for temperature, 1 for pressure
-        self.d1 = 0
-        self.d2 = 0
+    @micropython.native
+    def _periodic_sensor_reading(self):
+        state = 0
+        d1 = 0
+        d2 = 0
+        while True: # Check the running flag to allow stopping
 
-    def _timer_callback(self, timer):
-        if self.state == 0:
-            # Start temperature conversion
-            self._i2c.writeto(self._address, bytes([self._temp_command]))
-            self.state = 1
-        elif self.state == 1:
-            # Read temperature
-            temp_buf = bytearray(3)
-            self._i2c.readfrom_mem_into(self._address, msc._DATA, temp_buf)
-            self.d2 = struct.unpack(">I", b'\x00' + temp_buf)[0]
-            # Start pressure conversion
-            self._i2c.writeto(self._address, bytes([self._pressure_command]))
-            self.state = 2
-        elif self.state == 2:
-            # Read pressure
-            press_buf = bytearray(3)
-            self._i2c.readfrom_mem_into(self._address, msc._DATA, press_buf)
-            self.d1 = struct.unpack(">I", b'\x00' + press_buf)[0]
-            self._calculate_and_store()
-            self.state = 0
+            if state == 0:
+                # Start temperature conversion
+                self._i2c.writeto(self._address, bytes([self._temp_command]))
+                time.sleep_ms(self.conversion_time_temp)
+                state = 1
+            elif state == 1:
+                # Read temperature
+                temp_buf = bytearray(3)
+                self._i2c.readfrom_mem_into(self._address, msc._DATA, temp_buf)
+                d2 = struct.unpack(">I", b'\x00' + temp_buf)[0]
+
+                # Start pressure conversion
+                self._i2c.writeto(self._address, bytes([self._pressure_command]))
+                time.sleep_ms(self.conversion_time_press)
+                state = 2
+            elif state == 2:
+                # Read pressure
+                press_buf = bytearray(3)
+                self._i2c.readfrom_mem_into(self._address, msc._DATA, press_buf)
+                d1 = struct.unpack(">I", b'\x00' + press_buf)[0]
+
+                # Store press and temp in buffer
+                self.data = self._calculate_and_store(d1, d2)
+                state = 0
 
     @micropython.viper
-    def _calculate_and_store(self) -> None:
-        d1: int = self.d1
-        d2: int = self.d2
+    def _calculate_and_store(self, d1, d2) -> None:
         c1: int = self.c1
         c2: int = self.c2
         c3: int = self.c3
@@ -92,6 +88,7 @@ class MS5611:
         c6: int = self.c6
         buffer_index: int = self.buffer_index
         buffer_size: int = self.buffer_size
+        lock = self.lock
 
         dT: float = d2 - c5 * 256.0
         TEMP: float = 2000.0 + dT * c6 / 8388608.0
@@ -111,22 +108,25 @@ class MS5611:
 
         P: float = (SENS * d1 / _POW_2_21 - OFF) / 32768.0
 
-        # Acquire lock before updating the buffer
-        self.buffer_lock.acquire()
-        self.buffer[buffer_index] = (TEMP / 100.0, P)
-        self.buffer_index = (buffer_index + 1) % buffer_size
-        self.buffer_lock.release()
+        with lock:
+            # updating the buffer
+            self.buffer[buffer_index] = (TEMP / 100.0, P)
+            self.buffer_index = (buffer_index + 1) % buffer_size
 
     @micropython.native
-    def _read_raw_measurements(self) -> Tuple[float, float]:
-        # Read the most recent value from the buffer
-        self.buffer_lock.acquire()
-        temp, press = self.buffer[(self.buffer_index - 1) % self.buffer_size]
-        self.buffer_lock.release()
-        return temp, press
+    def get_lock(self, lock):
+        self.lock = lock
+
+    @micropython.native
+    def _read_buffer(self) -> Tuple[float, float]:
+        lock = self.lock
+        with lock:
+            # Read the most recent value from the buffer
+            temp, press = self.buffer[(self.buffer_index - 1) % self.buffer_size]
+            return temp, press
 
     @micropython.native
     def read_jeti(self):
         '''Read sensor data'''
-        temperature, pressure = self._read_raw_measurements()
-        return pressure, temperature
+        self.temperature, self.pressure = self._read_buffer()
+        return self.pressure, self.temperature
