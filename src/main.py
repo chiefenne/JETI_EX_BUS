@@ -37,13 +37,19 @@ import usys as sys
 from machine import Pin
 import _thread
 
-from Jeti.Ex import Ex
-from Jeti.ExBus import ExBus
+OPTIMIZED = True
+
+if OPTIMIZED:
+    from Jeti.Ex_optimized import Ex
+    from Jeti.ExBus_optimized import ExBus
+else:
+    from Jeti.Ex import Ex
+    from Jeti.ExBus import ExBus
+
 from Jeti.Serial_UART import Serial
 from Sensors.I2C import I2C_bus
 from Sensors.Sensors import Sensors
 from Utils.Logger import Logger
-from Utils import status
 from Utils.Streamrecorder import saveStream
 
 
