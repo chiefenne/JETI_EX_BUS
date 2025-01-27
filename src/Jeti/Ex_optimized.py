@@ -27,6 +27,9 @@ from Utils.Logger import Logger
 from Utils.round_robin import cycler
 from Utils.Filter import SignalFilter
 
+# 0.081s und 0.1561s
+# https://www.rc-network.de/threads/variometer-algorithmus.736247/post-7429743
+
 FILTER_TAU_1 = 100000.0
 FILTER_TAU_2 = 150920.76
 FILTER_DYN_ALPHA_DIVISOR = 0.8407
@@ -83,20 +86,20 @@ class Ex:
         # insert 'DEVICE' as first label
         labels.insert(0, 'DEVICE')
 
-        self.lock.acquire()
-        self.dev_labels_units = list()
-        for label in labels:
-            # frames for device, labels and units
-            self.dev_labels_units.append(self.exbus_frame(frametype=0, label=label))
-        self.n_labels = len(labels)
-        self.exbus_device_ready = True
-        self.lock.release()
+        with self.lock:
+            self.dev_labels_units = list()
+            for label in labels:
+                # frames for device, labels and units
+                self.dev_labels_units.append(self.exbus_frame(frametype=0, label=label))
+            self.n_labels = len(labels)
+            self.exbus_device_ready = True
 
         # acquire sensor data and prepare EX BUS telemetry
         while True:
 
             # cycle infinitely through all sensors
             current_sensor = next(cycle_sensors)
+            current_sensor.get_lock(self.lock) # provide lock to MS5611_timer_viper.py
             category = current_sensor.category # cache variable
 
             # collect data from currently selected sensor
@@ -136,10 +139,9 @@ class Ex:
 
             if data:
                 exbus_data_local = self.exbus_frame(frametype=const(1), data=data)
-                self.lock.acquire()
-                self.exbus_data = exbus_data_local
-                self.exbus_data_ready = True
-                self.lock.release()
+                with self.lock:
+                    self.exbus_data = exbus_data_local
+                    self.exbus_data_ready = True
 
     @micropython.native
     def exbus_frame(self, frametype=None, label=None, data=None):
