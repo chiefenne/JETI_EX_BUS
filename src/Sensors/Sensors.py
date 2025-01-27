@@ -58,9 +58,6 @@ class Sensors:
         # activate the sensors
         self.arm()
 
-        # test GPIO, rpm counter
-        # self.test()
-
         # number of sensors attached
         message = 'Number of sensors attached: {}'.format(len(self.sensors))
         self.logger.log('info', message)
@@ -89,7 +86,7 @@ class Sensors:
 
             self.sensors.append(sensor)
 
-            message = 'Found sensor: {}'.format(sensor.name)
+            message = f"Found sensor: {sensor.name}, Category: {sensor.category}"
             self.logger.log('info', message)
 
         return
@@ -98,24 +95,3 @@ class Sensors:
         '''Return a list of all sensors
         '''
         return self.sensors
-
-    def test(self):
-
-        addr = 'Pin26'
-
-        # import the module for the sensor dynamically from sensors.json
-        sensor_defs = __import__('Sensors/' + self.sensor_data[addr]['module'])
-        sensor_class = getattr(sensor_defs, self.sensor_data[addr]['class'])
-        sensor = sensor_class(addr)
-
-        sensor.address = addr
-        sensor.name = self.sensor_data[addr]['name']
-        sensor.manufacturer = self.sensor_data[addr]['manufacturer']
-        sensor.description = self.sensor_data[addr]['description']
-        sensor.category = self.sensor_data[addr]['category']
-        sensor.labels = self.sensor_data[addr]['labels']
-
-        self.sensors.append(sensor)
-
-        message = 'Found sensor: {}'.format(sensor.name)
-        self.logger.log('info', message)
