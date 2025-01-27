@@ -2,11 +2,6 @@ import micropython
 import time
 import struct
 
-try:
-    from typing import Tuple
-except ImportError:
-    pass
-
 from Sensors.i2c_helpers import RegisterStruct
 import Sensors.ms5611_constants as msc
 
@@ -28,6 +23,7 @@ class MS5611:
     _c6 = RegisterStruct(msc.CAL_DATA_C6, ">H")
 
     def __init__(self, lock, i2c, address) -> None:
+
         self._i2c = i2c
         self._address = address
         self.lock = lock
@@ -42,10 +38,6 @@ class MS5611:
         self.conversion_time_temp = msc.conversion_times[msc.TEMP_OSR_1024]
         self._pressure_command = msc.pressure_command_values[msc.PRESS_OSR_4096]
         self.conversion_time_press = msc.conversion_times[msc.PRESS_OSR_4096]
-
-        self.buffer_size = 10
-        self.buffer = [(0.0, 0.0)] * self.buffer_size
-        self.buffer_index = 0
 
     @micropython.native
     def measure(self):
@@ -96,10 +88,11 @@ class MS5611:
 
         P = (SENS * D1 / _POW_2_21 - OFF) / _POW_2_15
 
-        return P, TEMP
+        return P, TEMP / 100.0
 
     @micropython.native
     def read_jeti(self):
         '''Read sensor data'''
+
         self.pressure, self.temperature = self.measure()
         return self.pressure, self.temperature
