@@ -99,7 +99,6 @@ class Ex:
 
             # cycle infinitely through all sensors
             current_sensor = next(cycle_sensors)
-            current_sensor.get_lock(self.lock) # provide lock to MS5611_timer_viper.py
             category = current_sensor.category # cache variable
 
             # collect data from currently selected sensor
