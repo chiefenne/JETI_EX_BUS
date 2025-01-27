@@ -45,8 +45,9 @@ class Ex:
         # lock object used to prevent other cores from accessing shared resources
         self.lock = lock
 
-        # remember values for the variometer
-        self.last_altitude = 0
+        # remember values for the variometer filter
+        self.last_altitude_1 = 0
+        self.last_altitude_2 = 0
         self.last_climbrate = 0
         self.max_altitude = 0
         self.max_climb = 0
@@ -60,20 +61,11 @@ class Ex:
         self.exbus_data_ready = False
         self.exbus_device_ready = False
 
-        # setup a logger for the REPL
-        self.logger = Logger(prestring='JETI EX')
-
-    @micropython.native
-    def run_forever(self):
-        '''Run the EX protocol forever.
-        The EX BUS protocol is also prepared here.
-        '''
-
         # get all attached sensors (access object only once = speed up)
         active_sensors = self.sensors.get_sensors()
 
         # make a generator out of the list of sensors
-        cycle_sensors = cycler(active_sensors)
+        self.cycle_sensors = cycler(active_sensors)
 
         # device name and description/units of all available sensors
         # this can be send once (or a few times) at the beginning of the telemetry
@@ -94,6 +86,18 @@ class Ex:
             self.n_labels = len(labels)
             self.exbus_device_ready = True
 
+        # setup a logger for the REPL
+        self.logger = Logger(prestring='JETI EX')
+
+    @micropython.native
+    def run_forever(self):
+        '''Run the EX protocol forever.
+        The EX BUS protocol is also prepared here.
+        '''
+
+        # cache the generator
+        cycle_sensors = self.cycle_sensors
+
         # acquire sensor data and prepare EX BUS telemetry
         while True:
 
@@ -101,12 +105,14 @@ class Ex:
             current_sensor = next(cycle_sensors)
             category = current_sensor.category # cache variable
 
+            # DEBUG
             # collect data from currently selected sensor
             current_sensor.read_jeti()
 
             data = None
             # update data frame (new sensor data)
             if category == 'PRESSURE':
+
                 pressure = current_sensor.pressure / 100.0 # convert to mbar (hPa)
                 temperature = current_sensor.temperature
 
@@ -261,7 +267,7 @@ class Ex:
         telemetry_metadata = self.sensors.telemetry_metadata
 
         for telemetry, value in data.items():
-            telemetry_info = telemetry_metadata[telemetry] # speed up object access
+            telemetry_info = telemetry_metadata[telemetry]
             # compile 9th byte onwards of EX data specification
             id = telemetry_info['id'] << const(4)
             data_type = telemetry_info['data_type']
@@ -362,7 +368,7 @@ class Ex:
 
         # Filter the pressure data and derive the climb rate
         self.last_altitude_1, self.last_altitude_2, self.climbrate = \
-            self.filter.double_exponential_filter(
+            self.filter.double_exponential_filter_native_typed(
                 altitude,
                 self.last_altitude_1,
                 self.last_altitude_2,
@@ -370,7 +376,7 @@ class Ex:
                 tau_1=FILTER_TAU_1,
                 tau_2=FILTER_TAU_2,
                 dyn_alpha_divisor=FILTER_DYN_ALPHA_DIVISOR,
-                delta_t=dt_us
+                dt_us=dt_us
             )
 
         # Store data for next iteration
