@@ -12,8 +12,6 @@ Date: 04-2021
 # modules starting with 'u' are Python standard libraries which
 # are stripped down in MicroPython to be efficient on microcontrollers
 
-from ubinascii import hexlify
-import utime
 import micropython
 from micropython import const
 
@@ -125,8 +123,7 @@ class ExBus:
         exbus_data_ready = self.ex.exbus_data_ready
         n_labels = self.ex.n_labels
 
-        self.lock.acquire()
-        try:
+        with self.lock:
             if exbus_device_ready and self.frame_count <= self.label_frames:
                 telemetry = self.ex.dev_labels_units[self.frame_count % n_labels]
             elif exbus_data_ready and self.frame_count > self.label_frames:
@@ -134,8 +131,6 @@ class ExBus:
                 self.ex.exbus_data_ready = False
             else:
                 return 0
-        finally:
-            self.lock.release()
 
         # Optimization: Construct packet ID once
         telemetry_ID = telemetry[:3] + packetID + telemetry[4:]
