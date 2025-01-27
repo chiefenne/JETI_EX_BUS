@@ -207,10 +207,10 @@ class MS5611:
         if TEMP < 2000:
             T2 = dT * dT / 2**31.0
             OFF2 = 5 * (TEMP - 2000) ** 2.0 / 2
-            SENS2 = 5 * (TEMP - 2000) / 4
+            SENS2 = 5 * (TEMP - 2000) ** 2.0 / 4
             if TEMP < -1500:
                 OFF2 = OFF2 + 7 * (TEMP + 1500) ** 2.0
-                SENS2 = SENS2 + 11 * (TEMP + 1500) / 2
+                SENS2 = SENS2 + 11 * (TEMP + 1500) ** 2.0 / 2
             TEMP = TEMP - T2
             OFF = OFF - OFF2
             SENS = SENS - SENS2
