@@ -91,14 +91,13 @@ class Ex:
         # insert 'DEVICE' as first label
         labels.insert(0, 'DEVICE')
 
-        self.lock.acquire()
-        self.dev_labels_units = list()
-        for label in labels:
-            # frames for device, labels and units
-            self.dev_labels_units.append(self.exbus_frame(frametype=0, label=label))
-        self.n_labels = len(labels)
-        self.exbus_device_ready = True
-        self.lock.release()
+        with self.lock:
+            self.dev_labels_units = list()
+            for label in labels:
+                # frames for device, labels and units
+                self.dev_labels_units.append(self.exbus_frame(frametype=0, label=label))
+            self.n_labels = len(labels)
+            self.exbus_device_ready = True
 
         # acquire sensor data and prepare EX BUS telemetry
         while True:
@@ -142,10 +141,9 @@ class Ex:
                                 'GPSLON',
                                 self.GPStoEX(current_sensor.latitude, longitude=False)}
 
-            self.lock.acquire()
-            self.exbus_data = self.exbus_frame(frametype=const(1), data=data) # data
-            self.exbus_data_ready = True
-            self.lock.release()
+            with self.lock:
+                self.exbus_data = self.exbus_frame(frametype=const(1), data=data) # data
+                self.exbus_data_ready = True
 
     @micropython.native
     def exbus_frame(self, frametype=None, label=None, data=None):
