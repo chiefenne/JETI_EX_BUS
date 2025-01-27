@@ -1,4 +1,6 @@
 
+from Utils.Logger import Logger
+
 
 class DemoSensor:
 
@@ -20,5 +22,13 @@ class DemoSensor:
         self.temperature = 29.37 + self.counter * 0.1 * self.sign
         self.humidity = 45.67 + self.counter * 0.5 * self.sign
         self.altitude = 1234.5 + self.counter * 10 * self.sign
+        self.relative_altitude = self.altitude
+
+        # log the data for debugging purposes
+        logger = Logger(prestring='JETI DEMO')
+        logger.log('info', 'Pressure: {}'.format(self.pressure))
+        logger.log('info', 'Temperature: {}'.format(self.temperature))
+        logger.log('info', 'Humidity: {}'.format(self.humidity))
+        logger.log('info', 'Altitude: {}'.format(self.altitude))
 
         return self.pressure, self.temperature, self.humidity, self.altitude

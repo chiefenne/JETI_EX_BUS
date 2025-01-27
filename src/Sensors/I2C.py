@@ -34,8 +34,12 @@ class I2C_bus:
         self.logger.log('info', 'Settings: {}'.format(self.i2c))
         self.logger.log('info', 'I2C setup done')
        
-    def scan(self, demo=False):
+    def scan(self):
         '''Scan the I2C bus for devices.
+
+        The return value per I2C device is its hex address
+        Scan all I2C addresses between 0x08 and 0x77 inclusive
+        The corresponding sensor needs to be added in the file Sensors.py
 
         Returns
         -------
@@ -43,16 +47,16 @@ class I2C_bus:
             List of addresses of devices on the I2C bus.
         '''
 
-        # the return value per I2C device is its hex address
-        # scan all I2C addresses between 0x08 and 0x77 inclusive
-        # the corresponding sensor needs to be added in the file Sensors.py
         self.addresses = self.i2c.scan()
 
-        if demo:
+        # offer a demo sensor if no sensor is attached to the microcontroller
+        if self.addresses == []:
             self.addresses = [0x99]
+            self.logger.log('info', 'No sensor found. Using DEMO sensor.')
 
         message = 'Addresses available on I2C: {}'.format([hex(a) for a in self.addresses])
         self.logger.log('info', message)
+
 
         return self.addresses
 

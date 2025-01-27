@@ -1,7 +1,7 @@
 '''Python Implementation of the JETI EX Bus protocol
 
 JETI Ex Bus specification:
-    http://www.jetimodel.com/en/Telemetry-Protocol/   
+    http://www.jetimodel.com/en/Telemetry-Protocol/
     File: EX_Bus_protokol_v121_EN.pdf
 
 
@@ -35,7 +35,7 @@ class ExBus:
         # number of frames for sending initial device and label information
         self.label_frames = 100
 
-        
+
         # lock object used to prevent other cores from accessing shared resources
         self.lock = lock
 
@@ -84,7 +84,7 @@ class ExBus:
                 if c in [b'\x3e',  b'\x3d']:
                     buffer = bytearray()
                     buffer += bytearray(c)
-                    
+
                     # change state
                     state = STATE_HEADER_2
 
@@ -95,7 +95,7 @@ class ExBus:
 
                     # change state
                     state = STATE_LENGTH
-                
+
             elif state == STATE_LENGTH:
                 # check for EX bus packet length
                 buffer += bytearray(c)
@@ -122,13 +122,13 @@ class ExBus:
 
                 # update rest of EX bus packet (ID, data identifier, data, CRC)
                 buffer += bytearray(c)
-                
+
                 # check if packet is complete
                 if len(buffer) == packet_length:
-                    
+
                     # check CRC
                     if self.checkCRC(buffer): # packet is complete and CRC is correct
-    
+
                         # check for channel data
                         if buffer[0:1] == b'\x3e' and \
                            buffer[4:5] == b'\x31':
@@ -149,7 +149,7 @@ class ExBus:
     @micropython.native
     def getChannelData(self, buffer):
         self.channel = dict()
-        
+
         num_channels = int.from_bytes(buffer[5:6], 'little') // 2
 
         for i in range(num_channels):
@@ -166,25 +166,18 @@ class ExBus:
         # frame counter
         self.frame_count += 1
 
-        # acquire lock to access the "ex" object" exclusively
-        self.lock.acquire()
+        with self.lock:
+            if self.ex.exbus_device_ready and self.frame_count <= self.label_frames:
+                # send device and label information (cycle through labels)
+                telemetry = self.ex.dev_labels_units[self.frame_count % self.ex.n_labels]
 
-        if self.ex.exbus_device_ready and self.frame_count <= self.label_frames:
-            # send device and label information (cycle through labels)
-            telemetry = self.ex.dev_labels_units[self.frame_count % self.ex.n_labels]
+            elif self.ex.exbus_data_ready and self.frame_count > self.label_frames:
+                # send telemetry values
+                telemetry = self.ex.exbus_data
+                self.ex.exbus_data_ready = False
 
-        elif self.ex.exbus_data_ready and self.frame_count > self.label_frames:
-            # send telemetry values
-            telemetry = self.ex.exbus_data
-            self.ex.exbus_data_ready = False
-
-        else: # no data available
-            if self.lock.locked():
-                self.lock.release()
-            return 0 
-
-        if self.lock.locked():
-            self.lock.release()
+            else: # no data available
+                return 0
 
         # packet ID (answer with same ID as by the request)
         telemetry_ID = telemetry[:3] + packetID + telemetry[4:]
@@ -210,7 +203,7 @@ class ExBus:
         Args:
             packet : packet of Jeti Ex Bus including the checksum
                      The last two bytes of the packet are LSB and
-                     MSB of the checksum. 
+                     MSB of the checksum.
 
         Returns:
             bool: True if the crc check is OK, False if NOT
@@ -225,22 +218,8 @@ class ExBus:
 
         # swap bytes in 2 byte crc value (LSB and MSB)
         crc = crc[2:4] + crc[0:2]
-        
+
         if crc == crc_check:
             return True
         else:
             return False
-
-    def dummy(self):
-        '''Dummy function for checking lock.
-        Stay 3 seconds in the lock.
-        '''
-        self.logger.log('info', 'core 0: EX BUS trying to acquire lock')
-        start = utime.ticks_us()
-        self.lock.acquire()
-        utime.sleep_ms(3000)
-        self.lock.release()
-        end = utime.ticks_us()
-        diff = utime.ticks_diff(end, start)
-        self.logger.log(
-            'info', 'core 0: EX BUS lock released after {} us'.format(diff))

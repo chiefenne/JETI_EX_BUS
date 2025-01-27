@@ -14,15 +14,13 @@ MicroPython Driver for the TE MS5611 Pressure and Temperature Sensor
 
 A. Ennemoser, 2023-07
 Modifications:
-    Reduced waiting time for ADC conversion time (original: 15ms)
-      - ADC conversion time is 10ms for OSR 4096 according to application note AN520
-      - and maximum 9.04ms according to datasheet
     Initializations:
-      - initial altitude for relative altitude measurements
-      - alpha beta filter for pressure signal smoothing
+        - initial altitude for relative altitude measurements
+        - alpha beta filter for pressure signal smoothing
+
     Added methods:
-      - calc_altitude
-      - read_jeti
+        - calc_altitude
+        - read_jeti
 
 """
 
@@ -154,15 +152,16 @@ class MS5611:
 
         # store initial altitude for relative altitude measurements
         # make an initial averaged measurement
-        dummy, pressure = self.measurements # dummy measurement
-        num = 10
+        dummy, pressure = self.measurements  # dummy measurement
+        time.sleep_ms(100)
+        num = 30
         self.initial_altitude = 0.0
         self.initial_pressure = 0.0
         for _ in range(num):
             dummy, pressure = self.measurements
             self.initial_pressure += pressure
             self.initial_altitude += self.calc_altitude(pressure)
-            time.sleep_ms(10)
+            time.sleep_ms(20)
         self.initial_pressure /= num
         self.initial_altitude /= num
 
@@ -189,13 +188,13 @@ class MS5611:
         """
         press_buf = bytearray(3)
         self._i2c.writeto(self._address, bytes([self._pressure_command]))
-        time.sleep(0.01) # wait ADC conversion time (10ms for OSR 4096)
+        time.sleep(0.015)
         self._i2c.readfrom_mem_into(self._address, _DATA, press_buf)
         D1 = press_buf[0] << 16 | press_buf[1] << 8 | press_buf[0]
 
         temp_buf = bytearray(3)
         self._i2c.writeto(self._address, bytes([self._temp_command]))
-        time.sleep(0.01) # wait ADC conversion time (10ms for OSR 4096)
+        time.sleep(0.015)
         self._i2c.readfrom_mem_into(self._address, _DATA, temp_buf)
         D2 = temp_buf[0] << 16 | temp_buf[1] << 8 | temp_buf[0]
 
@@ -207,10 +206,10 @@ class MS5611:
         if TEMP < 2000:
             T2 = dT * dT / 2**31.0
             OFF2 = 5 * (TEMP - 2000) ** 2.0 / 2
-            SENS2 = 5 * (TEMP - 2000) ** 2.0 / 4
+            SENS2 = 5 * (TEMP - 2000) / 4
             if TEMP < -1500:
                 OFF2 = OFF2 + 7 * (TEMP + 1500) ** 2.0
-                SENS2 = SENS2 + 11 * (TEMP + 1500) ** 2.0 / 2
+                SENS2 = SENS2 + 11 * (TEMP + 1500) / 2
             TEMP = TEMP - T2
             OFF = OFF - OFF2
             SENS = SENS - SENS2

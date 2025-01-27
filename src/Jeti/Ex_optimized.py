@@ -9,7 +9,6 @@ The EX protocol is used in two ways:
 
 In both cases it carries the telemetry data (data, text, message, alarms).
 
-
 Author: Dipl.-Ing. A. Ennemoser
 Date: 04-2021
 
@@ -26,12 +25,17 @@ from micropython import const
 from Jeti import CRC8
 from Utils.Logger import Logger
 from Utils.round_robin import cycler
-from Utils.alpha_beta_filter import AlphaBetaFilter
+from Utils.Filter import SignalFilter
 
+# 0.081s und 0.1561s
+# https://www.rc-network.de/threads/variometer-algorithmus.736247/post-7429743
+
+FILTER_TAU_1 = 100000.0
+FILTER_TAU_2 = 150920.76
+FILTER_DYN_ALPHA_DIVISOR = 0.8407
 
 class Ex:
-    '''Jeti EX protocol handler.
-    '''
+    """Jeti EX protocol handler."""
 
     def __init__(self, sensors, lock):
 
@@ -41,44 +45,41 @@ class Ex:
         # lock object used to prevent other cores from accessing shared resources
         self.lock = lock
 
-        # remember values for the variometer
-        self.last_altitude = 0
-        self.last_climbrate = 0
+        # remember values for the variometer filter
         self.max_altitude = 0
         self.max_climb = 0
-        self.vario_time_old = time.ticks_ms()
+        self.last_climbrate = 0
 
-        # exponential filter
-        self.vario_smoothing = 0.81
-
-        # alpha-beta filter
-        alpha = 0.02
-        beta = 0.005
-        self.vario_filter = AlphaBetaFilter(alpha=alpha,
-                                            beta=beta,
-                                            initial_value=0,
-                                            initial_velocity=0,
-                                            delta_t=1)
+        # initialize the filter
+        self.filter = SignalFilter()
 
         # initialize the EX BUS packet
         # needed for check in ExBus.py, set to 'True' in main.py
         self.exbus_data_ready = False
         self.exbus_device_ready = False
 
-        # setup a logger for the REPL
-        self.logger = Logger(prestring='JETI EX')
-
-    @micropython.native
-    def run_forever(self):
-        '''Run the EX protocol forever.
-        The EX BUS protocol is also prepared here.
-        '''
-
         # get all attached sensors (access object only once = speed up)
         active_sensors = self.sensors.get_sensors()
 
         # make a generator out of the list of sensors
-        cycle_sensors = cycler(active_sensors)
+        self.cycle_sensors = cycler(active_sensors)
+
+        # initialize reference height for variometer
+        for s in active_sensors:
+            if s.category == 'PRESSURE':
+
+                reference_pressure = 0.0
+                samples = 50
+                for i in range(samples):
+                    s.read_jeti()
+                    reference_pressure += s.pressure / 100.0
+                reference_pressure /= samples
+
+                self.reference_altitude = self.calc_altitude(reference_pressure)
+                self.last_altitude_1 = self.reference_altitude
+                self.last_altitude_2 = self.reference_altitude
+                self.vario_time_old = time.ticks_us() # microseconds
+                break
 
         # device name and description/units of all available sensors
         # this can be send once (or a few times) at the beginning of the telemetry
@@ -99,6 +100,21 @@ class Ex:
             self.n_labels = len(labels)
             self.exbus_device_ready = True
 
+        # setup a logger for the REPL
+        self.logger = Logger(prestring='JETI EX')
+
+    @micropython.native
+    def run_forever(self):
+        '''Run the EX protocol forever.
+        The EX BUS protocol is also prepared here.
+        '''
+
+        # cache reference altitude
+        reference_altitude = self.reference_altitude
+
+        # cache the generator
+        cycle_sensors = self.cycle_sensors
+
         # acquire sensor data and prepare EX BUS telemetry
         while True:
 
@@ -106,17 +122,21 @@ class Ex:
             current_sensor = next(cycle_sensors)
             category = current_sensor.category # cache variable
 
+            # DEBUG
             # collect data from currently selected sensor
             current_sensor.read_jeti()
 
+            data = None
             # update data frame (new sensor data)
             if category == 'PRESSURE':
-                pressure = current_sensor.pressure / 100.0 # convert to hPa (mbar)
+
+                pressure = current_sensor.pressure / 100.0 # convert to mbar (hPa)
                 temperature = current_sensor.temperature
-                relative_altitude = current_sensor.relative_altitude
+
                 # variometer
-                climb, altitude = self.variometer(relative_altitude,
-                                                  filter='alpha_beta')
+                climb, altitude = self.variometer(pressure)
+                altitude -= reference_altitude
+
                 self.max_altitude = max(self.max_altitude, altitude)
                 self.max_climb = max(self.max_climb, climb)
 
@@ -126,6 +146,7 @@ class Ex:
                         'MAX_CLIMB': self.max_climb,       # 2 bytes
                         'ALTITUDE': altitude,              # 2 bytes
                         'MAX_ALTITUDE': self.max_altitude} # 2 bytes
+
             elif category == 'VOLTAGE':
                 pass
             elif category == 'CURRENT':
@@ -136,14 +157,14 @@ class Ex:
                 rpm = current_sensor.rpm
                 data = {'RPM': rpm}
             elif category == 'GPS':
-                data = {'GPSLAT',
-                                self.GPStoEX(current_sensor.longitude, longitude=True),
-                                'GPSLON',
-                                self.GPStoEX(current_sensor.latitude, longitude=False)}
+                data = {'GPSLAT': self.GPStoEX(current_sensor.longitude, longitude=True),
+                        'GPSLON': self.GPStoEX(current_sensor.latitude, longitude=False)}
 
-            with self.lock:
-                self.exbus_data = self.exbus_frame(frametype=const(1), data=data) # data
-                self.exbus_data_ready = True
+            if data:
+                exbus_data_local = self.exbus_frame(frametype=const(1), data=data)
+                with self.lock:
+                    self.exbus_data = exbus_data_local
+                    self.exbus_data_ready = True
 
     @micropython.native
     def exbus_frame(self, frametype=None, label=None, data=None):
@@ -190,10 +211,10 @@ class Ex:
 
         if frametype == const(1): # data
             # put sensor data into ex frame
-            data, length = self.Data(data=data)
+            data, length = self.Data(data)
         elif frametype == const(0): # text
             # put text data into ex frame
-            data, length = self.Text(label=label)
+            data, length = self.Text(label)
         elif frametype == const(2): # message
             # put message data into ex frame
             message = 'Greetings from chiefenne'
@@ -255,41 +276,41 @@ class Ex:
         return header
 
     @micropython.native
-    def Data(self, data=None):
+    def Data(self, data):
         '''EX data packet. Maximum length including the header and crc8 is 29 bytes.'''
 
         exdata = bytearray()
 
-        # speed up obejct access
-        meta = self.sensors.meta
+        # speed up object access (cache object)
+        telemetry_metadata = self.sensors.telemetry_metadata
 
         for telemetry, value in data.items():
-            meta_tele = meta[telemetry] # speed up object access
+            telemetry_info = telemetry_metadata[telemetry]
             # compile 9th byte onwards of EX data specification
-            id = meta_tele['id'] << const(4)
-            data_type = meta_tele['data_type']
+            id = telemetry_info['id'] << const(4)
+            data_type = telemetry_info['data_type']
             # combine bits for id and data type
             exdata += ustruct.pack('B', id | data_type)
 
             # data of 1st telemetry value, converted to EX format
             # scale value based on precision and round it
             mult = -1 if value < 0 else 1
-            value_scaled = int(value * 10**meta_tele['precision'] + mult * 0.5)
+            value_scaled = int(value * 10**telemetry_info['precision'] + mult * 0.5)
             exdata += self.EncodeValue(value_scaled,
-                                     meta_tele['data_type'],
-                                     meta_tele['precision'])
+                                     telemetry_info['data_type'],
+                                     telemetry_info['precision'])
 
         return exdata, len(exdata)
 
     @micropython.native
-    def Text(self, label=None):
+    def Text(self, label):
         '''EX text packet. This transfers the sensor description and unit for
         one sensor value.
         Maximum length including the header and crc8 is 29 bytes.
         '''
 
-        # cache object
-        meta_label = self.sensors.meta[label]
+        # speed up object access (cache object)
+        meta_label = self.sensors.telemetry_metadata[label]
         id = meta_label['id']
         description = meta_label['description']
         unit = meta_label['unit']
@@ -352,57 +373,51 @@ class Ex:
 
         return alarm, len(alarm)
 
-    def process_ms5611_data(realPressure_1, referencePressure_1, alfa_1, r_altitude0_1, r_altitude_1, factor, climb_1):
-        relativeAltitude_1 = ms5611_getAltitude(realPressure_1, referencePressure_1)
+    @micropython.native
+    def variometer(self, pressure):
+        '''Calculate the variometer value derived from pressure.'''
 
-        r_altitude0_1_new = r_altitude0_1 - alfa_1 * (r_altitude0_1 - relativeAltitude_1)
-        r_altitude_1_new = r_altitude_1 - alfa_1 * (r_altitude_1 - relativeAltitude_1)
+        # get altitude from pressure
+        altitude = self.calc_altitude(pressure)
 
-        climb0_1_new = (r_altitude0_1_new - r_altitude_1_new) * factor
+        # calculate delta's for gradient
+        vario_time = time.ticks_us() # microseconds
+        dt_us = time.ticks_diff(vario_time, self.vario_time_old)
 
-        dyn_alfa_1 = abs((climb_1 - climb0_1_new) / 0.4)
-        if dyn_alfa_1 >= 1:
-            dyn_alfa_1 = 1
-        climb_1_new = climb_1 - dyn_alfa_1 * (climb_1 - climb0_1_new)
+        # Filter the pressure data and derive the climb rate
+        self.last_altitude_1, self.last_altitude_2, self.climbrate = \
+            self.filter.double_exponential_filter_native_typed(
+                altitude,
+                self.last_altitude_1,
+                self.last_altitude_2,
+                self.last_climbrate,
+                tau_1=FILTER_TAU_1,
+                tau_2=FILTER_TAU_2,
+                dyn_alpha_divisor=FILTER_DYN_ALPHA_DIVISOR,
+                dt_us=dt_us
+            )
 
-        SetSensorValue(ID_VARIOM, round(climb_1_new * 100), True)
-        SetSensorValue(ID_ALTITU, round(r_altitude0_1_new * 10), True)
+        # Store data for next iteration
+        self.vario_time_old = vario_time
+        self.last_altitude = altitude
+        self.last_climbrate = self.climbrate
 
-        return r_altitude0_1_new, r_altitude_1_new, climb_1_new
+        # Return climb rate and altitude (altitude filtered using tau_1)
+        return self.climbrate, self.last_altitude_1
 
     @micropython.native
     def calc_altitude(self, pressure):
+        '''The following variables are constants for a standard atmosphere
+        t0 = 288.15 # sea level standard temperature (K)
+        p0 = 101325.0 # sea level standard atmospheric pressure (Pa)
+        gamma = 6.5 / 1000.0 # temperature lapse rate (K / m)
+        g = 9.80665 # gravity constant (m / s^2)
+        R = 8.314462618 # mol gas constant (J / (mol * K))
+        Md = 28.96546e-3 # dry air molar mass (kg / mol)
+        Rd =  R / Md
+        return (t0 / gamma) * (1.0 - (pressure / p0)**(Rd * gamma / g))
+        '''
         return 44330.76923 * (1.0 - (pressure / 101325.0)**0.19025954)
-
-    @micropython.native
-    def variometer(self, altitude, filter='alpha_beta'):
-        '''Calculate the variometer value derived from the pressure sensor.'''
-
-        # calculate delta's for gradient
-        # use ticks_diff to produce correct result (when timer overflows)
-        vario_time = time.ticks_ms()
-        dt = time.ticks_diff(vario_time, self.vario_time_old) / 1000.0
-        dz = altitude - self.last_altitude
-
-        # calculate the climbrate
-        climbrate_raw = dz / (dt + 1.e-9)
-
-        if filter == 'exponential':
-            # smoothing filter for the climb rate
-            climbrate = climbrate_raw + \
-                self.vario_smoothing * (self.last_climbrate - climbrate_raw)
-        elif filter == 'alpha_beta':
-            # alpha-beta filter for the climb rate
-            climbrate = self.vario_filter.update(climbrate_raw)
-        else:
-            climbrate = climbrate_raw
-
-        # store data for next iteration
-        self.vario_time_old = vario_time
-        self.last_altitude = altitude
-        self.last_climbrate = climbrate
-
-        return climbrate, self.last_altitude
 
     @micropython.native
     def SimpleText(self, text):
@@ -439,7 +454,6 @@ class Ex:
 
         Returns:
             value_ex : encoded value as bytes in little endian format
-
 
         Data type | Description |  Note
         ----------|-------------|---------------------------------------
