@@ -79,7 +79,7 @@ class MS5611:
                 state = 0
 
     @micropython.native
-    def _calculate_and_store_native(self, d1: int, d2: int) -> None:
+    def _calculate_and_store(self, d1: int, d2: int) -> None:
         """
         Calculates temperature and pressure from raw sensor readings and stores them in the buffer.
         Optimized with @micropython.native decorator.
