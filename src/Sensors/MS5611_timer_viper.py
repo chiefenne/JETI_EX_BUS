@@ -16,12 +16,12 @@ _POW_2_21 = 2097152.0
 
 
 class MS5611:
-    _c1 = RegisterStruct(msc._CAL_DATA_C1, ">H")
-    _c2 = RegisterStruct(msc._CAL_DATA_C2, ">H")
-    _c3 = RegisterStruct(msc._CAL_DATA_C3, ">H")
-    _c4 = RegisterStruct(msc._CAL_DATA_C4, ">H")
-    _c5 = RegisterStruct(msc._CAL_DATA_C5, ">H")
-    _c6 = RegisterStruct(msc._CAL_DATA_C6, ">H")
+    _c1 = RegisterStruct(msc.CAL_DATA_C1, ">H")
+    _c2 = RegisterStruct(msc.CAL_DATA_C2, ">H")
+    _c3 = RegisterStruct(msc.CAL_DATA_C3, ">H")
+    _c4 = RegisterStruct(msc.CAL_DATA_C4, ">H")
+    _c5 = RegisterStruct(msc.CAL_DATA_C5, ">H")
+    _c6 = RegisterStruct(msc.CAL_DATA_C6, ">H")
 
     def __init__(self, i2c, address: int = 0x77,
                  temperature_oversample_rate=msc.TEMP_OSR_1024,
@@ -61,7 +61,7 @@ class MS5611:
             elif state == 1:
                 # Read temperature
                 temp_buf = bytearray(3)
-                self._i2c.readfrom_mem_into(self._address, msc._DATA, temp_buf)
+                self._i2c.readfrom_mem_into(self._address, msc.DATA, temp_buf)
                 d2 = struct.unpack(">I", b'\x00' + temp_buf)[0]
 
                 # Start pressure conversion
@@ -71,7 +71,7 @@ class MS5611:
             elif state == 2:
                 # Read pressure
                 press_buf = bytearray(3)
-                self._i2c.readfrom_mem_into(self._address, msc._DATA, press_buf)
+                self._i2c.readfrom_mem_into(self._address, msc.DATA, press_buf)
                 d1 = struct.unpack(">I", b'\x00' + press_buf)[0]
 
                 # Store press and temp in buffer
