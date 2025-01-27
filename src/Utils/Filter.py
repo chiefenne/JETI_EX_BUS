@@ -24,21 +24,14 @@ class SignalFilter:
         self.value = value + smoothing_factor * (self.value - value)
         return self.value
 
-    @micropython.viper
-    def double_exponential_filter(self,
-                                        altitude: float,
-                                        old_altitude_1: float,
-                                        old_altitude_2: float,
-                                        old_climb_rate: float,
-                                        tau_1: float, tau_2: float, dyn_alpha_divisor: float,
-                                        dt_us: float) -> tuple[float, float, float]:
-        """Applies a double exponential filter with dynamic smoothing to an input value.
-        The altitude is smoothed using two exponential filters with different time constants.
-        The difference between the two smoothed values divided by the difference in time constants
-        is used to calculate the climb rate. The climb rate is then smoothed using an
-        additional exponential filter with a dynamic smoothing factor.
-        Source: https://github.com/nichtgedacht/Arduino-MS5611-Interrupt/blob/master/MS5611.cpp
-        """
+    @micropython.native
+    def double_exponential_filter_native_typed(self, altitude: float,
+                                            old_altitude_1: float,
+                                            old_altitude_2: float,
+                                            old_climb_rate: float,
+                                            tau_1: float, tau_2: float, dyn_alpha_divisor: float,
+                                            dt_us: float) -> tuple[float, float, float]:
+        """Applies a double exponential filter using @native with type hints."""
 
         alfa_1: float = dt_us / (tau_1 + dt_us)
         alfa_2: float = dt_us / (tau_2 + dt_us)
