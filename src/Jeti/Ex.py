@@ -69,12 +69,13 @@ class Ex:
             if s.category == 'PRESSURE':
 
                 reference_pressure = 0.0
-                samples = 50
+                samples = 20
                 for i in range(samples):
                     s.read_jeti()
-                    reference_pressure += s.pressure / 100.0
+                    reference_pressure += s.pressure
                 reference_pressure /= samples
 
+                # calculate reference altitude (pressure in Pascal)
                 self.reference_altitude = self.calc_altitude(reference_pressure)
                 self.last_altitude_1 = self.reference_altitude
                 self.last_altitude_2 = self.reference_altitude
@@ -134,8 +135,8 @@ class Ex:
                 pressure = raw_pressure / 100.0 # convert to mbar (hPa)
                 temperature = current_sensor.temperature
 
-                # variometer
-                climb, altitude = self.variometer(pressure)
+                # variometer (pressure in Pascal)
+                climb, altitude = self.variometer(raw_pressure)
                 altitude -= reference_altitude
 
                 self.max_altitude = max(self.max_altitude, altitude)
@@ -418,6 +419,9 @@ class Ex:
         Md = 28.96546e-3 # dry air molar mass (kg / mol)
         Rd =  R / Md
         return (t0 / gamma) * (1.0 - (pressure / p0)**(Rd * gamma / g))
+
+        NOTE: pressure in Pascal
+
         '''
         return 44330.76923 * (1.0 - (pressure / 101325.0)**0.19025954)
 
