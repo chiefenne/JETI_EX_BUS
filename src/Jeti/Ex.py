@@ -136,8 +136,7 @@ class Ex:
                 temperature = current_sensor.temperature
 
                 # variometer (pressure in Pascal)
-                climb, altitude = self.variometer(raw_pressure)
-                altitude -= reference_altitude
+                climb, altitude = self.variometer(raw_pressure, reference_altitude)
 
                 self.max_altitude = max(self.max_altitude, altitude)
                 self.max_climb = max(self.max_climb, climb)
@@ -377,19 +376,19 @@ class Ex:
         return alarm, len(alarm)
 
     @micropython.native
-    def variometer(self, pressure):
-        '''Calculate the variometer value derived from pressure.'''
+    def variometer(self, pressure, reference_altitude):
+        '''Calculate the variometer value derived from pressure (Pascal).'''
 
-        # get altitude from pressure
-        altitude = self.calc_altitude(pressure)
+        # get altitude from pressure (base on reference altitude)
+        altitude = self.calc_altitude(pressure) - reference_altitude
 
         # calculate delta's for gradient
         vario_time = time.ticks_us() # microseconds
         dt_us = time.ticks_diff(vario_time, self.vario_time_old)
 
-        # Filter the pressure data and derive the climb rate
+        # Filter the altitude and derive the climb rate
         self.last_altitude_1, self.last_altitude_2, self.climbrate = \
-            self.filter.double_exponential_filter_native_typed(
+            self.filter.double_exponential_filter(
                 altitude,
                 self.last_altitude_1,
                 self.last_altitude_2,
