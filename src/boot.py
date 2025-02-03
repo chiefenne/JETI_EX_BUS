@@ -17,6 +17,8 @@ print('JETI BOOT - INFO: Underlying machine:', sys.implementation._machine)
 overclock = False
 
 if 'rp2' in sys.platform:
+    # set nominal CPU frequency (so that printout is correct)
+    freq(125_000_000)
     overclock = True
 elif 'esp32' in sys.platform:
     overclock = True
@@ -54,7 +56,7 @@ if 'rp2' in sys.platform:
         ledb = Pin(rp2_led_pins['b'], Pin.OUT)
         for led in (ledr, ledg, ledb):
             led.value(1)
-        blink(ledr, 4, 10)
+        blink(ledr, 2, 10)
         blink(ledg, 4, 5)
         ledg.value(0)  # indicate active
     except:
