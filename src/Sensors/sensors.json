@@ -12,7 +12,7 @@
         "name": "MS5611",
         "manufacturer": "AMSYS",
         "description": "High resolution precision barometer",
-        "module": "ms5611_timer_viper",
+        "module": "ms5611",
         "class": "MS5611",
         "category": "PRESSURE",
         "labels": ["PRESSURE", "RAW_PRESSURE", "TEMPERATURE", "CLIMB", "ALTITUDE", "MAX_ALTITUDE", "MAX_CLIMB"]
