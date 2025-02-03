@@ -130,7 +130,8 @@ class Ex:
             # update data frame (new sensor data)
             if category == 'PRESSURE':
 
-                pressure = current_sensor.pressure / 100.0 # convert to mbar (hPa)
+                raw_pressure = current_sensor.pressure
+                pressure = raw_pressure / 100.0 # convert to mbar (hPa)
                 temperature = current_sensor.temperature
 
                 # variometer
@@ -141,6 +142,7 @@ class Ex:
                 self.max_climb = max(self.max_climb, climb)
 
                 data = {'PRESSURE': pressure,              # 3 bytes
+                        'RAW_PRESSURE': raw_pressure,      # 3 bytes
                         'TEMPERATURE': temperature,        # 2 bytes
                         'CLIMB': climb,                    # 2 bytes
                         'MAX_CLIMB': self.max_climb,       # 2 bytes

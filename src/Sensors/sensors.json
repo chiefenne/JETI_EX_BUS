@@ -6,7 +6,7 @@
         "module": "bme280_i2c",
         "class": "BME280_I2C",
         "category": "PRESSURE",
-        "labels": ["PRESSURE", "TEMPERATURE", "CLIMB", "ALTITUDE", "MAX_ALTITUDE", "MAX_CLIMB"]
+        "labels": ["PRESSURE", "RAW_PRESSURE", "TEMPERATURE", "CLIMB", "ALTITUDE", "MAX_ALTITUDE", "MAX_CLIMB"]
     },
     "0x77": {
         "name": "MS5611",
@@ -15,7 +15,7 @@
         "module": "ms5611_timer_viper",
         "class": "MS5611",
         "category": "PRESSURE",
-        "labels": ["PRESSURE", "TEMPERATURE", "CLIMB", "ALTITUDE", "MAX_ALTITUDE", "MAX_CLIMB"]
+        "labels": ["PRESSURE", "RAW_PRESSURE", "TEMPERATURE", "CLIMB", "ALTITUDE", "MAX_ALTITUDE", "MAX_CLIMB"]
     },
     "0x99": {
         "name": "DEMO",

@@ -41,14 +41,21 @@
         "data_type": 1,
         "precision": 1
     },
-    "PRESSURE": {    
+    "PRESSURE": {
         "id": 6,
         "description": "Pressure",
         "unit": "mbar",
         "data_type": 4,
         "precision": 1
     },
-    "TEMPERATURE": {
+    "RAW_PRESSURE": {
+        "id": 6,
+        "description": "Pressure",
+        "unit": "Pa",
+        "data_type": 4,
+        "precision": 0
+    },
+     "TEMPERATURE": {
         "id": 7,
         "description": "Temperature",
         "unit": "C",
