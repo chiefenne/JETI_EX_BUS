@@ -25,7 +25,7 @@ class SignalFilter:
         return self.value
 
     @micropython.native
-    def double_exponential_filter_native_typed(self, altitude: float,
+    def double_exponential_filter(self, altitude: float,
                                             old_altitude_1: float,
                                             old_altitude_2: float,
                                             old_climb_rate: float,
