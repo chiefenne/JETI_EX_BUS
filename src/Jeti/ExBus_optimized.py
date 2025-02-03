@@ -30,7 +30,7 @@ class ExBus:
         self.frame_count = -1
 
         # number of frames for sending initial device and label information
-        self.label_frames = 100
+        self.label_frames = 30
 
         # lock object used to prevent other cores from accessing shared resources
         self.lock = lock
