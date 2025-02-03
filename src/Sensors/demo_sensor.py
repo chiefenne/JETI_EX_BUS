@@ -4,8 +4,9 @@ from Utils.Logger import Logger
 
 class DemoSensor:
 
-    def __init__(self, address=0x99, i2c=None):
+    def __init__(self, lock, address=0x99, i2c=None):
         self.address = address
+        self.lock = lock
         self.i2c = i2c
         self.counter = 0
         self.sign = 1
