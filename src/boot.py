@@ -14,12 +14,13 @@ print('JETI BOOT - INFO: Platform:', sys.platform)
 print('JETI BOOT - INFO: Operating system:', sys.version)
 print('JETI BOOT - INFO: Underlying machine:', sys.implementation._machine)
 
-overclock = False
+overclock = True
 
 if 'rp2' in sys.platform:
-    overclock = True
+    # set nominal CPU frequency (so that printout is correct)
+    freq(125_000_000)
 elif 'esp32' in sys.platform:
-    overclock = True
+    pass
 elif 'samd' in sys.platform:
     pass
 else:
@@ -29,7 +30,7 @@ print(f'JETI BOOT - INFO: CPU frequency (MHz): {freq() / 1_000_000}')
 
 if overclock:
     if 'rp2' in sys.platform or 'esp32' in sys.platform:
-        freq(240_000_000)
+        freq(220_000_000)
         print(f'JETI BOOT - INFO: CPU overclocked frequency (MHz): {freq() / 1_000_000}')
 
 def blink(led, seconds, hz):
@@ -54,7 +55,7 @@ if 'rp2' in sys.platform:
         ledb = Pin(rp2_led_pins['b'], Pin.OUT)
         for led in (ledr, ledg, ledb):
             led.value(1)
-        blink(ledr, 4, 10)
+        blink(ledr, 2, 10)
         blink(ledg, 4, 5)
         ledg.value(0)  # indicate active
     except:

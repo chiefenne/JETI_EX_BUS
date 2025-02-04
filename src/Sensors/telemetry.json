@@ -41,7 +41,7 @@
         "data_type": 1,
         "precision": 1
     },
-    "PRESSURE": {    
+    "PRESSURE": {
         "id": 6,
         "description": "Pressure",
         "unit": "mbar",
@@ -103,5 +103,12 @@
         "unit": "_",
         "data_type": 0,
         "precision": 0
-    }
+    },
+    "RAW_PRESSURE": {
+        "id": 15,
+        "description": "Raw Pressure",
+        "unit": "Pa",
+        "data_type": 4,
+        "precision": 1
+}
 }

@@ -6,28 +6,21 @@ JETI receiver.
 Source code and documentation:
     https://github.com/chiefenne/JETI_EX_BUS
 
-
-JETI Ex Bus and JETI Ex specification:
+JETI Ex Bus and JETI Ex protocol specification:
     http://www.jetimodel.com/en/Telemetry-Protocol/
     EX_Bus_protokol_v121_EN.pdf
     JETI_Telem_protocol_EN_V1.07.pdf
 
-MicroPython:
-   https://micropython.org/
-   https://github.com/micropython/micropython
-
 
 This module holds the overall program logic. It initializes the serial connection
 between microcontroller (board) and Jeti receiver.
-
 Further it connects the sensors via I2C to the board.
-
 After that it starts an endless loop to handle all data streams between the devices.
+The code runs on two cores of the microcontroller.
 
 
 Author: Dipl.-Ing. A. Ennemoser
 Date: 01-2025
-Version: 1.0 dev
 
 '''
 
@@ -37,14 +30,8 @@ import usys as sys
 from machine import Pin
 import _thread
 
-OPTIMIZED = True
-
-if OPTIMIZED:
-    from Jeti.Ex_optimized import Ex
-    from Jeti.ExBus_optimized import ExBus
-else:
-    from Jeti.Ex import Ex
-    from Jeti.ExBus import ExBus
+from Jeti.Ex import Ex
+from Jeti.ExBus import ExBus
 
 from Jeti.Serial_UART import Serial
 from Sensors.I2C import I2C_bus
