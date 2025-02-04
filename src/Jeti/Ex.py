@@ -27,12 +27,12 @@ from Utils.Logger import Logger
 from Utils.round_robin import cycler
 from Utils.Filter import SignalFilter
 
-# 0.081s und 0.1561s
+# signal filter parameters for the variometer
 # https://www.rc-network.de/threads/variometer-algorithmus.736247/post-7429743
-
-FILTER_TAU_1 = 100000.0
+FILTER_TAU_1 = 110000.0
 FILTER_TAU_2 = 150920.76
 FILTER_DYN_ALPHA_DIVISOR = 0.8407
+
 
 class Ex:
     """Jeti EX protocol handler."""
@@ -64,16 +64,15 @@ class Ex:
         # make a generator out of the list of sensors
         self.cycle_sensors = cycler(active_sensors)
 
-        # initialize reference height for variometer
+        # initialize reference pressure/altitude for variometer
         for s in active_sensors:
             if s.category == 'PRESSURE':
-
-                reference_pressure = 0.0
-                samples = 20
+                # do some warm-up to get a "stable" pressure reading
+                samples = 50
                 for i in range(samples):
                     s.read_jeti()
-                    reference_pressure += s.pressure
-                reference_pressure /= samples
+                # take the last sample as reference pressure
+                reference_pressure = s.pressure
 
                 # calculate reference altitude (pressure in Pascal)
                 self.reference_altitude = self.calc_altitude(reference_pressure)
@@ -123,7 +122,6 @@ class Ex:
             current_sensor = next(cycle_sensors)
             category = current_sensor.category # cache variable
 
-            # DEBUG
             # collect data from currently selected sensor
             current_sensor.read_jeti()
 
@@ -141,8 +139,7 @@ class Ex:
                 self.max_altitude = max(self.max_altitude, altitude)
                 self.max_climb = max(self.max_climb, climb)
 
-                data = {'PRESSURE': pressure,              # 3 bytes
-                        'RAW_PRESSURE': raw_pressure,      # 3 bytes
+                data = {'RAW_PRESSURE': raw_pressure,      # 3 bytes
                         'TEMPERATURE': temperature,        # 2 bytes
                         'CLIMB': climb,                    # 2 bytes
                         'MAX_CLIMB': self.max_climb,       # 2 bytes
