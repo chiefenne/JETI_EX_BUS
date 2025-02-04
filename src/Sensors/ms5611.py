@@ -94,4 +94,5 @@ class MS5611:
     def read_jeti(self):
         '''Read sensor data'''
 
-        return self.measure()
+        self.pressure, self.temperature = self.measure()
+        return self.pressure, self.temperature
