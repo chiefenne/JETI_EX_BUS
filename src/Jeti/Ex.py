@@ -29,9 +29,9 @@ from Utils.Filter import SignalFilter
 
 # signal filter parameters for the variometer
 # https://www.rc-network.de/threads/variometer-algorithmus.736247/post-7429743
-FILTER_TAU_1 = 110000.0
-FILTER_TAU_2 = 150920.76
-FILTER_DYN_ALPHA_DIVISOR = 0.8407
+FILTER_TAU_1 = 40000.0
+FILTER_TAU_2 = 150000.0
+FILTER_DYN_ALPHA_DIVISOR = 0.6
 
 
 class Ex:
