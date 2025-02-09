@@ -28,9 +28,9 @@ from Utils.round_robin import cycler
 from Utils.Filter import SignalFilter
 
 # signal filter parameters for the variometer
-FILTER_TAU_1 = 80000.0
-FILTER_TAU_2 = 150000.0
-FILTER_DYN_ALPHA_DIVISOR = 0.4
+FILTER_TAU_1 = 150000.0
+FILTER_TAU_2 = 200000.0
+FILTER_DYN_ALPHA_DIVISOR = 0.85
 
 
 class Ex:
