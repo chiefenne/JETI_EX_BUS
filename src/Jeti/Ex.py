@@ -132,7 +132,6 @@ class Ex:
             if category == 'PRESSURE':
 
                 raw_pressure = current_sensor.pressure
-                pressure = raw_pressure / 100.0 # convert to mbar (hPa)
                 temperature = current_sensor.temperature
 
                 # variometer (pressure in Pascal)
