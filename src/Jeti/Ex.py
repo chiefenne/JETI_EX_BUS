@@ -70,7 +70,7 @@ class Ex:
         for s in active_sensors:
             if s.category == 'PRESSURE':
                 # do some warm-up to get a "stable" pressure reading
-                samples = 50
+                samples = 20
                 for i in range(samples):
                     s.read_jeti()
                 # take the last sample as reference pressure
