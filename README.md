@@ -206,7 +206,7 @@ a<br>
   </kbd>
 </p>
 <p align="center">
-    <i>Fig. 7a: Compare altitude readings of MS5611 sensor to Jeti MVario2</i>
+    <i>Fig. 7a: Compare climb rate (green) with  to Jeti MVario2 (red)</i>
 </p>
 
 <br>
