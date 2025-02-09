@@ -28,10 +28,9 @@ from Utils.round_robin import cycler
 from Utils.Filter import SignalFilter
 
 # signal filter parameters for the variometer
-# https://www.rc-network.de/threads/variometer-algorithmus.736247/post-7429743
-FILTER_TAU_1 = 110000.0
-FILTER_TAU_2 = 150920.76
-FILTER_DYN_ALPHA_DIVISOR = 0.8407
+FILTER_TAU_1 = 150000.0
+FILTER_TAU_2 = 200000.0
+FILTER_DYN_ALPHA_DIVISOR = 0.85
 
 
 class Ex:
@@ -68,7 +67,7 @@ class Ex:
         for s in active_sensors:
             if s.category == 'PRESSURE':
                 # do some warm-up to get a "stable" pressure reading
-                samples = 50
+                samples = 20
                 for i in range(samples):
                     s.read_jeti()
                 # take the last sample as reference pressure
@@ -130,7 +129,6 @@ class Ex:
             if category == 'PRESSURE':
 
                 raw_pressure = current_sensor.pressure
-                pressure = raw_pressure / 100.0 # convert to mbar (hPa)
                 temperature = current_sensor.temperature
 
                 # variometer (pressure in Pascal)
@@ -382,9 +380,10 @@ class Ex:
         # calculate delta's for gradient
         vario_time = time.ticks_us() # microseconds
         dt_us = time.ticks_diff(vario_time, self.vario_time_old)
+        self.vario_time_old = vario_time
 
         # Filter the altitude and derive the climb rate
-        self.last_altitude_1, self.last_altitude_2, self.climbrate = \
+        self.last_altitude_1, self.last_altitude_2, self.last_climbrate = \
             self.filter.double_exponential_filter(
                 altitude,
                 self.last_altitude_1,
@@ -396,13 +395,8 @@ class Ex:
                 dt_us=dt_us
             )
 
-        # Store data for next iteration
-        self.vario_time_old = vario_time
-        self.last_altitude = altitude
-        self.last_climbrate = self.climbrate
-
         # Return climb rate and altitude (altitude filtered using tau_1)
-        return self.climbrate, self.last_altitude_1
+        return self.last_climbrate, self.last_altitude_1
 
     @micropython.native
     def calc_altitude(self, pressure):

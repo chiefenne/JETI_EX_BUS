@@ -10,7 +10,7 @@ This allows to use microcontrollers (aka boards) like Raspbery Pi, ESP32 or simi
 [Raspberry Pi  RP2040](https://www.raspberrypi.com/products/rp2040/) based platforms were used for development. The main application is to use the software on these boards together with one or more sensors attached to it. The main sensor interface is based on the [I2C protocol](https://en.wikipedia.org/wiki/I%C2%B2C). So all sensors using this interafce can be easiliy integrated, some are already predifined (see section features).
 
 
-The code runs on two cores. One core handles the telemetry transfer, the other core prepares the telemetry based on data retrieved from sensors. 
+The code runs on two cores. One core handles the telemetry transfer, the other core prepares the telemetry based on data retrieved from sensors.
 
 
 ## Features
@@ -68,14 +68,14 @@ After finishing board and sensors (see further down) the MicroPython firmware ne
 
 <br>
 
-> NOTE: From the MicroPython docs: "The exact procedure for these steps is highly dependent on the particular board and you will need to refer to its documentation for details." 
+> NOTE: From the MicroPython docs: "The exact procedure for these steps is highly dependent on the particular board and you will need to refer to its documentation for details."
 
 > NOTE: If there is already an older release of [JETI Ex Bus protocol (Python)](https://github.com/chiefenne/JETI_EX_BUS) installed, and an upddate to a newer version is performed, it is highly recommended to delete at first all files from the board. See below how to do that.
 
 <br>
 
 Wiping the board, is at the time of this writing, not easily possible with ```mpremote```. The filesystem can be formatted with the following fancy command for RP2040 boards (copied from [here](https://forum.micropython.org/viewtopic.php?t=12674)):
-        
+
 ```
 mpremote exec --no-follow "import os, machine, rp2; os.umount(/); bdev = rp2.Flash(); os.VfsLfs2.mkfs(bdev, progsize=256); vfs = os.VfsLfs2(bdev, progsize=256); os.mount(vfs, /); machine.reset()"
 ```
@@ -108,7 +108,7 @@ Sooner or later ```mpremote``` will have an option to achieve this in a simpler 
 The program logic consists of two parts. Those are the similar to the Arduino <b>*setup()*</b> and <b>*loop()*</b> functions.
 
   * In the beginning the communication channels (UART, I2C) are initialized. A serial connection (UART) is established between the microcontroller and the receiver. Additionally an I2C connection is setup between the microcontroller and the sensor(s).
-  * After the setup of the communication, the two main (infinite) loops start, one infinite loop on each core. 
+  * After the setup of the communication, the two main (infinite) loops start, one infinite loop on each core.
 
 <br>
 
@@ -202,11 +202,11 @@ a<br>
 
 <p align="center">
   <kbd> <!-- make a frame around the image -->
-    <img src="docs/images/comparison_to_MVario2.png" width="600" />
+    <img src="docs/images/comparison_to_MVario2_01.png" width="600" />
   </kbd>
 </p>
 <p align="center">
-    <i>Fig. 7a: Compare altitude readings of MS5611 sensor to Jeti MVario2</i>
+    <i>Fig. 7a: Comparison of climb rate (green) with Jeti MVario2 (red)</i>
 </p>
 
 <br>
@@ -307,7 +307,7 @@ See [EX_Bus_stream.txt](https://github.com/chiefenne/JETI_EX_BUS/blob/main/docs/
 
 ## Credits
 
-Apart from the JETI telemetry documentation, the code of this repo has learned from many sources. 
+Apart from the JETI telemetry documentation, the code of this repo has learned from many sources.
 
 
 Following sources were most helpful (without those I couldn't have done this at all):

@@ -5,24 +5,11 @@ class SignalFilter:
     def __init__(self, filter_type='exponential'):
         self.filter_type = filter_type
 
+
     @micropython.native
-    def exponential_filter(self, value, smoothing_factor):
-        """
-        Apply an exponential filter to the provided value.
-
-        This method updates an internal stored value by applying a smoothing factor
-        to gradually reduce the difference between the new value and the stored value.
-
-        Parameters:
-            value (int or float): The new measurement or target value.
-            smoothing_factor (float): A number in the range [0, 1] that determines
-                how much of the old value to keep. A higher value means more smoothing.
-
-        Returns:
-            float: The updated filtered value.
-        """
-        self.value = value + smoothing_factor * (self.value - value)
-        return self.value
+    def exponential_filter(value: float, smoothing_factor: float, last_value: float) -> float:
+        """Applies an exponential filter using @native with type hints."""
+        return value + smoothing_factor * (last_value - value)
 
     @micropython.native
     def double_exponential_filter(self, altitude: float,
@@ -31,7 +18,9 @@ class SignalFilter:
                                             old_climb_rate: float,
                                             tau_1: float, tau_2: float, dyn_alpha_divisor: float,
                                             dt_us: float) -> tuple[float, float, float]:
-        """Applies a double exponential filter using @native with type hints."""
+        """Applies a double exponential filter using @native with type hints.
+        # https://www.rc-network.de/threads/variometer-algorithmus.736247/post-7429743
+        """
 
         alfa_1: float = dt_us / (tau_1 + dt_us)
         alfa_2: float = dt_us / (tau_2 + dt_us)
