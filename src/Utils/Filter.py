@@ -18,7 +18,9 @@ class SignalFilter:
                                             old_climb_rate: float,
                                             tau_1: float, tau_2: float, dyn_alpha_divisor: float,
                                             dt_us: float) -> tuple[float, float, float]:
-        """Applies a double exponential filter using @native with type hints."""
+        """Applies a double exponential filter using @native with type hints.
+        # https://www.rc-network.de/threads/variometer-algorithmus.736247/post-7429743
+        """
 
         alfa_1: float = dt_us / (tau_1 + dt_us)
         alfa_2: float = dt_us / (tau_2 + dt_us)
