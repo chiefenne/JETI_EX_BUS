@@ -325,4 +325,4 @@ Following sources were most helpful (without those I couldn't have done this at 
 Distributed under the MIT license. See [LICENSE](https://raw.githubusercontent.com/chiefenne/PyAero/master/LICENSE) for more information.
 
 <br><br>
-2023 Andreas Ennemoser – andreas.ennemoser@aon.at
+2025 Andreas Ennemoser – andreas.ennemoser@aon.at
