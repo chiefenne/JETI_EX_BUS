@@ -69,12 +69,10 @@ if DEBUG:
     logger.log('debug', 'EX Bus stream recorded')
 
 # setup the I2C bus (pins are board specific)
-#    TINY2040 board: GPIO6, GPIO7 at port 1 (id=1)
-#    ESP32 board: GPIO5, GPIO6 at port ??
 if 'rp2' in sys.platform:
     i2c = I2C_bus(1, scl=Pin(7), sda=Pin(6), freq=400000)
 if 'esp32' in sys.platform:
-    i2c = I2C_bus(1, scl=Pin(6), sda=Pin(5), freq=400000)
+    i2c = I2C_bus(1, scl=Pin(5), sda=Pin(4), freq=400000)
 
 # scan the I2C bus for sensors
 addresses = i2c.scan()
