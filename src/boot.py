@@ -20,7 +20,7 @@ if 'rp2' in sys.platform:
     # set nominal CPU frequency (so that printout is correct)
     freq(125_000_000)
 elif 'esp32' in sys.platform:
-    pass
+    freq(240_000_000)
 elif 'samd' in sys.platform:
     pass
 else:
@@ -29,7 +29,7 @@ else:
 print(f'JETI BOOT - INFO: CPU frequency (MHz): {freq() / 1_000_000}')
 
 if overclock:
-    if 'rp2' in sys.platform or 'esp32' in sys.platform:
+    if 'rp2' in sys.platform in sys.platform:
         freq(220_000_000)
         print(f'JETI BOOT - INFO: CPU overclocked frequency (MHz): {freq() / 1_000_000}')
 
@@ -63,9 +63,8 @@ if 'rp2' in sys.platform:
 
 elif 'esp32' in sys.platform:
     try:
-        # default built-in LED on some boards is GPIO2, others vary
         led = Pin(21, Pin.OUT)
-        blink(led, 5, 4)
+        blink(led, 4, 5)
         led.value(0)  # indicate active
     except:
         print("JETI BOOT - ERROR: LED setup failed on ESP32")
