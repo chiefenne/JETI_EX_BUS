@@ -1,4 +1,4 @@
-from machine import I2C, Pin
+import micropython
 import time
 import struct
 
@@ -64,7 +64,7 @@ class ICP20100:
         temperature_raw = struct.unpack("<h", data)[0]  # Little-endian, signed short
         return temperature_raw
 
-    def get_pressure_kPa(self):
+    def get_pressure_Pa(self):
         """Reads and returns the pressure in kPa (kilopascals)."""
         data_press = self.get_pressure_raw()
 
@@ -73,7 +73,7 @@ class ICP20100:
             data_press |= 0xF000  # shifted down from 0xFFF00000
 
         pressure = ((float)(data_press) * 40 / 131072) + 70
-        return pressure
+        return pressure * 1000  # Convert to Pa
 
     def get_temperature_C(self):
         """Reads and returns the temperature in degrees Celsius."""
@@ -86,23 +86,9 @@ class ICP20100:
         temperature = ((float)(data_temp) * 65 / 262144) + 25
         return temperature
 
+    @micropython.native
+    def read_jeti(self):
+        '''Read sensor data'''
 
-# --- Example Usage ---
-if __name__ == "__main__":
-    # Replace with your actual I2C pins
-    i2c = I2C(0, scl=Pin(21), sda=Pin(20), freq=100000) #Adjust pins
-    ICP20100_I2C_ADDR = 0x69  # Or 0x68, check the sensor!
-    sensor = ICP20100(i2c, ICP20100_I2C_ADDR)
-
-    try:
-        sensor.begin()
-        print("ICP-20100 Chip ID: 0x{:02X}".format(sensor.chip_id))
-
-        pressure_kPa = sensor.get_pressure_kPa()
-        temperature_C = sensor.get_temperature_C()
-
-        print("Pressure: {:.2f} kPa".format(pressure_kPa))
-        print("Temperature: {:.2f} °C".format(temperature_C))
-
-    except Exception as e:
-        print("Error:", e)
+        self.pressure, self.temperature = self.get_pressure_Pa(), self.get_temperature_C()
+        return self.pressure, self.temperature
