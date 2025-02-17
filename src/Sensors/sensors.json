@@ -17,6 +17,15 @@
         "category": "PRESSURE",
         "labels": ["PRESSURE", "RAW_PRESSURE", "TEMPERATURE", "CLIMB", "ALTITUDE", "MAX_ALTITUDE", "MAX_CLIMB"]
     },
+    "0x64": {
+        "name": "ICP-20100",
+        "manufacturer": "TDK",
+        "description": "High resolution precision barometer",
+        "module": "icp20100",
+        "class": "ICP20100",
+        "category": "PRESSURE",
+        "labels": ["PRESSURE", "RAW_PRESSURE", "TEMPERATURE", "CLIMB", "ALTITUDE", "MAX_ALTITUDE", "MAX_CLIMB"]
+    },
     "0x99": {
         "name": "DEMO",
         "manufacturer": "chiefenne",
