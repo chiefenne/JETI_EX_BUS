@@ -22,11 +22,10 @@ class MS5611:
     _c5 = RegisterStruct(msc.CAL_DATA_C5, ">H")
     _c6 = RegisterStruct(msc.CAL_DATA_C6, ">H")
 
-    def __init__(self, lock, i2c, address) -> None:
+    def __init__(self, i2c, address) -> None:
 
         self._i2c = i2c
         self._address = address
-        self.lock = lock
 
         self.c1: int = self._c1 # access the class attribute
         self.c2: int = self._c2
