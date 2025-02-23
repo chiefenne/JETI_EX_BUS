@@ -90,7 +90,7 @@ _BME280_P_T_H_DATA_LEN                = const(8)
 
 
 class BME280_I2C:
-    def __init__(self, address: int = BME280_I2C_ADDR_PRIM, i2c=None):
+    def __init__(self, i2c=None, address: int = BME280_I2C_ADDR_PRIM):
         """
         Ensure I2C communication with the sensor is working, reset the sensor,
         and load its calibration data into memory.
@@ -113,7 +113,7 @@ class BME280_I2C:
         Configure the sensor with settings recommended for "indoor" 0.2Pa/1.7cm RMS
         or "gaming" 0.3Pa/2.5cm RMS accuracy.
         Indoor is more accurate but slower, gaming is faster but less accurate.
-        
+
         Timing calculation according to the data sheet (appendix B), example for indoor use:
           Measurement time:
             t_typ = 1.00 + 2.0*osr_t + 2.0*osr_p+0.500 + 2.0*osr_h+0.500
@@ -145,7 +145,7 @@ class BME280_I2C:
             'osr_h': BME280_NO_OVERSAMPLING}
 
         self.set_measurement_settings(vario)
-        
+
         # Start the sensor automatically sensing
         self.set_power_mode(BME280_NORMAL_MODE)
 
@@ -428,28 +428,28 @@ class BME280_I2C:
         """
         temperature_min = -40
         temperature_max = 85
-    
+
         var1 = (adc_T / 16384.0) - (self.cal_dig_T1 / 1024.0)
         var1 = var1 * self.cal_dig_T2
-    
+
         var2 = (adc_T / 131072.0) - (self.cal_dig_T1 / 8192.0)
         var2 = var2 * var2 * self.cal_dig_T3
-    
+
         self.cal_t_fine = int(var1 + var2)
-    
+
         temperature = (var1 + var2) / 5120.0
-    
+
         if temperature < temperature_min:
             temperature = temperature_min
         elif temperature > temperature_max:
             temperature = temperature_max
-    
+
         return temperature
 
     def _compensate_pressure(self, adc_P: int) -> float:
         """
         Output value of “96386.0” equals 96386 Pa = 963.86 hPa
-        
+
         See the floating-point implementation in the reference library:
         https://github.com/BoschSensortec/BME280_driver/blob/bme280_v3.3.4/bme280.c#L912
         """
@@ -482,33 +482,33 @@ class BME280_I2C:
     def _compensate_humidity(self, adc_H: int) -> float:
         """
         Output value between 0.0 and 100.0, where 100.0 is 100%RH
-    
+
         See the floating-point implementation in the reference library:
         https://github.com/BoschSensortec/BME280_driver/blob/bme280_v3.3.4/bme280.c#L952
         """
         humidity_min = 0.0
         humidity_max = 100.0
-    
+
         var1 = self.cal_t_fine - 76800.0
-    
+
         var2 = self.cal_dig_H4 * 64.0 + (self.cal_dig_H5 / 16384.0) * var1
-    
+
         var3 = adc_H - var2
-    
+
         var4 = self.cal_dig_H2 / 65536.0
-    
+
         var5 = 1.0 + (self.cal_dig_H3 / 67108864.0) * var1
-    
+
         var6 = 1.0 + (self.cal_dig_H6 / 67108864.0) * var1 * var5
         var6 = var3 * var4 * (var5 * var6)
-    
+
         humidity = var6 * (1.0 - self.cal_dig_H1 * var6 / 524288.0)
-    
+
         if humidity > humidity_max:
             humidity = humidity_max
         elif humidity < humidity_min:
             humidity = humidity_min
-    
+
         return humidity
 
     ##
@@ -518,7 +518,7 @@ class BME280_I2C:
     # def _compensate_temperature(self, adc_T: int) -> float:
     #     """
     #     Output value of “25.0” equals 25.0 DegC.
-    # 
+    #
     #     See the integer implementation in the data sheet, section 4.2.3
     #     And the reference library:
     #     https://github.com/BoschSensortec/BME280_driver/blob/bme280_v3.3.4/bme280.c#L987
