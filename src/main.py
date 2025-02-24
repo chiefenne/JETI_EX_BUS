@@ -78,7 +78,7 @@ if 'esp32' in sys.platform:
 addresses = i2c.scan()
 
 # check for sensors attached to the microcontroller
-sensors = Sensors(addresses, i2c.i2c, lock)
+sensors = Sensors(addresses, i2c.i2c)
 
 # setup the JETI EX protocol
 ex = Ex(sensors, lock)
