@@ -55,7 +55,7 @@ def crc8_viper(packet: ptr8, length: int) -> int:
         crc_u = packet[i]
         crc_u ^= crc_up
 
-        for i in range(8):
+        for j in range(8):
             crc_u = POLY ^ (crc_u << 1) if (crc_u & 0x80) else (crc_u << 1)
 
             # mask crc_u to 8 bits

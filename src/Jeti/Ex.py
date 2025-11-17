@@ -322,15 +322,16 @@ class Ex:
         extext += ustruct.pack('B', len(description) << 3 | len(unit))
 
         # compile 11th+x bytes of EX text specification
-        extext += bytes([ord(c) for c in description])
+        # Use encode() instead of list comprehension for better performance
+        extext += description.encode('ascii')
 
         # compile 11+x+y bytes of EX text specification (y bytes)
-        extext += bytes([ord(c) for c in unit])
+        extext += unit.encode('ascii')
 
         return extext, len(extext)
 
     @micropython.native
-    def Message(self, message=None, msg_class=const(0)):
+    def Message(self, message_text=None, msg_class=const(0)):
         '''This message type allows transmitting any textual information directly
         to the pilot. Additional semantics can be added to the message
         (alarm/status/warning).'''
@@ -347,10 +348,11 @@ class Ex:
         # 2: Warning (alarm, high vibrations, preflight conditions check, …)
         # 3: Recoverable error (loss of GPS position, erratic sensor data, …)
         # 4: Nonrecoverable error (peripheral failure, unexpected hardware fault, …)
-        message += ustruct.pack('B', msg_class << const(5) | len(message))
+        message += ustruct.pack('B', msg_class << const(5) | len(message_text))
 
         # compile 11th+x bytes of EX message specification
-        message += bytes([ord(c) for c in message])
+        # Use encode() instead of list comprehension for better performance
+        message += message_text.encode('ascii')
 
         return message, len(message)
 
