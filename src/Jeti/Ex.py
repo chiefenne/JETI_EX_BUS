@@ -227,7 +227,8 @@ class Ex:
 
         # crc for telemetry (8-bit crc)
         # counting begins at the length byte of a message (skipping the header)
-        crc8_int = CRC8.crc8_viper(ex_packet[1:], len(ex_packet[1:]))
+        packet_slice = ex_packet[1:]
+        crc8_int = CRC8.crc8_viper(packet_slice, len(packet_slice))
 
         # add crc8 to the packet ('B' is unsigned byte 8-bit)
         ex_packet += ustruct.pack('B', crc8_int)
@@ -432,17 +433,18 @@ class Ex:
         # 32 bytes are reserved for the text
         text = '{:<32}'.format(text[:32])
 
-        simple_text = bytearray()
+        # Pre-allocate bytearray with known size (34 bytes total)
+        simple_text = bytearray(34)
 
         # separator of message (begin), clear 8th bit
-        simple_text += (0xFE & ~(1 << 7)).to_bytes(1, 'little')
+        simple_text[0] = 0xFE & ~(1 << 7)
 
         # add the text to the packet, set 8th bit
-        for c in text:
-            simple_text += bytes([ord(c) | (1 << 7)])
+        for i, c in enumerate(text):
+            simple_text[i + 1] = ord(c) | (1 << 7)
 
         # separator of message (end), clear 8th bit
-        simple_text += (0xFF & ~(1 << 7)).to_bytes(1, 'little')
+        simple_text[33] = 0xFF & ~(1 << 7)
 
         return simple_text
 
