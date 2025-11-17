@@ -227,7 +227,8 @@ class Ex:
 
         # crc for telemetry (8-bit crc)
         # counting begins at the length byte of a message (skipping the header)
-        crc8_int = CRC8.crc8_viper(ex_packet[1:], len(ex_packet[1:]))
+        packet_slice = ex_packet[1:]
+        crc8_int = CRC8.crc8_viper(packet_slice, len(packet_slice))
 
         # add crc8 to the packet ('B' is unsigned byte 8-bit)
         ex_packet += ustruct.pack('B', crc8_int)
@@ -322,15 +323,16 @@ class Ex:
         extext += ustruct.pack('B', len(description) << 3 | len(unit))
 
         # compile 11th+x bytes of EX text specification
-        extext += bytes([ord(c) for c in description])
+        # Use encode() instead of list comprehension for better performance
+        extext += description.encode('ascii')
 
         # compile 11+x+y bytes of EX text specification (y bytes)
-        extext += bytes([ord(c) for c in unit])
+        extext += unit.encode('ascii')
 
         return extext, len(extext)
 
     @micropython.native
-    def Message(self, message=None, msg_class=const(0)):
+    def Message(self, message_text=None, msg_class=const(0)):
         '''This message type allows transmitting any textual information directly
         to the pilot. Additional semantics can be added to the message
         (alarm/status/warning).'''
@@ -347,10 +349,11 @@ class Ex:
         # 2: Warning (alarm, high vibrations, preflight conditions check, …)
         # 3: Recoverable error (loss of GPS position, erratic sensor data, …)
         # 4: Nonrecoverable error (peripheral failure, unexpected hardware fault, …)
-        message += ustruct.pack('B', msg_class << const(5) | len(message))
+        message += ustruct.pack('B', msg_class << const(5) | len(message_text))
 
         # compile 11th+x bytes of EX message specification
-        message += bytes([ord(c) for c in message])
+        # Use encode() instead of list comprehension for better performance
+        message += message_text.encode('ascii')
 
         return message, len(message)
 
@@ -430,17 +433,18 @@ class Ex:
         # 32 bytes are reserved for the text
         text = '{:<32}'.format(text[:32])
 
-        simple_text = bytearray()
+        # Pre-allocate bytearray with known size (34 bytes total)
+        simple_text = bytearray(34)
 
         # separator of message (begin), clear 8th bit
-        simple_text += (0xFE & ~(1 << 7)).to_bytes(1, 'little')
+        simple_text[0] = 0xFE & ~(1 << 7)
 
         # add the text to the packet, set 8th bit
-        for c in text:
-            simple_text += bytes([ord(c) | (1 << 7)])
+        for i, c in enumerate(text):
+            simple_text[i + 1] = ord(c) | (1 << 7)
 
         # separator of message (end), clear 8th bit
-        simple_text += (0xFF & ~(1 << 7)).to_bytes(1, 'little')
+        simple_text[33] = 0xFF & ~(1 << 7)
 
         return simple_text
 
